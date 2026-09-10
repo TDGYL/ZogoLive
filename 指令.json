@@ -1,0 +1,19 @@
+html转flutter提示词
+请根据README和index.html的原型图，开发完整的flutter app。
+不要g.dart
+Think hard ,不要偷懒
+Lib中是已有代码
+
+
+补充完整的dart文件，每个文件分别给我完整的内容
+
+
+不使用 freezed 包和 part 语法
+状态管理先用setState
+数据存储可以用shared_preferences
+不需要本地图片assets/images/
+不需要 cached_network_image
+不需要账户功能
+不需要外部字体
+不要 share_plus
+数据请求，模型映射等使用常用的第三方库

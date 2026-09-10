@@ -1,0 +1,367 @@
+
+
+
+
+主要的功能拆解：
+第一页界面分成3个大模块，第一个模块将极球赛事和搜索顶部封装成一个view，最右边的通知消息按钮修改成日历的事件，当点击时候，在中间弹出一个日历选显卡；
+第二个模块是下边的日历为单独的一个View，当天时间高亮，当天居中显示,只展示7天，第三模块则是下边的列表数据
+
+第一个模块的14是动态请求展示的，第二个模块的日历只展示7天，当点击了右上角的通知按钮触发日历选项卡，选中之后，则联动下边的日历为高亮，日历选项卡和日历的高亮能联动
+
+列表只请求日历选中的时间的数据，下拉刷新和上拉加载size=20，全部那里展示当天的总数，然后右边是今天关联的联赛名字，点击联赛高亮过滤已经请求的数据
+
+给我创建请求数据工具类，baseUrl=https://api.livepulseapp.com
+
+第一页比赛列表的接口为：/api/v1/football/matches，请求方式为POST请求
+入参{
+    "tab": 0, integer，类型
+    "page": 1, integer，页码
+    "size": 10, integer，请求条数
+    "timestamp":176477777, integer，时间戳
+    "competition_ids": []
+}
+入参说明：
+当点击不同的日期时候传入日期时间戳替换timestamp的值
+出参为：
+{
+    "code": 0,
+    "data": {
+        "total": 0,
+        "timestamp": 0,
+        "results": [
+            {
+                "match_id": 0,
+                "season_id": 0,
+                "competition_id": 0,
+                "competition_logo": "string",
+                "competition_name": "string",
+                "competition_primary_color": "string",
+                "competition_secondary_color": "string",
+                "home_team_id": 0,
+                "home_team_name": "string",
+                "home_team_logo": "string",
+                "away_team_id": 0,
+                "away_team_name": "string",
+                "away_team_logo": "string",
+                "status_id": 0,
+                "status_name": "string",
+                "match_time": 0,
+                "neutral": 0,
+                "home_normal_score": 0,
+                "home_half_score": 0,
+                "home_red": 0,
+                "home_yellow": 0,
+                "home_corn": 0,
+                "home_add_score": 0,
+                "home_point_score": 0,
+                "away_normal_score": 0,
+                "away_half_score": 0,
+                "away_red": 0,
+                "away_yellow": 0,
+                "away_corn": 0,
+                "away_add_score": 0,
+                "away_point_score": 0,
+                "lineup": 0,
+                "stage_id": 0,
+                "odds": {
+                    "eu": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "bs": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "asia": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    }
+                },
+                "init_odds": {
+                    "eu": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "bs": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "asia": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    }
+                },
+                "pre_odds": {
+                    "asia": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "bs": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    },
+                    "eu": {
+                        "updated_at": 0,
+                        "match_offset": "string",
+                        "home": "string",
+                        "draw": "string",
+                        "away": "string",
+                        "state": 0,
+                        "closed": 0,
+                        "score": "string"
+                    }
+                },
+                "subscribed": true,
+                "incidents": null,
+                "home_position": "string",
+                "away_position": "string",
+                "has_ot": true,
+                "has_penalty": true,
+                "win": 0,
+                "note": "string",
+                "minutes": "string",
+                "mlive": 0,
+                "mlive_url": "string",
+                "live_video": 0,
+                "live_url": {
+                    "rtmp": "string",
+                    "flv": "string",
+                    "m3u8": "string"
+                },
+                "has_article": 0,
+                "stage_name": "string",
+                "group_num": "string",
+                "round_num": 0,
+                "scheme_count": 0,
+                "lives": [
+                    {}
+                ],
+                "countdown": 0,
+                "user_note": {
+                    "content": "string",
+                    "focus_team_id": 0
+                },
+                "is_world_cup": 0,
+                "live": {
+                    "id": 0,
+                    "avatar": "string",
+                    "live_status": 0
+                }
+            }
+        ]
+    },
+    "message": "string"
+}
+
+
+第二页社区只请求最近发布的帖子，可以关注作者，界面只能点击关注用户和非关注部分进入帖子详情
+关注的时候需要验证用户是否登录，没有登录则跳转到登录界面
+
+关注和取消关注接口为：/api/v1/imchat/subscribe，请求方式为POST，
+入参：
+{
+    "target_id": 0,
+    "type": 1
+}
+其中target_id表示关注的用户id，type=1表示关注，type=2表示取消关注
+
+第二页社区列表的接口为：/api/v1/community/list，请求方式为POST请求
+入参{
+    "type": 2, integer，类型
+    "page": 1, integer，页码
+    "size": 10, integer，请求条数
+}
+入参说明：
+社区首页的type = 2，个人中心要看我关注的用户的帖子type=3
+出参数为：
+{"code":0,"data":{"total":100,"results":[{
+	    "id":123,"content":"今天看好主队取胜","image":"https://cdn.../post/a.png",
+	    "like_count":12,"comment_count":3,"create_time":1722800000,
+	    "author":{"id":456,"name":"用户A","avatar":"https://cdn.../avatar.png","member_id":456},
+	    "match":{"match_type":1,"match_id":1001,"competition_id":2001,"season_id":3001,
+	      "start_time":1722900000,"status_id":1,"status_name":"未开赛","competition_name":"英超",
+	      "home_team_name":"主队","home_team_logo":"https://cdn.../home.png",
+	      "away_team_name":"客队","away_team_logo":"https://cdn.../away.png",
+	      "home_score":0,"away_score":0},
+	    "is_like":false
+	  }]},"message":"ok"}
+出参说明：results为列表帖子数据，author为发布的用户信息，create_time为发布时间
+
+
+
+第三页资讯页，bannaer展示数据列表的第一张数据，列表从第二张开始展示
+资讯页的接口为:/api/v1/info/list,请求方式为get请求
+入参为：
+{
+    "page": 0,
+    "size": 1,
+    "tab":1
+}
+
+出参为：
+{
+    "code": 0,
+    "data": {
+        "total": 0,
+        "results": [
+            {
+                "id": 0,
+                "title": "string",
+                "cover": "string",
+                "type": 0,
+                "author": "string",
+                "author_avatar": "string",
+                "source": "string",
+                "source_url": "string",
+                "top": 0,
+                "tags": [
+                    {
+                        "name": "string",
+                        "type_id": 0,
+                        "category": 0,
+                        "type": "string"
+                    }
+                ],
+                "created_at": 0,
+                "online_at": 0,
+                "offline_at": 0,
+                "status": 0,
+                "content": "string",
+                "pv": 0,
+                "support": 0,
+                "comment": 0,
+                "relay": 0,
+                "video_time": 0,
+                "is_support": true,
+                "video_direction": 0,
+                "h5_url": "string",
+                "is_follow": true,
+                "content_counts": 0,
+                "video_height": 0,
+                "video_width": 0,
+                "living": true,
+                "expert_id": 0,
+                "live": {
+                    "id": 0,
+                    "match_id": 0,
+                    "match": {
+                        "match_id": 0,
+                        "match_time": 0,
+                        "away_team_name": "string",
+                        "away_team_logo": "string",
+                        "home_team_name": "string",
+                        "home_team_logo": "string",
+                        "competition_id": 0,
+                        "competition_name": "string",
+                        "primary_color": "string",
+                        "secondary_color": "string",
+                        "away_scores": 0,
+                        "home_scores": 0,
+                        "status_id": 0
+                    },
+                    "live_status": 0,
+                    "video_type": 0,
+                    "live_type": 0,
+                    "video_title": "string",
+                    "cover_url": "string",
+                    "video_pay": 0,
+                    "user_pay": true,
+                    "free_time": 0,
+                    "live_start_time": 0,
+                    "video_sell_status": 0,
+                    "goods_id": 0,
+                    "price": "string",
+                    "programme_id": 0,
+                    "commentators": [
+                        {
+                            "id": 0,
+                            "avatar": "string",
+                            "nickname": "string",
+                            "is_subscribe": true
+                        }
+                    ],
+                    "addresses": [
+                        {
+                            "addr_url": "string",
+                            "addr_type": 0,
+                            "addr_multi": {
+                                "flv": "string",
+                                "rtmp": "string",
+                                "m3u8": "string"
+                            }
+                        }
+                    ],
+                    "patch": "string",
+                    "group_id": "string",
+                    "weight": 0,
+                    "lucky_bag": {
+                        "id": 0,
+                        "status": 0,
+                        "draw_time": 0
+                    },
+                    "tabs": [
+                        {
+                            "name": "string",
+                            "type": 0,
+                            "default": true
+                        }
+                    ],
+                    "vertical_cover_url": "string",
+                    "content_counts": 0,
+                    "intelligence_counts": 0
+                }
+            }
+        ]
+    }
+}
+
+
+

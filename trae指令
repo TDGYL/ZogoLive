@@ -1,27 +1,23 @@
 
 
+========================================比赛列表的数据请求======
 
-按照app.html的原型图，实现第一页比赛菜单的界面，界面呈现控制在LSMatchViewController文件中，主要的功能拆解：
-1、将整体界面分成3个大模块，第一个模块将极球赛事和搜索顶部封装成一个view，最右边的通知消息按钮修改成日历的事件，当点击时候，在中间弹出一个日历选显卡；
-第二个模块是下边的日历为单独的一个View，当天时间高亮，当天居中显示,只展示7天，第三模块则是下边的列表数据
+参考/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Network/LPNetworking的网络请求框架，封装自己的flutter的网络请求，baseUrl=https://api.livepulseapp.com
 
-2、第一个模块的14是动态请求展示的，第二个模块的日历只展示7天，当点击了右上角的通知按钮触发日历选项卡，选中之后，则联动下边的日历为高亮，日历选项卡和日历的高亮能联动
 
-3、列表只请求日历选中的时间的数据，下拉刷新和上拉加载size=20，全部那里展示当天的总数，然后右边是今天关联的联赛名字，点击联赛高亮过滤已经请求的数据
-
-4、日历用第三方FSCalendar实现，联赛过滤用三方库JXCategoryTitleView实现,刷新用MJRefresh，模型的映射用MJextension
-
-5、数据请求业务逻辑放在LSMatchViewModel中，数据模型为LSMatchModel，请求类LSNetWorking
-
-6、请求接口为LSApi文件里的neptuneErratic，请求方式为POST请求
-入参{
+ 然后第一页的比赛列表接入请求数据，比赛列表接口为：/api/v1/football/matches，请求方式给POST请求，
+ 请求参数，入参{
     "tab": 0, integer，类型
     "page": 1, integer，页码
     "size": 10, integer，请求条数
     "timestamp":176477777, integer，时间戳
     "competition_ids": []
 }
-出参为：帮我在LSMatchModel添加对应results内部的属性
+其中timestamp是动态的，初始化时候传入今天的时间戳，然后列表上面切换时间时候，传入选中的时间戳重新下拉刷新新数据
+
+列表做下拉刷新和上拉加载功能
+
+请求响应的数据为：
 {
     "code": 0,
     "data": {
@@ -199,3 +195,4 @@
     },
     "message": "string"
 }
+
