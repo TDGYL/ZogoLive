@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极球 TactiGoal - 深度足球赛事与战术社区 App</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Alpine.js for lightweight interactive state management -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pitch: {
+                            DEFAULT: '#0B0D12', // Deep Obsidian background
+                            card: '#151922',    // Primary dark card background
+                            elevated: '#1E2430',// Elevated UI elements
+                            border: '#2A3242',  // Crisp dark border
+                        },
+                        accent: {
+                            emerald: '#10B981', // Pitch Emerald primary accent
+                            lime: '#84CC16',    // Live indicator neon green
+                            gold: '#F59E0B',    // Highlight / VIP gold
+                            crimson: '#EF4444', // Hot / Live alert
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom smooth scrollbar & utility classes */
+        ::-webkit-scrollbar { width: 0px; height: 0px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .glass-panel {
+            background: rgba(21, 25, 34, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-header {
+            background: rgba(11, 13, 18, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .pulse-live {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .glow-emerald {
+            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+
+<body class="bg-[#050608] text-slate-100 font-sans antialiased min-h-screen flex flex-col items-center justify-center p-0 md:p-6 select-none overflow-x-hidden">
+
+    <!-- Top Bar for Preview Controls & Design Doc Toggle -->
+    <div x-data="{ showDocModal: false }" class="w-full max-w-6xl mb-4 px-4 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
+        <div class="flex items-center gap-3">
+            <span class="bg-pitch-card border border-pitch-border px-3 py-1.5 rounded-full font-medium text-slate-200 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent-emerald animate-ping"></span>
+                极球 TactiGoal v2.4 (浅黑极夜高保真)
+            </span>
+            <span class="hidden md:inline text-slate-500">iPhone 15 Pro 视角 (393px × 852px)</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button @click="showDocModal = true" class="bg-pitch-elevated hover:bg-slate-800 text-accent-emerald border border-accent-emerald/30 px-3.5 py-1.5 rounded-full font-semibold transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-950/30">
+                <i class="fa-solid fa-book-open text-xs"></i>
+                查看产品与UI设计文档
+            </button>
+        </div>
+
+        <!-- Product Documentation Modal -->
+        <div x-show="showDocModal" x-transition.opacity x-cloak class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="bg-pitch-card border border-pitch-border w-full max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+                <div class="p-5 glass-header flex items-center justify-between border-b border-pitch-border">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-accent-emerald/20 border border-accent-emerald/40 flex items-center justify-center text-accent-emerald font-bold">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">产品与UI设计文档 (Product Specification)</h3>
+                            <p class="text-xs text-slate-400">极球 TactiGoal - 浅黑微光战术赛事App</p>
+                        </div>
+                    </div>
+                    <button @click="showDocModal = false" class="w-8 h-8 rounded-full bg-pitch-elevated hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300 leading-relaxed">
+                    <!-- Section 1 -->
+                    <section class="space-y-2">
+                        <h4 class="text-accent-emerald font-bold text-base flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye"></i> 1. 用户体验与独特性分析 (UX Analysis)
+                        </h4>
+                        <p class="text-slate-400">
+                            传统足球App多以“比分罗列+简单图文”为主，缺乏对现代化深度球迷（战术分析控、数据玩家）的满足。
+                            <strong>极球 TactiGoal</strong> 创新采用<b>“战术动量矩阵”与“动态关联挂载”</b>，允许用户在社区讨论中直接插入具体赛事某分钟的战术高光卡片。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                            <div class="bg-pitch-elevated p-3 rounded-xl border border-pitch-border">
+                                <div class="font-semibold text-white mb-1"><i class="fa-solid fa-circle-nodes text-accent-emerald"></i> 独特路径：卡片级赛事联动</div>
+                                <div class="text-xs text-slate-400">社区帖文中嵌入关联赛事卡片，点击直接直达该场比赛的AI战术动量图表，实现“看贴-看比赛-复盘”无缝闭环。</div>
+                            </div>
+                            <div class="bg-pitch-elevated p-3 rounded-xl border border-pitch-border">
+                                <div class="font-semibold text-white mb-1"><i class="fa-solid fa-chart-line text-accent-gold"></i> 实时AI战术动量表</div>
+                                <div class="text-xs text-slate-400">摒弃单一控球率，引入xG预期进球与前场压迫动量实时折线，带来战术极客的极致体验。</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 2 -->
+                    <section class="space-y-2">
+                        <h4 class="text-accent-emerald font-bold text-base flex items-center gap-2">
+                            <i class="fa-solid fa-sitemap"></i> 2. 产品界面规划与架构 (Information Architecture)
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1.5 text-slate-400">
+                            <li><strong class="text-slate-200">比赛列表 (Matches):</strong> 日历横滑选择器 + 联赛筛选器 + 实时/未开赛/完场卡片 + 战术动量下沉抽屉。</li>
+                            <li><strong class="text-slate-200">战术社区 (Community):</strong> 话题标签 + 战术热帖 + 关联赛事嵌入标签 (Match Tag) + 悬浮极速发帖。</li>
+                            <li><strong class="text-slate-200">赛事资讯 (News):</strong> 聚焦深度独家/转会传闻/战术拆解 + 沉浸式新闻详情阅读器。</li>
+                            <li><strong class="text-slate-200">个人中心 (Profile):</strong> 暗黑VIP主队身份卡 + 预测准确率战报 + 关注战术面板 + 懂球AI助手入口。</li>
+                        </ul>
+                    </section>
+
+                    <!-- Section 3 -->
+                    <section class="space-y-2">
+                        <h4 class="text-accent-emerald font-bold text-base flex items-center gap-2">
+                            <i class="fa-solid fa-palette"></i> 3. 高保真 UI 设计规范 (Visual Identity)
+                        </h4>
+                        <p class="text-slate-400">
+                            <strong>主题色：浅黑 (Pitch Black #0B0D12)</strong> —— 区别于冷硬纯黑与普通白底，采用具有质感的暗沉石墨黑，搭配绿茵场翡翠绿 (Pitch Emerald #10B981) 与高光金 (#F59E0B)。
+                        </p>
+                        <div class="flex items-center gap-2 pt-1">
+                            <div class="h-8 w-1/4 rounded-lg bg-[#0B0D12] border border-white/20 flex items-center justify-center text-xs font-mono">#0B0D12 背景</div>
+                            <div class="h-8 w-1/4 rounded-lg bg-[#151922] border border-white/20 flex items-center justify-center text-xs font-mono">#151922 卡片</div>
+                            <div class="h-8 w-1/4 rounded-lg bg-[#10B981] text-black font-bold flex items-center justify-center text-xs font-mono">#10B981 主色</div>
+                            <div class="h-8 w-1/4 rounded-lg bg-[#F59E0B] text-black font-bold flex items-center justify-center text-xs font-mono">#F59E0B 辅助</div>
+                        </div>
+                    </section>
+                </div>
+                <div class="p-4 glass-header border-t border-pitch-border flex justify-end">
+                    <button @click="showDocModal = false" class="bg-accent-emerald hover:bg-emerald-600 text-black font-bold px-5 py-2 rounded-xl text-xs transition-all">
+                        开始体验原型 App
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iPhone 15 Pro Mobile Device Container -->
+    <div class="relative w-full max-w-[400px] h-[850px] bg-pitch rounded-[50px] border-[10px] border-[#222730] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col ring-1 ring-white/10">
+
+        <!-- Dynamic Island / Status Bar -->
+        <div class="w-full bg-pitch pt-3 px-7 pb-2 flex justify-between items-center z-40 select-none border-b border-white/[0.02]">
+            <span class="text-xs font-semibold text-slate-200 tracking-tight font-mono">21:41</span>
+            
+            <!-- Dynamic Island -->
+            <div class="w-[105px] h-[26px] bg-black rounded-full flex items-center justify-between px-2.5 shadow-inner">
+                <div class="w-2.5 h-2.5 rounded-full bg-accent-emerald animate-pulse"></div>
+                <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-futbol text-[10px] text-accent-emerald animate-spin" style="animation-duration: 8s;"></i>
+                    <span class="text-[9px] text-slate-300 font-mono">2-1</span>
+                </div>
+            </div>
+
+            <!-- Hardware icons -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-300">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-three-quarters text-[11px] text-accent-emerald"></i>
+            </div>
+        </div>
+
+        <!-- Main App Interactive Area -->
+        <div x-data="{ 
+            currentTab: 'matches', 
+            selectedDate: '2026-09-09',
+            leagueFilter: 'all',
+            matchDetailModal: false,
+            activeMatch: null,
+            newsDetailModal: false,
+            activeNews: null,
+            createPostModal: false,
+            notificationToast: false,
+            toastMsg: '',
+            
+            showToast(msg) {
+                this.toastMsg = msg;
+                this.notificationToast = true;
+                setTimeout(() => { this.notificationToast = false }, 2500);
+            }
+        }" class="relative flex-1 flex flex-col bg-pitch overflow-hidden">
+
+            <!-- Toast Alert Notification -->
+            <div x-show="notificationToast" 
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="-translate-y-8 opacity-0"
+                 x-transition:enter-end="translate-y-0 opacity-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="translate-y-0 opacity-100"
+                 x-transition:leave-end="-translate-y-8 opacity-0"
+                 x-cloak
+                 class="absolute top-3 left-4 right-4 z-50 glass-panel bg-accent-emerald/20 border border-accent-emerald/40 text-emerald-200 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-accent-emerald text-base"></i>
+                <span class="text-xs font-medium" x-text="toastMsg"></span>
+            </div>
+
+            <!-- ================= PAGE 1: MATCHES (比赛) ================= -->
+            <div x-show="currentTab === 'matches'" class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                <div class="glass-header px-4 pt-3 pb-2 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-accent-emerald/15 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald font-black text-sm">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-extrabold text-white tracking-wide">极球·赛事</h1>
+                            <p class="text-[10px] text-slate-400 font-medium">今日 14 场焦点对决</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="showToast('搜索功能：请输入球队/球星关键词')" class="w-8 h-8 rounded-full bg-pitch-elevated hover:bg-slate-800 flex items-center justify-center text-slate-300 text-xs border border-pitch-border">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <button @click="showToast('无新通知')" class="w-8 h-8 rounded-full bg-pitch-elevated hover:bg-slate-800 flex items-center justify-center text-slate-300 text-xs border border-pitch-border relative">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent-crimson"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Horizontal Date Selector Strip -->
+                <div class="bg-pitch-card/60 border-b border-pitch-border px-3 py-2.5">
+                    <div class="flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar">
+                        <template x-for="d in [
+                            {day: '周一', date: '09-07', id: '2026-09-07'},
+                            {day: '周二', date: '09-08', id: '2026-09-08'},
+                            {day: '今天', date: '09-09', id: '2026-09-09'},
+                            {day: '周四', date: '09-10', id: '2026-09-10'},
+                            {day: '周五', date: '09-11', id: '2026-09-11'},
+                            {day: '周六', date: '09-12', id: '2026-09-12'}
+                        ]">
+                            <button @click="selectedDate = d.id; showToast('已切换至 ' + d.date + ' 赛程')" 
+                                    :class="selectedDate === d.id ? 'bg-accent-emerald text-black font-bold shadow-md shadow-emerald-950/40' : 'bg-pitch-elevated text-slate-400 border border-pitch-border'"
+                                    class="flex-shrink-0 w-[58px] py-1.5 rounded-xl flex flex-col items-center transition-all">
+                                <span class="text-[10px] opacity-80" x-text="d.day"></span>
+                                <span class="text-xs font-mono font-semibold" x-text="d.date"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- League Filters -->
+                <div class="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
+                    <button @click="leagueFilter = 'all'" :class="leagueFilter === 'all' ? 'bg-slate-200 text-black font-bold' : 'bg-pitch-elevated text-slate-400 border border-pitch-border'" class="px-3 py-1 rounded-full flex-shrink-0 transition-all">全部 (14)</button>
+                    <button @click="leagueFilter = 'champions'" :class="leagueFilter === 'champions' ? 'bg-slate-200 text-black font-bold' : 'bg-pitch-elevated text-slate-400 border border-pitch-border'" class="px-3 py-1 rounded-full flex-shrink-0 transition-all flex items-center gap-1"><i class="fa-solid fa-star text-accent-gold text-[10px]"></i> 欧冠</button>
+                    <button @click="leagueFilter = 'premier'" :class="leagueFilter === 'premier' ? 'bg-slate-200 text-black font-bold' : 'bg-pitch-elevated text-slate-400 border border-pitch-border'" class="px-3 py-1 rounded-full flex-shrink-0 transition-all">英超</button>
+                    <button @click="leagueFilter = 'laliga'" :class="leagueFilter === 'laliga' ? 'bg-slate-200 text-black font-bold' : 'bg-pitch-elevated text-slate-400 border border-pitch-border'" class="px-3 py-1 rounded-full flex-shrink-0 transition-all">西甲</button>
+                </div>
+
+                <!-- Match List Feed -->
+                <div class="flex-1 overflow-y-auto px-4 py-2 space-y-3">
+                    
+                    <!-- LIVE Match Card 1 -->
+                    <div @click="activeMatch = { home: '皇家马德里', away: '曼城', homeScore: 2, awayScore: 1, minute: '78\'', league: '欧冠 1/4 决赛', status: 'LIVE', stadium: '伯纳乌球场' }; matchDetailModal = true"
+                         class="bg-pitch-card border border-accent-emerald/30 rounded-2xl p-3.5 relative overflow-hidden shadow-lg hover:border-accent-emerald/60 transition-all cursor-pointer group">
+                        
+                        <!-- Top League & Time bar -->
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2.5 pb-2 border-b border-pitch-border">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-accent-emerald/15 text-accent-emerald text-[10px] font-bold">欧冠 Knockout</span>
+                                <span class="text-[11px]">伯纳乌球场</span>
+                            </div>
+                            <!-- Live indicator badge -->
+                            <div class="flex items-center gap-1.5 bg-accent-crimson/20 border border-accent-crimson/40 text-accent-crimson px-2 py-0.5 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-accent-crimson animate-ping"></span>
+                                <span class="text-[10px] font-mono font-bold">78' 进行中</span>
+                            </div>
+                        </div>
+
+                        <!-- Teams & Score Row -->
+                        <div class="flex items-center justify-between py-1">
+                            <!-- Home Team -->
+                            <div class="flex items-center gap-3 w-5/12">
+                                <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=80&q=80" class="w-10 h-10 rounded-full object-cover border border-white/20 shadow-md" alt="Real Madrid">
+                                <div>
+                                    <h3 class="font-bold text-sm text-white group-hover:text-accent-emerald transition-colors">皇家马德里</h3>
+                                    <p class="text-[10px] text-slate-400">主场 · 控球 48%</p>
+                                </div>
+                            </div>
+
+                            <!-- Score Center -->
+                            <div class="flex flex-col items-center justify-center w-2/12">
+                                <div class="text-2xl font-black font-mono text-white tracking-wider flex items-center gap-1">
+                                    <span class="text-accent-emerald">2</span>
+                                    <span class="text-slate-600 text-lg">-</span>
+                                    <span>1</span>
+                                </div>
+                                <span class="text-[9px] text-accent-gold font-mono font-medium mt-0.5"><i class="fa-solid fa-chart-line"></i> xG 2.1 - 1.4</span>
+                            </div>
+
+                            <!-- Away Team -->
+                            <div class="flex items-center justify-end gap-3 w-5/12 text-right">
+                                <div>
+                                    <h3 class="font-bold text-sm text-white group-hover:text-accent-emerald transition-colors">曼彻斯特城</h3>
+                                    <p class="text-[10px] text-slate-400">客场 · 控球 52%</p>
+                                </div>
+                                <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=80&q=80" class="w-10 h-10 rounded-full object-cover border border-white/20 shadow-md" alt="Man City">
+                            </div>
+                        </div>
+
+                        <!-- Mini Momentum Graph Bar -->
+                        <div class="mt-3 bg-pitch-elevated rounded-xl p-2 border border-pitch-border flex items-center justify-between text-[11px]">
+                            <div class="flex items-center gap-1.5 text-slate-300">
+                                <i class="fa-solid fa-bolt text-accent-gold"></i>
+                                <span class="text-[10px]">实时动量：皇马反击高潮中</span>
+                            </div>
+                            <span class="text-accent-emerald text-[10px] font-semibold flex items-center gap-1">
+                                战术复盘 <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Match Card 2 -->
+                    <div @click="activeMatch = { home: '阿森纳', away: '拜仁慕尼黑', homeScore: '-', awayScore: '-', minute: '03:00', league: '欧冠 1/4 决赛', status: 'UPCOMING', stadium: '酋长球场' }; matchDetailModal = true"
+                         class="bg-pitch-card border border-pitch-border rounded-2xl p-3.5 hover:border-slate-600 transition-all cursor-pointer group">
+                        
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2.5 pb-2 border-b border-pitch-border">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-pitch-elevated text-slate-300 text-[10px] font-medium border border-pitch-border">欧冠 Knockout</span>
+                                <span class="text-[11px]">酋长球场</span>
+                            </div>
+                            <span class="text-[11px] text-accent-gold font-mono font-semibold"><i class="fa-regular fa-clock"></i> 03:00 未开赛</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-1">
+                            <div class="flex items-center gap-3 w-5/12">
+                                <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=80&q=80" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="Arsenal">
+                                <div>
+                                    <h3 class="font-bold text-sm text-white group-hover:text-accent-emerald transition-colors">阿森纳</h3>
+                                    <p class="text-[10px] text-slate-400">胜率 45%</p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center justify-center w-2/12">
+                                <span class="text-sm font-bold font-mono text-slate-400 bg-pitch-elevated px-2.5 py-1 rounded-lg border border-pitch-border">VS</span>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 w-5/12 text-right">
+                                <div>
+                                    <h3 class="font-bold text-sm text-white group-hover:text-accent-emerald transition-colors">拜仁慕尼黑</h3>
+                                    <p class="text-[10px] text-slate-400">胜率 35%</p>
+                                </div>
+                                <img src="https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=80&q=80" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="Bayern">
+                            </div>
+                        </div>
+
+                        <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-pitch-border/50">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-comments text-slate-500"></i> 社区热议 3,420 条</span>
+                            <span class="text-accent-emerald font-medium"><i class="fa-solid fa-bell"></i> 预约比赛提醒</span>
+                        </div>
+                    </div>
+
+                    <!-- Finished Match Card 3 -->
+                    <div class="bg-pitch-card border border-pitch-border rounded-2xl p-3.5 opacity-90 hover:opacity-100 transition-all">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2.5 pb-2 border-b border-pitch-border">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-pitch-elevated text-slate-400 text-[10px]">英超 第28轮</span>
+                                <span class="text-[11px]">安菲尔德球场</span>
+                            </div>
+                            <span class="text-[10px] text-slate-500 font-medium">完场</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-1">
+                            <div class="flex items-center gap-3 w-5/12">
+                                <div class="w-10 h-10 rounded-full bg-red-900/40 border border-red-500/30 flex items-center justify-center font-black text-red-400 text-xs">LIV</div>
+                                <div>
+                                    <h3 class="font-bold text-sm text-white">利物浦</h3>
+                                    <p class="text-[10px] text-slate-400">射门 18次</p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center justify-center w-2/12">
+                                <div class="text-xl font-bold font-mono text-slate-200">3 - 1</div>
+                                <span class="text-[9px] text-slate-500 font-mono">FT</span>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 w-5/12 text-right">
+                                <div>
+                                    <h3 class="font-bold text-sm text-slate-300">切尔西</h3>
+                                    <p class="text-[10px] text-slate-400">射门 7次</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-blue-900/40 border border-blue-500/30 flex items-center justify-center font-black text-blue-400 text-xs">CHE</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= PAGE 2: COMMUNITY (社区) ================= -->
+            <div x-show="currentTab === 'community'" class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                <div class="glass-header px-4 pt-3 pb-2 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-accent-gold/15 border border-accent-gold/30 flex items-center justify-center text-accent-gold font-bold">
+                            <i class="fa-solid fa-users-rays"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-extrabold text-white tracking-wide">极球·战术社区</h1>
+                            <p class="text-[10px] text-slate-400">与 240,000+ 深度球友研讨战术</p>
+                        </div>
+                    </div>
+                    <button @click="createPostModal = true" class="bg-accent-emerald hover:bg-emerald-600 text-black font-bold px-3 py-1.5 rounded-full text-xs transition-all flex items-center gap-1 shadow-md shadow-emerald-950/50">
+                        <i class="fa-solid fa-pen-to-square"></i> 发帖
+                    </button>
+                </div>
+
+                <!-- Community Filter Tabs -->
+                <div class="px-4 py-2 bg-pitch-card/40 border-b border-pitch-border flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
+                    <span class="px-3 py-1 rounded-full bg-accent-emerald/20 text-accent-emerald font-bold border border-accent-emerald/30 flex-shrink-0">🔥 热门推荐</span>
+                    <span class="px-3 py-1 rounded-full bg-pitch-elevated text-slate-400 border border-pitch-border flex-shrink-0">⚽ 战术复盘</span>
+                    <span class="px-3 py-1 rounded-full bg-pitch-elevated text-slate-400 border border-pitch-border flex-shrink-0">🔄 转会风暴</span>
+                    <span class="px-3 py-1 rounded-full bg-pitch-elevated text-slate-400 border border-pitch-border flex-shrink-0">⭐ 专属主队</span>
+                </div>
+
+                <!-- Posts Feed Scrollable -->
+                <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+                    
+                    <!-- Post 1 with LINKED MATCH TAG (核心需求: 关联比赛) -->
+                    <div class="bg-pitch-card border border-pitch-border rounded-2xl p-4 space-y-3">
+                        <!-- Post Author Row -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" class="w-9 h-9 rounded-full object-cover border border-accent-gold/40" alt="Avatar">
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-bold text-xs text-white">战术狂人安切洛</h4>
+                                        <span class="bg-accent-gold/20 text-accent-gold text-[9px] px-1.5 py-0.2 rounded border border-accent-gold/30 font-semibold">Pro 分析师</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400">20分钟前 · 发布于马德里</p>
+                                </div>
+                            </div>
+                            <button @click="showToast('已关注该博主')" class="text-[11px] text-accent-emerald bg-accent-emerald/10 hover:bg-accent-emerald/20 border border-accent-emerald/30 px-2.5 py-1 rounded-full transition-all">
+                                + 关注
+                            </button>
+                        </div>
+
+                        <!-- Post Content -->
+                        <p class="text-xs text-slate-200 leading-relaxed">
+                            今晚皇马对阵曼城，安切洛蒂在第65分钟的换人堪称胜负手！克罗斯撤下后，通过中场高位逼抢彻底打断了德布劳内的出球线路。看这张实时热力图，曼城后场脱节非常严重 👇
+                        </p>
+
+                        <!-- LINKED MATCH TAG (关联比赛组件) -->
+                        <div @click="activeMatch = { home: '皇家马德里', away: '曼城', homeScore: 2, awayScore: 1, minute: '78\'', league: '欧冠 1/4 决赛', status: 'LIVE', stadium: '伯纳乌球场' }; matchDetailModal = true"
+                             class="bg-pitch-elevated hover:bg-slate-800 border border-accent-emerald/40 rounded-xl p-2.5 flex items-center justify-between cursor-pointer transition-all">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-accent-emerald/20 flex items-center justify-center text-accent-emerald text-xs font-bold">
+                                    <i class="fa-solid fa-futbol"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] font-bold text-white flex items-center gap-1.5">
+                                        <span>关联比赛：皇家马德里 2 - 1 曼城</span>
+                                        <span class="w-1.5 h-1.5 rounded-full bg-accent-emerald"></span>
+                                    </div>
+                                    <p class="text-[9px] text-slate-400">欧冠 1/4 决赛 · 实时战术面板可查</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                        </div>
+
+                        <!-- Post Multi-Image Grid -->
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80" class="w-full h-28 rounded-xl object-cover border border-white/10" alt="Tactics 1">
+                            <img src="https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?auto=format&fit=crop&w=400&q=80" class="w-full h-28 rounded-xl object-cover border border-white/10" alt="Tactics 2">
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-pitch-border/60">
+                            <button @click="showToast('点赞 +1')" class="flex items-center gap-1.5 hover:text-accent-crimson transition-colors">
+                                <i class="fa-regular fa-heart"></i>
+                                <span class="text-[11px]">428</span>
+                            </button>
+                            <button @click="showToast('展开 86 条评论')" class="flex items-center gap-1.5 hover:text-white transition-colors">
+                                <i class="fa-regular fa-comment"></i>
+                                <span class="text-[11px]">86</span>
+                            </button>
+                            <button @click="showToast('已收藏该帖子')" class="flex items-center gap-1.5 hover:text-accent-gold transition-colors">
+                                <i class="fa-regular fa-bookmark"></i>
+                                <span class="text-[11px]">112</span>
+                            </button>
+                            <button @click="showToast('分享链接已复制')" class="flex items-center gap-1.5 hover:text-accent-emerald transition-colors">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post 2 -->
+                    <div class="bg-pitch-card border border-pitch-border rounded-2xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" class="w-9 h-9 rounded-full object-cover border border-white/20" alt="Avatar">
+                                <div>
+                                    <h4 class="font-bold text-xs text-white">伦敦球探人</h4>
+                                    <p class="text-[10px] text-slate-400">1小时前 · 话题 #英超转会季</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-200 leading-relaxed">
+                            独家消息：阿森纳管理层已正式提交对维尔茨的初步报价，预计包含浮动条款达1.2亿欧。各位枪迷觉得这笔引援能补齐最后一块冠军拼图吗？
+                        </p>
+                        <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-pitch-border/60">
+                            <button @click="showToast('点赞 +1')" class="flex items-center gap-1.5"><i class="fa-regular fa-heart"></i> <span class="text-[11px]">892</span></button>
+                            <button @click="showToast('展开评论')" class="flex items-center gap-1.5"><i class="fa-regular fa-comment"></i> <span class="text-[11px]">310</span></button>
+                            <button @click="showToast('已分享')" class="flex items-center gap-1.5"><i class="fa-solid fa-share-nodes"></i></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= PAGE 3: NEWS (资讯) ================= -->
+            <div x-show="currentTab === 'news'" class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                <div class="glass-header px-4 pt-3 pb-2 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold">
+                            <i class="fa-regular fa-newspaper"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-extrabold text-white tracking-wide">极球·深度资讯</h1>
+                            <p class="text-[10px] text-slate-400">权威体育记者 24 小时快讯</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Feed Scrollable -->
+                <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+                    
+                    <!-- Featured Article Hero Banner -->
+                    <div @click="activeNews = { title: '欧冠淘汰赛分析：四大豪门齐聚死亡半区，谁能踏平伯纳乌？', source: '极球深度体坛', time: '10分钟前', img: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=600&q=80' }; newsDetailModal = true"
+                         class="relative h-44 rounded-2xl overflow-hidden border border-pitch-border cursor-pointer group shadow-xl">
+                        <img src="https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="News Hero">
+                        <div class="absolute inset-0 bg-gradient-to-t from-pitch via-pitch/40 to-transparent flex flex-col justify-end p-3.5">
+                            <span class="bg-accent-emerald text-black text-[9px] font-extrabold px-2 py-0.5 rounded w-max mb-1.5">头条重磅</span>
+                            <h3 class="font-bold text-sm text-white leading-snug group-hover:text-accent-emerald transition-colors">
+                                欧冠淘汰赛分析：四大豪门齐聚死亡半区，谁能踏平伯纳乌？
+                            </h3>
+                            <div class="flex items-center gap-2 text-[10px] text-slate-300 mt-1">
+                                <span>极球深度体坛</span>
+                                <span>•</span>
+                                <span>10分钟前</span>
+                                <span>•</span>
+                                <span><i class="fa-regular fa-eye"></i> 4.8w 阅读</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- News Category Filter Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
+                        <span class="px-3 py-1 rounded-full bg-slate-200 text-black font-bold flex-shrink-0">全部</span>
+                        <span class="px-3 py-1 rounded-full bg-pitch-card text-slate-400 border border-pitch-border flex-shrink-0">官方转会</span>
+                        <span class="px-3 py-1 rounded-full bg-pitch-card text-slate-400 border border-pitch-border flex-shrink-0">伤病前瞻</span>
+                        <span class="px-3 py-1 rounded-full bg-pitch-card text-slate-400 border border-pitch-border flex-shrink-0">战术拆解</span>
+                    </div>
+
+                    <!-- Article Cards List -->
+                    <div class="space-y-3">
+                        <div @click="activeNews = { title: '哈兰德专访：并不在意金球奖排名，团队大满贯才是我唯一的执念', source: '罗马诺独家', time: '1小时前', img: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=300&q=80' }; newsDetailModal = true"
+                             class="bg-pitch-card border border-pitch-border rounded-xl p-3 flex gap-3 cursor-pointer hover:border-slate-600 transition-all">
+                            <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=300&q=80" class="w-24 h-20 rounded-lg object-cover flex-shrink-0 border border-white/10" alt="News 1">
+                            <div class="flex flex-col justify-between py-0.5">
+                                <h4 class="font-bold text-xs text-white line-clamp-2 leading-relaxed">
+                                    哈兰德专访：并不在意金球奖排名，团队大满贯才是我唯一的执念
+                                </h4>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                    <span class="text-accent-gold"><i class="fa-solid fa-star text-[8px]"></i> 罗马诺独家</span>
+                                    <span>1小时前</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div @click="activeNews = { title: '国际足联宣布：2027世俱杯扩军方案正式通过，总奖金破10亿美金', source: 'FIFA 官方', time: '3小时前', img: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=300&q=80' }; newsDetailModal = true"
+                             class="bg-pitch-card border border-pitch-border rounded-xl p-3 flex gap-3 cursor-pointer hover:border-slate-600 transition-all">
+                            <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=300&q=80" class="w-24 h-20 rounded-lg object-cover flex-shrink-0 border border-white/10" alt="News 2">
+                            <div class="flex flex-col justify-between py-0.5">
+                                <h4 class="font-bold text-xs text-white line-clamp-2 leading-relaxed">
+                                    国际足联宣布：2027世俱杯扩军方案正式通过，总奖金破10亿美金
+                                </h4>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                    <span class="text-blue-400 font-medium">FIFA 官方</span>
+                                    <span>3小时前</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= PAGE 4: PROFILE (个人中心) ================= -->
+            <div x-show="currentTab === 'profile'" class="flex-1 flex flex-col overflow-hidden bg-pitch">
+                <!-- Profile Header Card -->
+                <div class="p-4 bg-gradient-to-b from-pitch-elevated to-pitch border-b border-pitch-border space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono text-slate-400">ID: 88492041</span>
+                        <button @click="showToast('系统设置 modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-gear"></i></button>
+                    </div>
+
+                    <!-- User Info Block -->
+                    <div class="flex items-center gap-3.5">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-14 h-14 rounded-full object-cover border-2 border-accent-gold shadow-lg" alt="User Avatar">
+                            <span class="absolute -bottom-1 -right-1 bg-accent-gold text-black text-[9px] font-black px-1.5 py-0.2 rounded-full border border-black">VIP</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="font-extrabold text-base text-white">战术狂人安切洛</h2>
+                                <span class="bg-accent-emerald/20 text-accent-emerald text-[9px] px-2 py-0.5 rounded-full border border-accent-emerald/30 font-semibold">黑金战术会员</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">信仰：皇家马德里 | 预测胜率 82%</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="grid grid-cols-4 gap-2 pt-2 text-center bg-pitch-card/80 p-2.5 rounded-xl border border-pitch-border">
+                        <div>
+                            <div class="font-extrabold text-sm text-white font-mono">148</div>
+                            <div class="text-[9px] text-slate-400">我的发帖</div>
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-sm text-white font-mono">12.4k</div>
+                            <div class="text-[9px] text-slate-400">获赞总数</div>
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-sm text-accent-emerald font-mono">82%</div>
+                            <div class="text-[9px] text-slate-400">预测准确</div>
+                        </div>
+                        <div>
+                            <div class="font-extrabold text-sm text-accent-gold font-mono">350</div>
+                            <div class="text-[9px] text-slate-400">极球积分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Action Menu -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    
+                    <!-- My Football Features Banner -->
+                    <div class="bg-gradient-to-r from-emerald-950/40 to-pitch-card border border-accent-emerald/30 p-3 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-accent-emerald/20 border border-accent-emerald/40 flex items-center justify-center text-accent-emerald font-bold">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs text-white">懂球 AI 战术助手</h4>
+                                <p class="text-[10px] text-slate-400">提问AI：“曼城高位逼抢破解战术”</p>
+                            </div>
+                        </div>
+                        <button @click="showToast('正在调起懂球 AI 助手...')" class="bg-accent-emerald text-black text-[10px] font-bold px-3 py-1.5 rounded-lg">
+                            对话
+                        </button>
+                    </div>
+
+                    <!-- Quick Functions Grid -->
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div @click="showToast('打开：我的赛事预测看板')" class="bg-pitch-card p-3 rounded-xl border border-pitch-border flex items-center gap-3 cursor-pointer hover:border-slate-600 transition-all">
+                            <i class="fa-solid fa-chart-pie text-accent-gold text-lg"></i>
+                            <div>
+                                <div class="font-bold text-xs text-white">赛事预测榜</div>
+                                <p class="text-[9px] text-slate-400">全国排名 第24位</p>
+                            </div>
+                        </div>
+                        <div @click="showToast('打开：关注的战术博主')" class="bg-pitch-card p-3 rounded-xl border border-pitch-border flex items-center gap-3 cursor-pointer hover:border-slate-600 transition-all">
+                            <i class="fa-solid fa-user-check text-accent-emerald text-lg"></i>
+                            <div>
+                                <div class="font-bold text-xs text-white">关注球队/博主</div>
+                                <p class="text-[9px] text-slate-400">已关注 12 队/18人</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu List -->
+                    <div class="bg-pitch-card border border-pitch-border rounded-xl divide-y divide-pitch-border/60 text-xs text-slate-200">
+                        <div @click="showToast('主队挂件与主题壁纸库')" class="p-3 flex items-center justify-between cursor-pointer hover:bg-pitch-elevated">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-shirt text-accent-emerald"></i>
+                                <span>主队定制挂件与暗黑壁纸</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                        </div>
+                        <div @click="showToast('赛事提醒推送设置')" class="p-3 flex items-center justify-between cursor-pointer hover:bg-pitch-elevated">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-bell text-accent-gold"></i>
+                                <span>比赛开赛 & 进球推送提醒</span>
+                            </div>
+                            <span class="text-[10px] text-accent-emerald">已开启</span>
+                        </div>
+                        <div @click="showToast('帮助与反馈')" class="p-3 flex items-center justify-between cursor-pointer hover:bg-pitch-elevated">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-headset text-blue-400"></i>
+                                <span>客服与意见反馈</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= MODAL 1: MATCH DETAIL BOTTOM SHEET ================= -->
+            <div x-show="matchDetailModal" 
+                 x-transition.opacity 
+                 x-cloak 
+                 class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
+                
+                <div @click.away="matchDetailModal = false" 
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="translate-y-full"
+                     x-transition:enter-end="translate-y-0"
+                     class="bg-pitch-card border-t border-pitch-border rounded-t-3xl max-h-[85%] flex flex-col overflow-hidden shadow-2xl">
+                    
+                    <!-- Sheet Handle Bar -->
+                    <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto my-2.5"></div>
+
+                    <!-- Header -->
+                    <div class="px-4 pb-3 flex items-center justify-between border-b border-pitch-border">
+                        <div>
+                            <span class="text-[10px] text-accent-emerald font-bold" x-text="activeMatch?.league"></span>
+                            <h3 class="font-extrabold text-sm text-white">AI 战术动量与实时面板</h3>
+                        </div>
+                        <button @click="matchDetailModal = false" class="w-7 h-7 rounded-full bg-pitch-elevated text-slate-400 flex items-center justify-center">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Body Content -->
+                    <div class="p-4 overflow-y-auto space-y-4 text-xs">
+                        <!-- Score Banner -->
+                        <div class="bg-pitch-elevated rounded-2xl p-4 border border-pitch-border flex items-center justify-between">
+                            <div class="text-center w-5/12">
+                                <div class="font-bold text-white text-sm" x-text="activeMatch?.home"></div>
+                                <div class="text-[10px] text-slate-400">主场</div>
+                            </div>
+                            <div class="text-center w-2/12 font-mono">
+                                <div class="text-2xl font-black text-accent-emerald" x-text="activeMatch?.homeScore + ' - ' + activeMatch?.awayScore"></div>
+                                <div class="text-[9px] text-accent-crimson font-bold animate-pulse" x-text="activeMatch?.minute"></div>
+                            </div>
+                            <div class="text-center w-5/12">
+                                <div class="font-bold text-white text-sm" x-text="activeMatch?.away"></div>
+                                <div class="text-[10px] text-slate-400">客场</div>
+                            </div>
+                        </div>
+
+                        <!-- Tactical Momentum Chart Simulation -->
+                        <div class="bg-pitch p-3.5 rounded-xl border border-pitch-border space-y-2">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-chart-area text-accent-emerald"></i> 实时比赛动量 (Momentum Flow)</span>
+                                <span class="text-[9px] text-slate-400">基于 xG & 进攻三区触球</span>
+                            </div>
+                            <!-- Mock Wave Graph -->
+                            <div class="h-20 w-full bg-pitch-elevated/50 rounded-lg flex items-end justify-between px-2 py-1 gap-1 border border-pitch-border">
+                                <div class="w-full bg-accent-emerald/80 h-[30%] rounded-t"></div>
+                                <div class="w-full bg-accent-emerald/80 h-[55%] rounded-t"></div>
+                                <div class="w-full bg-accent-emerald/80 h-[80%] rounded-t"></div>
+                                <div class="w-full bg-blue-500/80 h-[40%] rounded-t"></div>
+                                <div class="w-full bg-accent-emerald/80 h-[90%] rounded-t"></div>
+                                <div class="w-full bg-blue-500/80 h-[70%] rounded-t"></div>
+                                <div class="w-full bg-accent-emerald/80 h-[65%] rounded-t"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                                <span>1'</span>
+                                <span>30'</span>
+                                <span>60'</span>
+                                <span>78' (当前)</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Bars -->
+                        <div class="space-y-2 pt-1">
+                            <div>
+                                <div class="flex justify-between text-[10px] text-slate-300 mb-1">
+                                    <span>控球率 48%</span>
+                                    <span>控球率 52%</span>
+                                </div>
+                                <div class="w-full h-2 bg-pitch-elevated rounded-full overflow-hidden flex">
+                                    <div class="bg-accent-emerald h-full" style="width: 48%"></div>
+                                    <div class="bg-blue-500 h-full" style="width: 52%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] text-slate-300 mb-1">
+                                    <span>射门 12 (射正 6)</span>
+                                    <span>射门 9 (射正 4)</span>
+                                </div>
+                                <div class="w-full h-2 bg-pitch-elevated rounded-full overflow-hidden flex">
+                                    <div class="bg-accent-emerald h-full" style="width: 60%"></div>
+                                    <div class="bg-blue-500 h-full" style="width: 40%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="showToast('已进入战术讨论直播间')" class="w-full bg-accent-emerald hover:bg-emerald-600 text-black font-bold py-2.5 rounded-xl text-xs transition-all shadow-lg">
+                            进入该场赛事社区讨论区 (3,420条)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODAL 2: NEWS ARTICLE VIEWER ================= -->
+            <div x-show="newsDetailModal" x-transition.opacity x-cloak class="absolute inset-0 z-50 bg-pitch flex flex-col">
+                <div class="glass-header px-4 py-3 flex items-center justify-between border-b border-pitch-border">
+                    <button @click="newsDetailModal = false" class="text-slate-300 flex items-center gap-1.5 text-xs font-semibold">
+                        <i class="fa-solid fa-chevron-left"></i> 返回资讯
+                    </button>
+                    <button @click="showToast('已复制文章链接')" class="text-slate-300 text-xs"><i class="fa-solid fa-share-nodes"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <span class="text-accent-emerald text-[10px] font-bold" x-text="activeNews?.source"></span>
+                    <h2 class="text-lg font-extrabold text-white leading-snug" x-text="activeNews?.title"></h2>
+                    <p class="text-[10px] text-slate-400" x-text="'发布时间：2026-09-09 · ' + activeNews?.time"></p>
+                    <img :src="activeNews?.img" class="w-full h-44 rounded-xl object-cover border border-white/10" alt="News Image">
+                    <div class="text-xs text-slate-300 leading-relaxed space-y-3 pt-2">
+                        <p>在经历了90分钟高强度的战术博弈后，双方主帅在赛后新闻发布会上表达了对比赛细节的看法。战术专家指出，本场比赛的关键在于边路过载后对肋部空档的快速转移。</p>
+                        <p>欧洲各大体育媒体评价这场比赛为“近五年欧冠最具沉浸感的战术盛宴”。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODAL 3: CREATE POST (发帖) ================= -->
+            <div x-show="createPostModal" x-transition.opacity x-cloak class="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col">
+                <div class="glass-header px-4 py-3 flex items-center justify-between">
+                    <button @click="createPostModal = false" class="text-slate-400 text-xs">取消</button>
+                    <h3 class="font-bold text-xs text-white">发布战术贴</h3>
+                    <button @click="createPostModal = false; showToast('帖子发布成功！已关联赛事')" class="bg-accent-emerald text-black font-bold text-xs px-3 py-1 rounded-full">发布</button>
+                </div>
+                <div class="p-4 space-y-4 flex-1">
+                    <textarea placeholder="分享你的战术见解或赛事评论..." class="w-full h-32 bg-pitch-card border border-pitch-border rounded-xl p-3 text-xs text-white focus:outline-none focus:border-accent-emerald resize-none"></textarea>
+                    
+                    <!-- Linked Match Tag Picker -->
+                    <div class="bg-pitch-card border border-pitch-border p-3 rounded-xl space-y-1.5">
+                        <label class="text-[10px] text-slate-400 font-bold block">⚽ 关联比赛 (必选标签)：</label>
+                        <div class="flex items-center justify-between bg-pitch-elevated px-3 py-2 rounded-lg border border-accent-emerald/40 text-xs text-white">
+                            <span>皇家马德里 2 - 1 曼城 (78'进行中)</span>
+                            <span class="text-accent-emerald text-[10px] font-bold">已挂载</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+            <div class="glass-header px-4 py-2 border-t border-pitch-border flex items-center justify-around z-40 select-none">
+                
+                <!-- Tab 1: Matches -->
+                <button @click="currentTab = 'matches'" 
+                        :class="currentTab === 'matches' ? 'text-accent-emerald' : 'text-slate-500 hover:text-slate-300'"
+                        class="flex flex-col items-center gap-1 transition-colors relative group">
+                    <i class="fa-solid fa-futbol text-lg"></i>
+                    <span class="text-[10px] font-medium">比赛</span>
+                    <span x-show="currentTab === 'matches'" class="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-emerald"></span>
+                </button>
+
+                <!-- Tab 2: Community -->
+                <button @click="currentTab = 'community'" 
+                        :class="currentTab === 'community' ? 'text-accent-emerald' : 'text-slate-500 hover:text-slate-300'"
+                        class="flex flex-col items-center gap-1 transition-colors relative group">
+                    <i class="fa-solid fa-users text-lg"></i>
+                    <span class="text-[10px] font-medium">社区</span>
+                    <span x-show="currentTab === 'community'" class="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-emerald"></span>
+                </button>
+
+                <!-- Tab 3: News -->
+                <button @click="currentTab = 'news'" 
+                        :class="currentTab === 'news' ? 'text-accent-emerald' : 'text-slate-500 hover:text-slate-300'"
+                        class="flex flex-col items-center gap-1 transition-colors relative group">
+                    <i class="fa-solid fa-newspaper text-lg"></i>
+                    <span class="text-[10px] font-medium">资讯</span>
+                    <span x-show="currentTab === 'news'" class="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-emerald"></span>
+                </button>
+
+                <!-- Tab 4: Profile -->
+                <button @click="currentTab = 'profile'" 
+                        :class="currentTab === 'profile' ? 'text-accent-emerald' : 'text-slate-500 hover:text-slate-300'"
+                        class="flex flex-col items-center gap-1 transition-colors relative group">
+                    <i class="fa-solid fa-user text-lg"></i>
+                    <span class="text-[10px] font-medium">我的</span>
+                    <span x-show="currentTab === 'profile'" class="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-emerald"></span>
+                </button>
+
+            </div>
+
+            <!-- Home Bar Indicator -->
+            <div class="w-full bg-pitch pb-1.5 flex justify-center">
+                <div class="w-32 h-1 bg-slate-700 rounded-full"></div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
