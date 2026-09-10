@@ -30,7 +30,9 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   @override
   void initData() {
     super.initData();
-    _fetchData(isRefresh: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshController.callRefresh();
+    });
   }
 
   @override
@@ -57,11 +59,11 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
       '/api/v1/community/list',
       queryParameters: params,
     );
-
+    print("请求成功---commiy-${response.isSuccess}");
     if (response.isSuccess) {
       final data = G5PostData.fromJson(response.data);
       final newItems = data.results ?? [];
-      
+      print("请求成功---commiy");
       setState(() {
         if (isRefresh) {
           posts = newItems;
@@ -72,13 +74,16 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
           _isFirstLoading = false;
         }
       });
-      
+
       if (isRefresh) {
+        print("请求成功---commiy-2");
         _refreshController.finishRefresh(IndicatorResult.success);
         _refreshController.resetFooter();
       } else {
         _refreshController.finishLoad(
-          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
+          newItems.length < _size
+              ? IndicatorResult.noMore
+              : IndicatorResult.success,
         );
       }
     } else {
@@ -171,14 +176,6 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    if (_isFirstLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: G5Colors.accentEmerald,
-        ),
-      );
-    }
-
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
@@ -317,29 +314,25 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
-          if (imageUrls.isNotEmpty)
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 6,
-                mainAxisSpacing: 6,
-              ),
-              itemCount: imageUrls.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    imageUrls[index],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Container(color: G5Colors.pitchElevated),
+          if (post.image != null && post.image!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                post.image!,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 200,
+                  color: G5Colors.pitchElevated,
+                  child: const Center(
+                    child: Icon(Icons.image, color: G5Colors.textSecondary),
                   ),
-                );
-              },
+                ),
+              ),
             ),
+          ],
           const SizedBox(height: 12),
           if (match != null)
             Container(

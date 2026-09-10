@@ -59,7 +59,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
     if (response.isSuccess) {
       final data = G5NewsData.fromJson(response.data);
       final newItems = data.results ?? [];
-      
+      print("请求成功---news");
       setState(() {
         if (isRefresh) {
           newsList = newItems;
@@ -70,13 +70,16 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
           _isFirstLoading = false;
         }
       });
-      
+
       if (isRefresh) {
+        print("请求成功---news--1");
         _refreshController.finishRefresh(IndicatorResult.success);
         _refreshController.resetFooter();
       } else {
         _refreshController.finishLoad(
-          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
+          newItems.length < _size
+              ? IndicatorResult.noMore
+              : IndicatorResult.success,
         );
       }
     } else {
@@ -223,7 +226,8 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                 child: Image.network(
                   news.cover!,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox(),
                 ),
               ),
             ),
@@ -260,7 +264,8 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.remove_red_eye, color: G5Colors.textSecondary, size: 12),
+                    const Icon(Icons.remove_red_eye,
+                        color: G5Colors.textSecondary, size: 12),
                     const SizedBox(width: 4),
                     Text(
                       '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
@@ -303,7 +308,9 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                     child: Image.network(
                       news.cover!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: G5Colors.textSecondary),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.image,
+                          color: G5Colors.textSecondary),
                     ),
                   )
                 : const Icon(Icons.image, color: G5Colors.textSecondary),
@@ -328,7 +335,8 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.remove_red_eye, color: G5Colors.textSecondary, size: 10),
+                    const Icon(Icons.remove_red_eye,
+                        color: G5Colors.textSecondary, size: 10),
                     const SizedBox(width: 4),
                     Text(
                       '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',

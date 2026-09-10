@@ -106,7 +106,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
     if (response.isSuccess) {
       final data = G5MatchData.fromJson(response.data);
       final newItems = data.results ?? [];
-
+      print("请求成功---match");
       setState(() {
         if (isRefresh) {
           matches = newItems;
@@ -116,11 +116,14 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       });
 
       if (isRefresh) {
+        print("请求成功---match-2");
         _refreshController.finishRefresh(IndicatorResult.success);
         _refreshController.resetFooter();
       } else {
         _refreshController.finishLoad(
-          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
+          newItems.length < _size
+              ? IndicatorResult.noMore
+              : IndicatorResult.success,
         );
       }
     } else {
@@ -173,7 +176,8 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.calendar_today, color: G5Colors.accentEmerald, size: 20),
+          icon: const Icon(Icons.calendar_today,
+              color: G5Colors.accentEmerald, size: 20),
           onPressed: () {
             _showCalendarDialog(context);
           },
@@ -251,13 +255,22 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
               },
               child: Container(
                 margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected ? G5Colors.accentEmerald : G5Colors.pitchElevated,
+                  color: isSelected
+                      ? G5Colors.accentEmerald
+                      : G5Colors.pitchElevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: isSelected ? null : Border.all(color: G5Colors.pitchBorder),
+                  border: isSelected
+                      ? null
+                      : Border.all(color: G5Colors.pitchBorder),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: G5Colors.accentEmerald.withOpacity(0.4), blurRadius: 4)]
+                      ? [
+                          BoxShadow(
+                              color: G5Colors.accentEmerald.withOpacity(0.4),
+                              blurRadius: 4)
+                        ]
                       : null,
                 ),
                 child: Column(
@@ -266,7 +279,9 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
                       days[index],
                       style: TextStyle(
                         fontSize: 10,
-                        color: isSelected ? Colors.black.withOpacity(0.8) : G5Colors.textSecondary,
+                        color: isSelected
+                            ? Colors.black.withOpacity(0.8)
+                            : G5Colors.textSecondary,
                       ),
                     ),
                     Text(
@@ -301,11 +316,12 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
     // 默认可选范围：前后 30 天
     final firstDate = now.subtract(const Duration(days: 30));
     final lastDate = now.add(const Duration(days: 30));
-    
+
     // 当前选中的日期对象
     DateTime initialDate;
     if (selectedDateIndex >= 0 && selectedDateIndex < timestamps.length) {
-      initialDate = DateTime.fromMillisecondsSinceEpoch(timestamps[selectedDateIndex] * 1000);
+      initialDate = DateTime.fromMillisecondsSinceEpoch(
+          timestamps[selectedDateIndex] * 1000);
     } else {
       initialDate = now;
     }
@@ -319,8 +335,10 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: G5Colors.accentEmerald, // Header background color / Selected day color
-              onPrimary: Colors.black, // Header text color / Selected day text color
+              primary: G5Colors
+                  .accentEmerald, // Header background color / Selected day color
+              onPrimary:
+                  Colors.black, // Header text color / Selected day text color
               surface: G5Colors.pitchCard, // Background color
               onSurface: Colors.white, // Text color
             ),
@@ -336,9 +354,9 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       final pickedMonth = pickedDate.month.toString().padLeft(2, '0');
       final pickedDay = pickedDate.day.toString().padLeft(2, '0');
       final pickedDateStr = '$pickedMonth-$pickedDay';
-      
+
       int foundIndex = dates.indexOf(pickedDateStr);
-      
+
       if (foundIndex != -1) {
         // 已经在列表中，直接选中
         _onDateSelected(foundIndex);
@@ -357,16 +375,20 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
     dates.clear();
     days.clear();
     timestamps.clear();
-    
+
     final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final tomorrowStr = '${now.add(const Duration(days: 1)).year}-${now.add(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.add(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
-    final yesterdayStr = '${now.subtract(const Duration(days: 1)).year}-${now.subtract(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.subtract(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final tomorrowStr =
+        '${now.add(const Duration(days: 1)).year}-${now.add(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.add(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
+    final yesterdayStr =
+        '${now.subtract(const Duration(days: 1)).year}-${now.subtract(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.subtract(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
 
     for (int i = -2; i <= 2; i++) {
       final targetDate = centerDate.add(Duration(days: i));
-      final targetDateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
-      
+      final targetDateStr =
+          '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+
       // 生成日期字符串 MM-DD
       final month = targetDate.month.toString().padLeft(2, '0');
       final day = targetDate.day.toString().padLeft(2, '0');
@@ -384,7 +406,13 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
         days.add('昨天');
       } else {
         const weekdayMap = {
-          1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日'
+          1: '周一',
+          2: '周二',
+          3: '周三',
+          4: '周四',
+          5: '周五',
+          6: '周六',
+          7: '周日'
         };
         days.add(weekdayMap[targetDate.weekday] ?? '');
       }
@@ -436,7 +464,8 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: G5Colors.accentEmerald.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),

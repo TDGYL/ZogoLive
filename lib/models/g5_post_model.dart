@@ -49,7 +49,8 @@ class G5PostItem {
       likeCount: json['like_count'] as int?,
       commentCount: json['comment_count'] as int?,
       createTime: json['create_time'] as int?,
-      author: json['author'] != null ? G5PostAuthor.fromJson(json['author']) : null,
+      author:
+          json['author'] != null ? G5PostAuthor.fromJson(json['author']) : null,
       match: json['match'] != null ? G5PostMatch.fromJson(json['match']) : null,
       isLike: json['is_like'] as bool?,
     );
@@ -59,7 +60,7 @@ class G5PostItem {
 class G5PostAuthor {
   int? id;
   String? name;
-  int? isSubscribe;
+  bool? isSubscribe;
   String? avatar;
   int? memberId;
 
@@ -75,7 +76,7 @@ class G5PostAuthor {
     return G5PostAuthor(
       id: json['id'] as int?,
       name: json['name'] as String?,
-      isSubscribe: json['is_subscribe'] as int?,
+      isSubscribe: json['is_subscribe'] as bool?,
       avatar: json['avatar'] as String?,
       memberId: json['member_id'] as int?,
     );
