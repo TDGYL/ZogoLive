@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_user_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/pages/login_page.dart';
 
 class ProfilePage extends G5BaseViewController {
   const ProfilePage({Key? key}) : super(key: key);
@@ -219,43 +220,59 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
       ),
       child: Column(
         children: [
-          _buildMenuItem(Icons.edit, G5Colors.accentEmerald, '编辑资料',
-              trailing: const Icon(Icons.chevron_right,
-                  size: 14, color: G5Colors.textSecondary)),
+          _buildMenuItem(
+            Icons.edit,
+            G5Colors.accentEmerald,
+            '编辑资料',
+            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+            },
+          ),
           const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(Icons.headset_mic, G5Colors.accentGold, '在线客服',
-              trailing: const Icon(Icons.chevron_right,
-                  size: 14, color: G5Colors.textSecondary)),
+          _buildMenuItem(
+            Icons.headset_mic,
+            G5Colors.accentGold,
+            '在线客服',
+            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+          ),
           const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(Icons.info, G5Colors.accentBlue, '关于我们',
-              trailing: const Text('v2.8',
-                  style:
-                      TextStyle(color: G5Colors.textSecondary, fontSize: 10))),
+          _buildMenuItem(
+            Icons.info,
+            G5Colors.accentBlue,
+            '关于我们',
+            trailing: const Text('v2.8', style: TextStyle(color: G5Colors.textSecondary, fontSize: 10)),
+          ),
           const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(Icons.settings, G5Colors.textSecondary, '设置',
-              trailing: const Icon(Icons.chevron_right,
-                  size: 14, color: G5Colors.textSecondary)),
+          _buildMenuItem(
+            Icons.settings,
+            G5Colors.textSecondary,
+            '设置',
+            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem(IconData icon, Color iconColor, String title,
-      {Widget? trailing}) {
-    return Padding(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 16),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(color: G5Colors.textPrimary, fontSize: 12),
+  Widget _buildMenuItem(IconData icon, Color iconColor, String title, {Widget? trailing, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 16),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(color: G5Colors.textPrimary, fontSize: 12),
+              ),
             ),
-          ),
-          if (trailing != null) trailing,
-        ],
+            if (trailing != null) trailing,
+          ],
+        ),
       ),
     );
   }

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZogoLive - Login / Regist</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS & Utilities -->
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0d0f17;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Background Effects */
+        .bg-glow-1 {
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(13, 15, 23, 0) 70%);
+        }
+        .bg-glow-2 {
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(13, 15, 23, 0) 70%);
+        }
+
+        /* Input Focus Glow */
+        .input-box {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .input-box:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Glassmorphic Container */
+        .glass-card {
+            background: rgba(22, 26, 38, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Button Gradient & Ripple effect */
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            background-position: right center;
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+        .btn-gradient:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast Popup Animation */
+        @keyframes slideInDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOutUp {
+            from {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+        }
+        .toast-enter {
+            animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .toast-exit {
+            animation: slideOutUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative antialiased selection:bg-indigo-500 selection:text-white">
+
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-glow-1 rounded-full blur-3xl opacity-70"></div>
+        <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-glow-2 rounded-full blur-3xl opacity-70"></div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2"></div>
+
+    <main class="w-full max-w-md glass-card rounded-3xl p-6 sm:p-8 relative shadow-2xl z-10 transition-all duration-300">
+        
+        <!-- Top Navigation Area / Back Button -->
+        <div class="flex items-center justify-between">
+            <button id="backBtn" 
+                    type="button"
+                    class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    aria-label="Back">
+                <i class="fa-solid fa-arrow-left text-base group-hover:-translate-x-0.5 transition-transform duration-200"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-semibold tracking-wider text-gray-400 uppercase">ZogoLive</span>
+            </div>
+        </div>
+
+        <!-- Required: "返回下面30像素出显示 Login/Regist" -> mt-[30px] -->
+        <div class="mt-[30px] mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+                Login/Regist
+            </h1>
+            <p class="text-sm text-gray-400 mt-2">
+                欢迎来到 ZogoLive！请输入邮箱登录或注册账号
+            </p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5" novalidate>
+            
+            <!-- Email Input Field -->
+            <div class="space-y-1.5">
+                <label for="emailInput" class="block text-xs font-medium text-gray-300 ml-1">
+                    电子邮箱
+                </label>
+                <div class="input-box relative flex items-center bg-gray-900/60 border border-white/10 rounded-2xl px-4 py-3.5 transition-all">
+                    <i class="fa-regular fa-envelope text-gray-400 text-lg mr-3"></i>
+                    <input type="email" 
+                           id="emailInput" 
+                           name="email"
+                           placeholder="请输入您的邮箱地址" 
+                           required
+                           autocomplete="email"
+                           class="w-full bg-transparent text-white placeholder-gray-500 text-sm focus:outline-none" />
+                    <button type="button" 
+                            id="clearEmailBtn" 
+                            class="hidden text-gray-500 hover:text-gray-300 p-1 focus:outline-none"
+                            aria-label="Clear input">
+                        <i class="fa-solid fa-circle-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Verification Code Field & Get Code Button -->
+            <div class="space-y-1.5">
+                <label for="codeInput" class="block text-xs font-medium text-gray-300 ml-1">
+                    邮箱验证码
+                </label>
+                <div class="flex gap-2.5">
+                    <!-- Verification Code Input -->
+                    <div class="input-box relative flex-1 flex items-center bg-gray-900/60 border border-white/10 rounded-2xl px-4 py-3.5 transition-all">
+                        <i class="fa-solid fa-shield-halved text-gray-400 text-lg mr-3"></i>
+                        <input type="text" 
+                               id="codeInput" 
+                               name="code"
+                               maxlength="6"
+                               placeholder="6位数验证码" 
+                               required
+                               pattern="[0-9]{6}"
+                               autocomplete="one-time-code"
+                               class="w-full bg-transparent text-white placeholder-gray-500 text-sm focus:outline-none tracking-widest font-mono" />
+                    </div>
+
+                    <!-- Get Code Button -->
+                    <button type="button" 
+                            id="sendCodeBtn" 
+                            onclick="sendVerificationCode()"
+                            class="whitespace-nowrap px-4 py-3.5 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 active:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 hover:text-indigo-200 text-xs font-semibold tracking-wide transition-all duration-200 flex items-center justify-center min-w-[110px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600/20">
+                        <span id="codeBtnText">获取验证码</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" 
+                           id="agreeTerms" 
+                           class="w-4 h-4 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500/40 focus:ring-offset-gray-900 cursor-pointer">
+                    <span class="text-xs text-gray-400 group-hover:text-gray-300">
+                        我已阅读并同意 <a href="#" class="text-indigo-400 hover:underline">服务协议</a> 与 <a href="#" class="text-indigo-400 hover:underline">隐私政策</a>
+                    </span>
+                </label>
+            </div>
+
+            <button type="submit" 
+                    id="submitBtn" 
+                    class="w-full mt-4 py-4 rounded-2xl btn-gradient text-white text-base font-semibold tracking-wide shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <span id="submitBtnText">登 录</span>
+                <i id="submitSpinner" class="fa-solid fa-circle-notch animate-spin hidden"></i>
+            </button>
+        </form>
+
+        <div class="mt-8">
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-4 text-xs text-gray-500 uppercase tracking-widest">快捷方式</span>
+                <div class="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mt-4">
+                <button type="button" 
+                        onclick="showToast('微信快捷登录对接中', 'info')"
+                        class="flex items-center justify-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-gray-300 hover:text-white transition-all text-sm"
+                        title="微信登录">
+                    <i class="fa-brands fa-weixin text-lg text-emerald-400"></i>
+                </button>
+                <button type="button" 
+                        onclick="showToast('Google快捷登录对接中', 'info')"
+                        class="flex items-center justify-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-gray-300 hover:text-white transition-all text-sm"
+                        title="Google登录">
+                    <i class="fa-brands fa-google text-lg text-rose-400"></i>
+                </button>
+                <button type="button" 
+                        onclick="showToast('Apple快捷登录对接中', 'info')"
+                        class="flex items-center justify-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-gray-300 hover:text-white transition-all text-sm"
+                        title="Apple登录">
+                    <i class="fa-brands fa-apple text-lg text-gray-200"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <p class="text-center text-xs text-gray-500 mt-8">
+            &copy; 2026 ZogoLive. All rights reserved.
+        </p>
+    </main>
+
+    <script>
+        // DOM Elements
+        const emailInput = document.getElementById('emailInput');
+        const codeInput = document.getElementById('codeInput');
+        const clearEmailBtn = document.getElementById('clearEmailBtn');
+        const sendCodeBtn = document.getElementById('sendCodeBtn');
+        const codeBtnText = document.getElementById('codeBtnText');
+        const backBtn = document.getElementById('backBtn');
+        const agreeTerms = document.getElementById('agreeTerms');
+        const loginForm = document.getElementById('loginForm');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // State Variables
+        let countdown = 0;
+        let timer = null;
+
+        // RegEx Validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        // Show/Hide Clear Email Icon
+        emailInput.addEventListener('input', () => {
+            if (emailInput.value.length > 0) {
+                clearEmailBtn.classList.remove('hidden');
+            } else {
+                clearEmailBtn.classList.add('hidden');
+            }
+        });
+
+        clearEmailBtn.addEventListener('click', () => {
+            emailInput.value = '';
+            clearEmailBtn.classList.add('hidden');
+            emailInput.focus();
+        });
+
+        // Back Button Action
+        backBtn.addEventListener('click', () => {
+            showToast('返回上一页', 'info');
+            // If embedded in a history environment:
+            if (window.history.length > 1) {
+                // setTimeout(() => window.history.back(), 500);
+            }
+        });
+
+        // Verification Code Trigger Function
+        function sendVerificationCode() {
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showToast('请输入电子邮箱地址', 'warning');
+                emailInput.focus();
+                return;
+            }
+
+            if (!emailRegex.test(email)) {
+                showToast('请输入有效的电子邮箱格式', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            if (countdown > 0) return;
+
+            // Simulate Requesting Verification Code
+            sendCodeBtn.disabled = true;
+            codeBtnText.innerText = '发送中...';
+
+            setTimeout(() => {
+                showToast(`验证码已发送至 ${email}`, 'success');
+                startCountdown(60);
+            }, 800);
+        }
+
+        // Countdown Timer Logic
+        function startCountdown(seconds) {
+            countdown = seconds;
+            sendCodeBtn.disabled = true;
+            codeBtnText.innerText = `${countdown}s 后重试`;
+
+            if (timer) clearInterval(timer);
+
+            timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    codeBtnText.innerText = `${countdown}s 后重试`;
+                } else {
+                    clearInterval(timer);
+                    sendCodeBtn.disabled = false;
+                    codeBtnText.innerText = '重新获取';
+                }
+            }, 1000);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const code = codeInput.value.trim();
+
+            // Form Validations
+            if (!email) {
+                showToast('请输入电子邮箱', 'warning');
+                emailInput.focus();
+                return;
+            }
+
+            if (!emailRegex.test(email)) {
+                showToast('请输入格式正确的邮箱', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            if (!code) {
+                showToast('请输入验证码', 'warning');
+                codeInput.focus();
+                return;
+            }
+
+            if (code.length < 4) {
+                showToast('验证码格式不正确', 'error');
+                codeInput.focus();
+                return;
+            }
+
+            if (!agreeTerms.checked) {
+                showToast('请阅读并勾选同意服务协议', 'warning');
+                return;
+            }
+
+            // Simulate Loading API Request
+            setLoadingState(true);
+
+            setTimeout(() => {
+                setLoadingState(false);
+                showToast('登录成功！正在跳转...', 'success');
+                
+                // Trigger success visual feedback
+                submitBtn.classList.remove('btn-gradient');
+                submitBtn.classList.add('bg-emerald-500');
+                submitBtnText.innerText = '登录成功';
+            }, 1500);
+        }
+
+        function setLoadingState(isLoading) {
+            submitBtn.disabled = isLoading;
+            if (isLoading) {
+                submitBtnText.innerText = '正在登录...';
+                submitSpinner.classList.remove('hidden');
+            } else {
+                submitBtnText.innerText = '登 录';
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgStyle = 'bg-gray-800 border-gray-700 text-white';
+            let icon = 'fa-circle-info text-indigo-400';
+
+            if (type === 'success') {
+                bgStyle = 'bg-gray-900/90 border-emerald-500/40 text-emerald-100';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'warning') {
+                bgStyle = 'bg-gray-900/90 border-amber-500/40 text-amber-100';
+                icon = 'fa-triangle-exclamation text-amber-400';
+            } else if (type === 'error') {
+                bgStyle = 'bg-gray-900/90 border-rose-500/40 text-rose-100';
+                icon = 'fa-circle-xmark text-rose-400';
+            }
+
+            toast.className = `toast-enter flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-xl text-xs font-medium ${bgStyle} min-w-[240px] max-w-xs pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base flex-shrink-0"></i>
+                <span class="flex-grow">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto dismiss toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

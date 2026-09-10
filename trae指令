@@ -3,6 +3,92 @@
 
 
 
+========================================登录数据请求======
+
+/api/v1/auth/send-verify
+/api/v1/auth/login
+/api/v1/member
+g5live@gmail.com默认验证1111
+
+
+login_page.dart点击登录的时候，
+第一步：调用/api/v1/auth/login接口,请求方式为POST请求，
+入参为：
+{
+    "channel": "email",
+    "account": "18317956029@qq.com",
+    "code": "1234"
+}
+其中channel是固定的，account和code是动态传入的
+
+返回的数据结构为：
+{
+    "code": 0,
+    "data": {
+        "expired": 1701658660,
+        "isReg": 1,
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjM3MDAwMzIsImV4cCI6MTcwMTY1ODY2MCwibmJmIjoxNzAxMDUzODYwfQ.L9oI0280FdCmEuOOmKr2uVM-yr1bQjoPXf9t3XOSE0Q",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjM3MDAwMzIsImV4cCI6MTcwMTY1ODY2MCwibmJmIjoxNzAxMDUzODYwfQ.L9oI0280FdCmEuOOmKr2uVM-yr1bQjoPXf9t3XOSE0Q"
+    },
+    "message": "success"
+}
+其中refresh_token是用户token，创建一个管理类缓存起来，然后把该值加到g5_network_manager请求工具的请求头，需要写一个方法动态添加请求头，传入的key=authorization，value= 返回refresh_token对应的值，修改完请求头后，callback，然后进行下一步
+
+
+第二步：
+等第一步成功回调，然后调用/api/v1/member请求用户信息，请求方式为GET请求，
+请求参数为空，依赖了请求头的authorization
+
+返回的数据结构是
+{
+    "code": 0,
+    "data": {
+        "id": 3668777,
+        "account": "13757380753",
+        "nickname": "Fython",
+        "avatar": "http://dummyimage.com/100x100",
+        "signature": "dolore voluptate cillum laboris",
+        "mobile": "13757380753",
+        "reg_time": "2023-05-30T17:40:20+08:00",
+        "status": 1,
+        "platforms": "",
+        "last_login_time": "2023-05-30T18:15:37+08:00",
+        "is_debut": true,
+        "k_money": 0,
+        "k_coupon": 0
+    },
+    "message": "success"
+}
+其中data就是用户的个人信息，然后把个人信息缓存起来，以后就用这个个人信息是否缓存来判断当前是否登录，然后返回上一个界面，如果报错，就toast提示，就不用跳转
+
+
+
+
+
+
+
+给请求类新增请求头数据key和value对应如下
+{
+'Accept':'application/json',
+'x-platform':'IOS',
+'Accept-Language':'en-US',
+'x-version':'6.0.0'
+
+}
+设置请求类的请求头可以动态增减，因为登录时候要加入用户token，退出登录时候删除用户token
+
+
+
+
+
+
+
+
+按照这个暗黑风格给我生成登录界面，界面必须有输入邮箱，输入邮箱验证码，获取验证码按钮，登录按钮四要素，左上角有返回按钮,返回下面30像素出显示 Login/Regist
+
+
+
+
 第三页资讯接入数据请求，请求接口为：/api/v1/info/list
 请求参数，入参{
     "type": 1, integer，类型
