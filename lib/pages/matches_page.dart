@@ -34,7 +34,10 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
   void initData() {
     super.initData();
     _generateDateData();
-    _fetchData(isRefresh: true);
+    // 使用 WidgetsBinding 确保在第一帧渲染完成后再触发下拉刷新动画
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshController.callRefresh();
+    });
   }
 
   @override
@@ -172,10 +175,9 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.calendar_today,
-              color: G5Colors.accentEmerald, size: 20),
+          icon: const Icon(Icons.calendar_today, color: G5Colors.accentEmerald, size: 20),
           onPressed: () {
-            // 日历点击
+            _showCalendarDialog(context);
           },
         ),
       ],
@@ -247,31 +249,17 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
             bool isSelected = selectedDateIndex == index;
             return GestureDetector(
               onTap: () {
-                if (selectedDateIndex != index) {
-                  setState(() {
-                    selectedDateIndex = index;
-                  });
-                  _refreshController.callRefresh();
-                }
+                _onDateSelected(index);
               },
               child: Container(
                 margin: const EdgeInsets.only(right: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? G5Colors.accentEmerald
-                      : G5Colors.pitchElevated,
+                  color: isSelected ? G5Colors.accentEmerald : G5Colors.pitchElevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: isSelected
-                      ? null
-                      : Border.all(color: G5Colors.pitchBorder),
+                  border: isSelected ? null : Border.all(color: G5Colors.pitchBorder),
                   boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                              color: G5Colors.accentEmerald.withOpacity(0.4),
-                              blurRadius: 4)
-                        ]
+                      ? [BoxShadow(color: G5Colors.accentEmerald.withOpacity(0.4), blurRadius: 4)]
                       : null,
                 ),
                 child: Column(
@@ -280,9 +268,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
                       days[index],
                       style: TextStyle(
                         fontSize: 10,
-                        color: isSelected
-                            ? Colors.black.withOpacity(0.8)
-                            : G5Colors.textSecondary,
+                        color: isSelected ? Colors.black.withOpacity(0.8) : G5Colors.textSecondary,
                       ),
                     ),
                     Text(
@@ -301,6 +287,118 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
         ),
       ),
     );
+  }
+
+  void _onDateSelected(int index) {
+    if (selectedDateIndex != index) {
+      setState(() {
+        selectedDateIndex = index;
+      });
+      _refreshController.callRefresh();
+    }
+  }
+
+  void _showCalendarDialog(BuildContext context) async {
+    final now = DateTime.now();
+    // 默认可选范围：前后 30 天
+    final firstDate = now.subtract(const Duration(days: 30));
+    final lastDate = now.add(const Duration(days: 30));
+    
+    // 当前选中的日期对象
+    DateTime initialDate;
+    if (selectedDateIndex >= 0 && selectedDateIndex < timestamps.length) {
+      initialDate = DateTime.fromMillisecondsSinceEpoch(timestamps[selectedDateIndex] * 1000);
+    } else {
+      initialDate = now;
+    }
+
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: G5Colors.accentEmerald, // Header background color / Selected day color
+              onPrimary: Colors.black, // Header text color / Selected day text color
+              surface: G5Colors.pitchCard, // Background color
+              onSurface: Colors.white, // Text color
+            ),
+            dialogBackgroundColor: G5Colors.pitchCard,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      // 检查选中的日期是否已经在横向列表中
+      final pickedMonth = pickedDate.month.toString().padLeft(2, '0');
+      final pickedDay = pickedDate.day.toString().padLeft(2, '0');
+      final pickedDateStr = '$pickedMonth-$pickedDay';
+      
+      int foundIndex = dates.indexOf(pickedDateStr);
+      
+      if (foundIndex != -1) {
+        // 已经在列表中，直接选中
+        _onDateSelected(foundIndex);
+      } else {
+        // 不在列表中，需要重新生成以选中日期为中心的前后两天列表
+        _generateCustomDateData(pickedDate);
+        setState(() {
+          selectedDateIndex = 2; // 重新生成后，选中的日期始终在中间(索引2)
+        });
+        _refreshController.callRefresh();
+      }
+    }
+  }
+
+  void _generateCustomDateData(DateTime centerDate) {
+    dates.clear();
+    days.clear();
+    timestamps.clear();
+    
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final tomorrowStr = '${now.add(const Duration(days: 1)).year}-${now.add(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.add(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
+    final yesterdayStr = '${now.subtract(const Duration(days: 1)).year}-${now.subtract(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${now.subtract(const Duration(days: 1)).day.toString().padLeft(2, '0')}';
+
+    for (int i = -2; i <= 2; i++) {
+      final targetDate = centerDate.add(Duration(days: i));
+      final targetDateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+      
+      // 生成日期字符串 MM-DD
+      final month = targetDate.month.toString().padLeft(2, '0');
+      final day = targetDate.day.toString().padLeft(2, '0');
+      dates.add('$month-$day');
+
+      // 生成时间戳 (秒)
+      timestamps.add(targetDate.millisecondsSinceEpoch ~/ 1000);
+
+      // 生成星期
+      if (targetDateStr == todayStr) {
+        days.add('今天');
+      } else if (targetDateStr == tomorrowStr) {
+        days.add('明天');
+      } else if (targetDateStr == yesterdayStr) {
+        days.add('昨天');
+      } else {
+        const weekdayMap = {
+          1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日'
+        };
+        days.add(weekdayMap[targetDate.weekday] ?? '');
+      }
+    }
+  }
+
+  String _formatMatchTime(int? timestamp) {
+    if (timestamp == null || timestamp == 0) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   Widget _buildMatchCard(G5MatchItem match) {
@@ -337,20 +435,32 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: G5Colors.accentEmerald.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  match.competitionName ?? '',
-                  style: const TextStyle(
-                    color: G5Colors.accentEmerald,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: G5Colors.accentEmerald.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      match.competitionName ?? '',
+                      style: const TextStyle(
+                        color: G5Colors.accentEmerald,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _formatMatchTime(match.matchTime),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
               if (isLive)
                 Container(
