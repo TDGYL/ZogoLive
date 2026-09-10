@@ -55,7 +55,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
       '/api/v1/info/list',
       queryParameters: params,
     );
-
+    print("请求成功---re${response.isSuccess}");
     if (response.isSuccess) {
       final data = G5NewsData.fromJson(response.data);
       final newItems = data.results ?? [];

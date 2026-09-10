@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:zogolive/utils/g5_auth_manager.dart';
+import 'package:zogolive/models/g5_user_model.dart';
+import 'package:zogolive/utils/g5_event_bus.dart';
 
 class LoginPage extends G5BaseViewController {
   const LoginPage({Key? key}) : super(key: key);
@@ -31,7 +35,7 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入电子邮箱')),
@@ -55,23 +59,74 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      // 第一步：调用登录接口
+      final loginResponse = await G5NetworkManager().post(
+        '/api/v1/auth/login',
+        data: {
+          "channel": "email",
+          "account": _emailController.text.trim(),
+          "code": _codeController.text.trim(),
+        },
+      );
+
+      if (loginResponse.isSuccess && loginResponse.data != null) {
+        final refreshToken = loginResponse.data['refresh_token'] as String?;
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          // 保存 Token 并设置到请求头
+          await G5AuthManager().saveToken(refreshToken);
+
+          // 第二步：请求用户信息
+          final userResponse = await G5NetworkManager().get('/api/v1/member');
+          
+          if (userResponse.isSuccess && userResponse.data != null) {
+            // 解析并保存用户信息
+            final userModel = G5UserModel.fromJson(userResponse.data);
+            await G5AuthManager().saveUserInfo(userModel);
+            
+            // 发送登录成功通知，让个人中心等需要的地方刷新数据
+            G5EventBus().fire(LoginStatusChangeEvent(true));
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('登录成功')),
+              );
+              Navigator.of(context).pop();
+            }
+          } else {
+            _showErrorToast(userResponse.message ?? '获取用户信息失败');
+          }
+        } else {
+          _showErrorToast('登录失败：Token 异常');
+        }
+      } else {
+        _showErrorToast(loginResponse.message ?? '登录失败');
+      }
+    } catch (e) {
+      _showErrorToast('网络请求异常');
+    } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('登录成功')),
-        );
-        Navigator.of(context).pop();
       }
-    });
+    }
+  }
+
+  void _showErrorToast(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
   Widget buildBody(BuildContext context) {
-    return Stack(
-      children: [
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Stack(
+        children: [
         // 背景光晕
         Positioned(
           top: -100,
@@ -369,7 +424,7 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
                     ),
                   ],
                 ),
-
+                
                 const SizedBox(height: 32),
 
                 // 登录按钮
@@ -435,6 +490,7 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
           ),
         ),
       ],
+    ),
     );
   }
 }

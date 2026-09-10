@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_user_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/pages/login_page.dart';
+import 'package:zogolive/utils/g5_auth_manager.dart';
+import 'package:zogolive/utils/g5_event_bus.dart';
 
 class ProfilePage extends G5BaseViewController {
   const ProfilePage({Key? key}) : super(key: key);
@@ -12,7 +15,7 @@ class ProfilePage extends G5BaseViewController {
 }
 
 class _ProfilePageState extends G5BaseViewState<ProfilePage> {
-  late G5UserModel user;
+  StreamSubscription? _authSubscription;
 
   @override
   bool get showBackButton => false;
@@ -20,15 +23,24 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
   @override
   void initData() {
     super.initData();
-    user = G5UserModel(
-      uid: '88492041',
-      nickname: '战术狂人安切洛',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-      followers: '12.4k',
-      following: '350',
-      isLoggedIn: true,
-    );
+    _authSubscription = G5EventBus().on<LoginStatusChangeEvent>().listen((event) {
+      if (mounted) {
+        setState(() {}); // 收到通知后刷新界面
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 每次页面重新可见时（比如从登录页返回）刷新状态
+    setState(() {});
   }
 
   @override
@@ -54,6 +66,9 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
   }
 
   Widget _buildHeader() {
+    final isLoggedIn = G5AuthManager().isLoggedIn;
+    final user = G5AuthManager().currentUser;
+
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 16,
@@ -72,36 +87,8 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    user.isLoggedIn = !user.isLoggedIn;
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: G5Colors.pitch,
-                    border: Border.all(color: G5Colors.pitchBorder),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.sync,
-                          color: G5Colors.accentEmerald, size: 10),
-                      const SizedBox(width: 4),
-                      Text(
-                        user.isLoggedIn ? '切换未登录状态' : '切换已登录状态',
-                        style: const TextStyle(
-                            color: G5Colors.accentEmerald, fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               const Icon(Icons.settings,
                   color: G5Colors.textSecondary, size: 20),
             ],
@@ -114,23 +101,27 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  color: isLoggedIn ? Colors.transparent : G5Colors.pitchElevated,
                   border: Border.all(color: G5Colors.pitchBorder, width: 2),
-                  image: DecorationImage(
-                    image: NetworkImage(
-                      user.isLoggedIn
-                          ? user.avatarUrl
-                          : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
                 ),
+                clipBehavior: Clip.antiAlias,
+                child: (isLoggedIn && user?.avatar != null && user!.avatar!.isNotEmpty)
+                    ? Image.network(
+                        user.avatar!,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.person, color: G5Colors.textSecondary, size: 30),
+                      )
+                    : const Icon(Icons.person, color: G5Colors.textSecondary, size: 30),
               ),
               const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user.isLoggedIn ? user.nickname : '未登录用户',
+                    (isLoggedIn && user?.nickname != null) ? user!.nickname! : '未登录用户',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -139,7 +130,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    user.isLoggedIn ? 'ID: ${user.uid}' : 'ID: --',
+                    (isLoggedIn && user?.id != null) ? 'ID: ${user!.id}' : 'ID: --',
                     style: const TextStyle(
                       color: G5Colors.textSecondary,
                       fontSize: 11,
@@ -163,7 +154,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                   child: Column(
                     children: [
                       Text(
-                        user.isLoggedIn ? user.followers : '0',
+                        isLoggedIn ? '${user?.fansCount ?? 0}' : '0',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -187,7 +178,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                   child: Column(
                     children: [
                       Text(
-                        user.isLoggedIn ? user.following : '0',
+                        isLoggedIn ? '${user?.followers ?? 0}' : '0',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -212,47 +203,106 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
   }
 
   Widget _buildMenuSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: G5Colors.pitchCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: G5Colors.pitchBorder),
-      ),
-      child: Column(
-        children: [
-          _buildMenuItem(
-            Icons.edit,
-            G5Colors.accentEmerald,
-            '编辑资料',
-            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
-            },
+    final isLoggedIn = G5AuthManager().isLoggedIn;
+    
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: G5Colors.pitchCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: G5Colors.pitchBorder),
           ),
-          const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(
-            Icons.headset_mic,
-            G5Colors.accentGold,
-            '在线客服',
-            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+          child: Column(
+            children: [
+              _buildMenuItem(
+                Icons.edit,
+                G5Colors.accentEmerald,
+                '编辑资料',
+                trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                },
+              ),
+              const Divider(height: 1, color: G5Colors.pitchBorder),
+              _buildMenuItem(
+                Icons.headset_mic,
+                G5Colors.accentGold,
+                '在线客服',
+                trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+              ),
+              const Divider(height: 1, color: G5Colors.pitchBorder),
+              _buildMenuItem(
+                Icons.info,
+                G5Colors.accentBlue,
+                '关于我们',
+                trailing: const Text('v2.8', style: TextStyle(color: G5Colors.textSecondary, fontSize: 10)),
+              ),
+              const Divider(height: 1, color: G5Colors.pitchBorder),
+              _buildMenuItem(
+                Icons.settings,
+                G5Colors.textSecondary,
+                '设置',
+                trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+              ),
+            ],
           ),
-          const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(
-            Icons.info,
-            G5Colors.accentBlue,
-            '关于我们',
-            trailing: const Text('v2.8', style: TextStyle(color: G5Colors.textSecondary, fontSize: 10)),
-          ),
-          const Divider(height: 1, color: G5Colors.pitchBorder),
-          _buildMenuItem(
-            Icons.settings,
-            G5Colors.textSecondary,
-            '设置',
-            trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+        ),
+        
+        if (isLoggedIn) ...[
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: G5Colors.pitchCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: G5Colors.pitchBorder),
+            ),
+            child: _buildMenuItem(
+              Icons.logout,
+              Colors.redAccent,
+              '退出登录',
+              onTap: () => _showLogoutConfirmDialog(),
+            ),
           ),
         ],
-      ),
+      ],
     );
+  }
+
+  void _showLogoutConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: G5Colors.pitchCard,
+          title: const Text('提示', style: TextStyle(color: Colors.white)),
+          content: const Text('确定要退出当前账号吗？', style: TextStyle(color: G5Colors.textSecondary)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消', style: TextStyle(color: G5Colors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 关闭弹窗
+                _performLogout();
+              },
+              child: const Text('确定', style: TextStyle(color: Colors.redAccent)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performLogout() async {
+    await G5AuthManager().logout();
+    if (mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('退出成功')),
+      );
+    }
   }
 
   Widget _buildMenuItem(IconData icon, Color iconColor, String title, {Widget? trailing, VoidCallback? onTap}) {

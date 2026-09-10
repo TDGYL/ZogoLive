@@ -59,11 +59,9 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
       '/api/v1/community/list',
       queryParameters: params,
     );
-    print("请求成功---commiy-${response.isSuccess}");
     if (response.isSuccess) {
       final data = G5PostData.fromJson(response.data);
       final newItems = data.results ?? [];
-      print("请求成功---commiy");
       setState(() {
         if (isRefresh) {
           posts = newItems;
@@ -76,7 +74,6 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
       });
 
       if (isRefresh) {
-        print("请求成功---commiy-2");
         _refreshController.finishRefresh(IndicatorResult.success);
         _refreshController.resetFooter();
       } else {

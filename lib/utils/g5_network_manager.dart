@@ -29,6 +29,10 @@ class G5NetworkManager {
       responseType: ResponseType.json,
       headers: {
         'Content-Type': 'application/json',
+        'Accept':'application/json',
+        'x-platform':'IOS',
+        'Accept-Language':'en-US',
+        'x-version':'6.0.0'
       },
     ));
 
@@ -81,6 +85,14 @@ class G5NetworkManager {
         return handler.next(e);
       },
     ));
+  }
+
+  void setAuthorizationHeader(String token) {
+    _dio.options.headers['authorization'] = token;
+  }
+
+  void clearAuthorizationHeader() {
+    _dio.options.headers.remove('authorization');
   }
 
   /// GET 请求

@@ -1,53 +1,80 @@
 /// 用户模型
 class G5UserModel {
-  /// 用户ID
-  String uid;
-
-  /// 用户昵称
-  String nickname;
-
-  /// 头像 URL
-  String avatarUrl;
-
-  /// 粉丝数
-  String followers;
-
-  /// 关注数
-  String following;
-
-  /// 是否登录
-  bool isLoggedIn;
+  int? id;
+  String? account;
+  String? nickname;
+  String? avatar;
+  String? signature;
+  String? mobile;
+  String? regTime;
+  int? status;
+  String? platforms;
+  String? lastLoginTime;
+  bool? isDebut;
+  int? kMoney;
+  int? kCoupon;
+  int? followers;
+  int? fansCount;
+  int? sex;
 
   G5UserModel({
-    required this.uid,
-    required this.nickname,
-    required this.avatarUrl,
-    required this.followers,
-    required this.following,
-    this.isLoggedIn = false,
+    this.id,
+    this.account,
+    this.nickname,
+    this.avatar,
+    this.signature,
+    this.mobile,
+    this.regTime,
+    this.status,
+    this.platforms,
+    this.lastLoginTime,
+    this.isDebut,
+    this.kMoney,
+    this.kCoupon,
+    this.followers,
+    this.fansCount,
+    this.sex,
   });
 
-  /// 从 JSON 解析
   factory G5UserModel.fromJson(Map<String, dynamic> json) {
     return G5UserModel(
-      uid: json['uid'] as String? ?? '',
-      nickname: json['nickname'] as String? ?? '',
-      avatarUrl: json['avatarUrl'] as String? ?? '',
-      followers: json['followers'] as String? ?? '0',
-      following: json['following'] as String? ?? '0',
-      isLoggedIn: json['isLoggedIn'] as bool? ?? false,
+      id: json['id'] as int?,
+      account: json['account'] as String?,
+      nickname: json['nickname'] as String?,
+      avatar: json['avatar'] as String?,
+      signature: json['signature'] as String?,
+      mobile: json['mobile'] as String?,
+      regTime: json['reg_time'] as String?,
+      status: json['status'] as int?,
+      platforms: json['platforms'] as String?,
+      lastLoginTime: json['last_login_time'] as String?,
+      isDebut: json['is_debut'] as bool?,
+      kMoney: json['k_money'] as int?,
+      kCoupon: json['k_coupon'] as int?,
+      followers: json['followers'] as int?,
+      fansCount: json['fans_count'] as int?,
+      sex: json['sex'] as int?,
     );
   }
 
-  /// 转换为 JSON
   Map<String, dynamic> toJson() {
     return {
-      'uid': uid,
+      'id': id,
+      'account': account,
       'nickname': nickname,
-      'avatarUrl': avatarUrl,
+      'avatar': avatar,
+      'signature': signature,
+      'mobile': mobile,
+      'reg_time': regTime,
+      'status': status,
+      'platforms': platforms,
+      'last_login_time': lastLoginTime,
+      'is_debut': isDebut,
+      'k_money': kMoney,
+      'k_coupon': kCoupon,
       'followers': followers,
-      'following': following,
-      'isLoggedIn': isLoggedIn,
+      'fans_count': fansCount,
+      'sex': sex,
     };
   }
 }
