@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_post_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_network_manager.dart';
 
 class CommunityPage extends G5BaseViewController {
   const CommunityPage({Key? key}) : super(key: key);
@@ -11,7 +13,16 @@ class CommunityPage extends G5BaseViewController {
 }
 
 class _CommunityPageState extends G5BaseViewState<CommunityPage> {
-  List<G5PostModel> posts = [];
+  final EasyRefreshController _refreshController = EasyRefreshController(
+    controlFinishRefresh: true,
+    controlFinishLoad: true,
+  );
+
+  List<G5PostItem> posts = [];
+  int _page = 1;
+  final int _size = 10;
+
+  bool _isFirstLoading = true;
 
   @override
   bool get showBackButton => false;
@@ -19,26 +30,85 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   @override
   void initData() {
     super.initData();
-    posts = [
-      G5PostModel(
-        authorName: '战术狂人安切洛',
-        authorAvatarUrl:
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
-        publishTime: '20分钟前',
-        location: '马德里',
-        title: 'Pro 分析师',
-        content: '今晚皇马对阵曼城，安切洛蒂在第65分钟的换人堪称胜负手！九张图全景拆解这场世纪对决的高光战术走势 👇',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=250&q=80',
-          'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?auto=format&fit=crop&w=250&q=80',
-          'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=250&q=80',
-          'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=250&q=80',
-          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=250&q=80',
-          'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=250&q=80',
-        ],
-        relatedMatch: '关联比赛：皇家马德里 2 - 1 曼城',
-      ),
-    ];
+    _fetchData(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchData({required bool isRefresh}) async {
+    if (isRefresh) {
+      _page = 1;
+    } else {
+      _page++;
+    }
+
+    final params = {
+      "type": 2, // 社区列表固定传 2
+      "page": _page,
+      "size": _size,
+      "match_type": 1,
+    };
+
+    final response = await G5NetworkManager().get(
+      '/api/v1/community/list',
+      queryParameters: params,
+    );
+
+    if (response.isSuccess) {
+      final data = G5PostData.fromJson(response.data);
+      final newItems = data.results ?? [];
+      
+      setState(() {
+        if (isRefresh) {
+          posts = newItems;
+        } else {
+          posts.addAll(newItems);
+        }
+        if (_isFirstLoading) {
+          _isFirstLoading = false;
+        }
+      });
+      
+      if (isRefresh) {
+        _refreshController.finishRefresh(IndicatorResult.success);
+        _refreshController.resetFooter();
+      } else {
+        _refreshController.finishLoad(
+          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
+        );
+      }
+    } else {
+      setState(() {
+        if (_isFirstLoading) {
+          _isFirstLoading = false;
+        }
+      });
+      if (isRefresh) {
+        _refreshController.finishRefresh(IndicatorResult.fail);
+      } else {
+        _refreshController.finishLoad(IndicatorResult.fail);
+      }
+    }
+  }
+
+  // 辅助方法：时间戳转相对时间
+  String _formatPublishTime(int? timestamp) {
+    if (timestamp == null || timestamp == 0) return '';
+    final now = DateTime.now();
+    final publishDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final difference = now.difference(publishDate);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}分钟前';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}小时前';
+    } else {
+      return '${publishDate.month}-${publishDate.day}';
+    }
   }
 
   @override
@@ -101,16 +171,63 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        return _buildPostCard(posts[index]);
-      },
+    if (_isFirstLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: G5Colors.accentEmerald,
+        ),
+      );
+    }
+
+    return EasyRefresh(
+      controller: _refreshController,
+      header: const ClassicHeader(
+        dragText: '下拉刷新',
+        armedText: '释放刷新',
+        readyText: '正在刷新...',
+        processingText: '正在刷新...',
+        processedText: '刷新成功',
+        noMoreText: '没有更多',
+        failedText: '刷新失败',
+        messageText: '最后更新于 %T',
+        iconTheme: IconThemeData(color: G5Colors.accentEmerald),
+        textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+        messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+      ),
+      footer: const ClassicFooter(
+        dragText: '上拉加载',
+        armedText: '释放加载',
+        readyText: '正在加载...',
+        processingText: '正在加载...',
+        processedText: '加载成功',
+        noMoreText: '没有更多数据了',
+        failedText: '加载失败',
+        messageText: '最后更新于 %T',
+        iconTheme: IconThemeData(color: G5Colors.accentEmerald),
+        textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+        messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+      ),
+      onRefresh: () => _fetchData(isRefresh: true),
+      onLoad: () => _fetchData(isRefresh: false),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: posts.length,
+        itemBuilder: (context, index) {
+          return _buildPostCard(posts[index]);
+        },
+      ),
     );
   }
 
-  Widget _buildPostCard(G5PostModel post) {
+  Widget _buildPostCard(G5PostItem post) {
+    final author = post.author;
+    final match = post.match;
+
+    // 图片列表，因为接口只返回一张图，用6张同样的图占位展示九宫格样式
+    final imageUrls = post.image != null && post.image!.isNotEmpty
+        ? List.generate(6, (index) => post.image!)
+        : [];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -134,18 +251,27 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                       shape: BoxShape.circle,
                       border: Border.all(
                           color: G5Colors.accentGold.withOpacity(0.4)),
-                      image: DecorationImage(
-                        image: NetworkImage(post.authorAvatarUrl),
-                        fit: BoxFit.cover,
-                      ),
+                      color: G5Colors.pitchElevated,
                     ),
+                    child: author?.avatar != null && author!.avatar!.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              author.avatar!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.person,
+                                      color: G5Colors.textSecondary, size: 20),
+                            ),
+                          )
+                        : const Icon(Icons.person,
+                            color: G5Colors.textSecondary, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        post.authorName,
+                        author?.name ?? '',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -153,7 +279,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                         ),
                       ),
                       Text(
-                        '${post.publishTime} · ${post.location}',
+                        '${_formatPublishTime(post.createTime)} · 社区用户', // 假设没有 location，用默认文本
                         style: const TextStyle(
                           color: G5Colors.textSecondary,
                           fontSize: 10,
@@ -172,9 +298,9 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                       color: G5Colors.accentEmerald.withOpacity(0.3)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  '+ 关注',
-                  style: TextStyle(
+                child: Text(
+                  author?.isSubscribe == 1 ? '已关注' : '+ 关注',
+                  style: const TextStyle(
                     color: G5Colors.accentEmerald,
                     fontSize: 11,
                   ),
@@ -184,7 +310,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            post.content,
+            post.content ?? '',
             style: const TextStyle(
               color: G5Colors.textPrimary,
               fontSize: 12,
@@ -192,7 +318,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
             ),
           ),
           const SizedBox(height: 12),
-          if (post.imageUrls.isNotEmpty)
+          if (imageUrls.isNotEmpty)
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -201,19 +327,21 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                 crossAxisSpacing: 6,
                 mainAxisSpacing: 6,
               ),
-              itemCount: post.imageUrls.length,
+              itemCount: imageUrls.length,
               itemBuilder: (context, index) {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: Image.network(
-                    post.imageUrls[index],
+                    imageUrls[index],
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Container(color: G5Colors.pitchElevated),
                   ),
                 );
               },
             ),
           const SizedBox(height: 12),
-          if (post.relatedMatch.isNotEmpty)
+          if (match != null)
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -229,7 +357,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      post.relatedMatch,
+                      '关联比赛：${match.homeTeamName} ${match.homeScore} - ${match.awayScore} ${match.awayTeamName}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

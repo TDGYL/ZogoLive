@@ -1,53 +1,111 @@
-/// 资讯模型
-class G5NewsModel {
-  /// 资讯标题
-  String title;
+/// 资讯模型 - JSON 映射
+class G5NewsData {
+  int? total;
+  List<G5NewsItem>? results;
 
-  /// 发布时间
-  String publishTime;
+  G5NewsData({this.total, this.results});
 
-  /// 阅读量
-  String reads;
-
-  /// 封面图 URL
-  String coverUrl;
-
-  /// 来源/标签
-  String source;
-
-  /// 是否是头条(大图)
-  bool isHeadline;
-
-  G5NewsModel({
-    required this.title,
-    required this.publishTime,
-    required this.reads,
-    required this.coverUrl,
-    required this.source,
-    this.isHeadline = false,
-  });
-
-  /// 从 JSON 解析
-  factory G5NewsModel.fromJson(Map<String, dynamic> json) {
-    return G5NewsModel(
-      title: json['title'] as String? ?? '',
-      publishTime: json['publishTime'] as String? ?? '',
-      reads: json['reads'] as String? ?? '',
-      coverUrl: json['coverUrl'] as String? ?? '',
-      source: json['source'] as String? ?? '',
-      isHeadline: json['isHeadline'] as bool? ?? false,
+  factory G5NewsData.fromJson(Map<String, dynamic> json) {
+    var list = json['results'] as List?;
+    List<G5NewsItem> items = [];
+    if (list != null) {
+      items = list.map((e) => G5NewsItem.fromJson(e)).toList();
+    }
+    return G5NewsData(
+      total: json['total'] as int?,
+      results: items,
     );
   }
+}
 
-  /// 转换为 JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'publishTime': publishTime,
-      'reads': reads,
-      'coverUrl': coverUrl,
-      'source': source,
-      'isHeadline': isHeadline,
-    };
+class G5NewsItem {
+  int? id;
+  String? title;
+  String? cover;
+  int? type;
+  String? author;
+  String? authorAvatar;
+  String? source;
+  String? sourceUrl;
+  int? createdAt;
+  int? onlineAt;
+  int? offlineAt;
+  int? status;
+  String? content;
+  bool? isSupport;
+  int? videoDirection;
+  String? h5Url;
+  bool? isFollow;
+  int? contentCounts;
+  int? videoHeight;
+  int? videoWidth;
+  bool? living;
+  int? expertId;
+  String? patch;
+  String? groupId;
+  int? weight;
+  String? verticalCoverUrl;
+  int? intelligenceCounts;
+
+  G5NewsItem({
+    this.id,
+    this.title,
+    this.cover,
+    this.type,
+    this.author,
+    this.authorAvatar,
+    this.source,
+    this.sourceUrl,
+    this.createdAt,
+    this.onlineAt,
+    this.offlineAt,
+    this.status,
+    this.content,
+    this.isSupport,
+    this.videoDirection,
+    this.h5Url,
+    this.isFollow,
+    this.contentCounts,
+    this.videoHeight,
+    this.videoWidth,
+    this.living,
+    this.expertId,
+    this.patch,
+    this.groupId,
+    this.weight,
+    this.verticalCoverUrl,
+    this.intelligenceCounts,
+  });
+
+  factory G5NewsItem.fromJson(Map<String, dynamic> json) {
+    return G5NewsItem(
+      id: json['id'] as int?,
+      title: json['title'] as String?,
+      cover: json['cover'] as String?,
+      type: json['type'] as int?,
+      author: json['author'] as String?,
+      authorAvatar: json['author_avatar'] as String?,
+      source: json['source'] as String?,
+      sourceUrl: json['source_url'] as String?,
+      createdAt: json['created_at'] as int?,
+      onlineAt: json['online_at'] as int?,
+      offlineAt: json['offline_at'] as int?,
+      status: json['status'] as int?,
+      content: json['content'] as String?,
+      isSupport: json['is_support'] as bool?,
+      videoDirection: json['video_direction'] as int?,
+      h5Url: json['h5_url'] as String?,
+      isFollow: json['is_follow'] as bool?,
+      contentCounts: json['content_counts'] as int?,
+      videoHeight: json['video_height'] as int?,
+      videoWidth: json['video_width'] as int?,
+      living: json['living'] as bool?,
+      expertId: json['expert_id'] as int?,
+      patch: json['patch'] as String?,
+      groupId: json['group_id'] as String?,
+      weight: json['weight'] as int?,
+      verticalCoverUrl: json['vertical_cover_url'] as String?,
+      intelligenceCounts: json['intelligence_counts'] as int?,
+    );
   }
 }

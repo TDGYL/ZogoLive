@@ -1,5 +1,116 @@
 
 
+
+
+
+第三页资讯接入数据请求，请求接口为：/api/v1/info/list
+请求参数，入参{
+    "type": 1, integer，类型
+    "page": 1, integer，页码
+    "size": 10, integer，请求条数
+}
+
+
+
+请求的响应数据为：
+{
+    "code": 0,
+    "data": {
+        "total": 0,
+        "results": [
+            {
+                "id": 0,
+                "title": "string",
+                "cover": "string",
+                "type": 0,
+                "author": "string",
+                "author_avatar": "string",
+                "source": "string",
+                "source_url": "string",
+                "created_at": 0,
+                "online_at": 0,
+                "offline_at": 0,
+                "status": 0,
+                "content": "string",
+                "is_support": true,
+                "video_direction": 0,
+                "h5_url": "string",
+                "is_follow": true,
+                "content_counts": 0,
+                "video_height": 0,
+                "video_width": 0,
+                "living": true,
+                "expert_id": 0,
+    
+                    "patch": "string",
+                    "group_id": "string",
+                    "weight": 0,
+                    "lucky_bag": {
+                        "id": 0,
+                        "status": 0,
+                        "draw_time": 0
+                    },
+                    "tabs": [
+                        {
+                            "name": "string",
+                            "type": 0,
+                            "default": true
+                        }
+                    ],
+                    "vertical_cover_url": "string",
+                    "content_counts": 0,
+                    "intelligence_counts": 0
+                }
+            }
+        ]
+    }
+}
+
+第一个数据做为banner的数据显示，剩下的展示列表，做下拉刷新和上拉加载功能
+
+
+
+
+
+
+
+
+========================================社区列表的数据请求======
+
+第二页社区接入数据请求，比赛接口为：/api/v1/community/list，请求方式为get请求，
+请求参数，入参{
+    "type": 2, integer，类型
+    "page": 1, integer，页码
+    "size": 10, integer，请求条数
+    "match_type":1, integer，
+}
+入参中type是动态的，接口要保留动态修改，社区列表请求时候传入2。
+
+请求的响应数据为：
+{"code":0,"data":{"total":100,"results":[{
+	    "id":123,"content":"今天看好主队取胜","image":"https://cdn.../post/a.png",
+	    "like_count":12,"comment_count":3,"create_time":1722800000,
+	    "author":{"id":456,"name":"用户A","is_subscribe":1,"avatar":"https://cdn.../avatar.png","member_id":456},
+	    "match":{"match_type":1,"match_id":1001,"competition_id":2001,"season_id":3001,
+	      "start_time":1722900000,"status_id":1,"status_name":"未开赛","competition_name":"英超",
+	      "home_team_name":"主队","home_team_logo":"https://cdn.../home.png",
+	      "away_team_name":"客队","away_team_logo":"https://cdn.../away.png",
+	      "home_score":0,"away_score":0},
+	    "is_like":false
+	  }]},"message":"ok"}
+
+数据说明：1、列表的图片只会返回一张，就是image这个字段，所以社区列表的图片要占位现在6张的总体大小
+         2、is_subscribe=1代表关注，0代表未关注
+         3、match是关联的足球赛事
+        4、content代表的是帖子内容
+
+和比赛列表一样，做一个下拉刷新，上拉加载的功能，初始化界面时候直接走下拉刷新的效果
+
+
+
+
+
+
 ========================================比赛列表的数据请求======
 
 参考/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Network/LPNetworking的网络请求框架，封装自己的flutter的网络请求，baseUrl=https://api.livepulseapp.com

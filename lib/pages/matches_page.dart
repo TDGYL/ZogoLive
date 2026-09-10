@@ -116,13 +116,11 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       });
 
       if (isRefresh) {
-        _refreshController.finishRefresh();
+        _refreshController.finishRefresh(IndicatorResult.success);
         _refreshController.resetFooter();
       } else {
         _refreshController.finishLoad(
-          newItems.length < _size
-              ? IndicatorResult.noMore
-              : IndicatorResult.success,
+          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
         );
       }
     } else {

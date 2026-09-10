@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_news_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_network_manager.dart';
 
 class NewsPage extends G5BaseViewController {
   const NewsPage({Key? key}) : super(key: key);
@@ -11,7 +13,15 @@ class NewsPage extends G5BaseViewController {
 }
 
 class _NewsPageState extends G5BaseViewState<NewsPage> {
-  List<G5NewsModel> newsList = [];
+  final EasyRefreshController _refreshController = EasyRefreshController(
+    controlFinishRefresh: true,
+    controlFinishLoad: true,
+  );
+
+  List<G5NewsItem> newsList = [];
+  int _page = 1;
+  final int _size = 10;
+  bool _isFirstLoading = true;
 
   @override
   bool get showBackButton => false;
@@ -19,33 +29,84 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
   @override
   void initData() {
     super.initData();
-    newsList = [
-      G5NewsModel(
-        title: '欧冠淘汰赛分析：四大豪门齐聚死亡半区，谁能踏平伯纳乌？',
-        publishTime: '10分钟前',
-        reads: '4.8w',
-        coverUrl:
-            'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=600&q=80',
-        source: '深度专栏',
-        isHeadline: true,
-      ),
-      G5NewsModel(
-        title: '哈兰德专访：并不在意金球奖排名，团队大满贯才是我唯一的执念',
-        publishTime: '1小时前',
-        reads: '1.8w',
-        coverUrl:
-            'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=300&q=80',
-        source: '深度专访',
-      ),
-      G5NewsModel(
-        title: '国际足联宣布：2027世俱杯扩军方案正式通过，总奖金破10亿美金',
-        publishTime: '3小时前',
-        reads: '2.4w',
-        coverUrl:
-            'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=300&q=80',
-        source: 'FIFA 动态',
-      ),
-    ];
+    _fetchData(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchData({required bool isRefresh}) async {
+    if (isRefresh) {
+      _page = 1;
+    } else {
+      _page++;
+    }
+
+    final params = {
+      "type": 1,
+      "page": _page,
+      "size": _size,
+    };
+
+    final response = await G5NetworkManager().get(
+      '/api/v1/info/list',
+      queryParameters: params,
+    );
+
+    if (response.isSuccess) {
+      final data = G5NewsData.fromJson(response.data);
+      final newItems = data.results ?? [];
+      
+      setState(() {
+        if (isRefresh) {
+          newsList = newItems;
+        } else {
+          newsList.addAll(newItems);
+        }
+        if (_isFirstLoading) {
+          _isFirstLoading = false;
+        }
+      });
+      
+      if (isRefresh) {
+        _refreshController.finishRefresh(IndicatorResult.success);
+        _refreshController.resetFooter();
+      } else {
+        _refreshController.finishLoad(
+          newItems.length < _size ? IndicatorResult.noMore : IndicatorResult.success,
+        );
+      }
+    } else {
+      setState(() {
+        if (_isFirstLoading) {
+          _isFirstLoading = false;
+        }
+      });
+      if (isRefresh) {
+        _refreshController.finishRefresh(IndicatorResult.fail);
+      } else {
+        _refreshController.finishLoad(IndicatorResult.fail);
+      }
+    }
+  }
+
+  // 辅助方法：时间戳转相对时间
+  String _formatPublishTime(int? timestamp) {
+    if (timestamp == null || timestamp == 0) return '';
+    final now = DateTime.now();
+    final publishDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final difference = now.difference(publishDate);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}分钟前';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}小时前';
+    } else {
+      return '${publishDate.month}-${publishDate.day}';
+    }
   }
 
   @override
@@ -90,84 +151,135 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: newsList.length,
-      itemBuilder: (context, index) {
-        final news = newsList[index];
-        if (news.isHeadline) {
-          return _buildHeadlineCard(news);
-        } else {
-          return _buildNormalNewsCard(news);
-        }
-      },
+    if (_isFirstLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: G5Colors.accentEmerald,
+        ),
+      );
+    }
+
+    return EasyRefresh(
+      controller: _refreshController,
+      header: const ClassicHeader(
+        dragText: '下拉刷新',
+        armedText: '释放刷新',
+        readyText: '正在刷新...',
+        processingText: '正在刷新...',
+        processedText: '刷新成功',
+        noMoreText: '没有更多',
+        failedText: '刷新失败',
+        messageText: '最后更新于 %T',
+        iconTheme: IconThemeData(color: G5Colors.accentEmerald),
+        textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+        messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+      ),
+      footer: const ClassicFooter(
+        dragText: '上拉加载',
+        armedText: '释放加载',
+        readyText: '正在加载...',
+        processingText: '正在加载...',
+        processedText: '加载成功',
+        noMoreText: '没有更多数据了',
+        failedText: '加载失败',
+        messageText: '最后更新于 %T',
+        iconTheme: IconThemeData(color: G5Colors.accentEmerald),
+        textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+        messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+      ),
+      onRefresh: () => _fetchData(isRefresh: true),
+      onLoad: () => _fetchData(isRefresh: false),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: newsList.length,
+        itemBuilder: (context, index) {
+          final news = newsList[index];
+          // 第一个元素作为 Headline
+          if (index == 0) {
+            return _buildHeadlineCard(news);
+          } else {
+            return _buildNormalNewsCard(news);
+          }
+        },
+      ),
     );
   }
 
-  Widget _buildHeadlineCard(G5NewsModel news) {
+  Widget _buildHeadlineCard(G5NewsItem news) {
     return Container(
       height: 180,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: G5Colors.pitchBorder),
-        image: DecorationImage(
-          image: NetworkImage(news.coverUrl),
-          fit: BoxFit.cover,
-        ),
+        color: G5Colors.pitchElevated,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              G5Colors.pitch.withOpacity(0.8),
-              G5Colors.pitch,
-            ],
-          ),
-        ),
-        padding: const EdgeInsets.all(14),
-        alignment: Alignment.bottomLeft,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              news.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                height: 1.3,
+      child: Stack(
+        children: [
+          if (news.cover != null && news.cover!.isNotEmpty)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  news.cover!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                ),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
-            Row(
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  G5Colors.pitch.withOpacity(0.8),
+                  G5Colors.pitch,
+                ],
+              ),
+            ),
+            padding: const EdgeInsets.all(14),
+            alignment: Alignment.bottomLeft,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.remove_red_eye,
-                    color: G5Colors.textSecondary, size: 12),
-                const SizedBox(width: 4),
                 Text(
-                  '${news.reads} 阅读量 · ${news.publishTime}',
+                  news.title ?? '',
                   style: const TextStyle(
-                    color: G5Colors.textSecondary,
-                    fontSize: 10,
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.3,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.remove_red_eye, color: G5Colors.textSecondary, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
+                      style: const TextStyle(
+                        color: G5Colors.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNormalNewsCard(G5NewsModel news) {
+  Widget _buildNormalNewsCard(G5NewsItem news) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -178,14 +290,23 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              news.coverUrl,
-              width: 96,
-              height: 80,
-              fit: BoxFit.cover,
+          Container(
+            width: 96,
+            height: 80,
+            decoration: BoxDecoration(
+              color: G5Colors.pitchElevated,
+              borderRadius: BorderRadius.circular(8),
             ),
+            child: news.cover != null && news.cover!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      news.cover!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: G5Colors.textSecondary),
+                    ),
+                  )
+                : const Icon(Icons.image, color: G5Colors.textSecondary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -194,7 +315,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  news.title,
+                  news.title ?? '',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -207,11 +328,10 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.remove_red_eye,
-                        color: G5Colors.textSecondary, size: 10),
+                    const Icon(Icons.remove_red_eye, color: G5Colors.textSecondary, size: 10),
                     const SizedBox(width: 4),
                     Text(
-                      '${news.reads} 阅读量 · ${news.publishTime}',
+                      '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
                       style: const TextStyle(
                         color: G5Colors.textSecondary,
                         fontSize: 10,

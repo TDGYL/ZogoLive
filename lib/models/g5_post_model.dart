@@ -1,70 +1,136 @@
-/// 社区帖子模型
-class G5PostModel {
-  /// 用户昵称
-  String authorName;
+/// 社区帖子模型 - JSON 映射
+class G5PostData {
+  int? total;
+  List<G5PostItem>? results;
 
-  /// 用户头像 URL
-  String authorAvatarUrl;
+  G5PostData({this.total, this.results});
 
-  /// 发布时间 (如 20分钟前)
-  String publishTime;
-
-  /// 发布地点 (如 马德里)
-  String location;
-
-  /// 用户头衔 (如 Pro 分析师)
-  String title;
-
-  /// 帖子内容
-  String content;
-
-  /// 配图 URL 列表
-  List<String> imageUrls;
-
-  /// 关联比赛信息
-  String relatedMatch;
-
-  G5PostModel({
-    required this.authorName,
-    required this.authorAvatarUrl,
-    required this.publishTime,
-    required this.location,
-    required this.title,
-    required this.content,
-    required this.imageUrls,
-    this.relatedMatch = '',
-  });
-
-  /// 从 JSON 解析
-  factory G5PostModel.fromJson(Map<String, dynamic> json) {
-    List<String> imgs = [];
-    if (json['imageUrls'] != null) {
-      imgs = List<String>.from(json['imageUrls'] as List);
+  factory G5PostData.fromJson(Map<String, dynamic> json) {
+    var list = json['results'] as List?;
+    List<G5PostItem> items = [];
+    if (list != null) {
+      items = list.map((e) => G5PostItem.fromJson(e)).toList();
     }
-
-    return G5PostModel(
-      authorName: json['authorName'] as String? ?? '',
-      authorAvatarUrl: json['authorAvatarUrl'] as String? ?? '',
-      publishTime: json['publishTime'] as String? ?? '',
-      location: json['location'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      content: json['content'] as String? ?? '',
-      imageUrls: imgs,
-      relatedMatch: json['relatedMatch'] as String? ?? '',
+    return G5PostData(
+      total: json['total'] as int?,
+      results: items,
     );
   }
+}
 
-  /// 转换为 JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'authorName': authorName,
-      'authorAvatarUrl': authorAvatarUrl,
-      'publishTime': publishTime,
-      'location': location,
-      'title': title,
-      'content': content,
-      'imageUrls': imageUrls,
-      'relatedMatch': relatedMatch,
-    };
+class G5PostItem {
+  int? id;
+  String? content;
+  String? image;
+  int? likeCount;
+  int? commentCount;
+  int? createTime;
+  G5PostAuthor? author;
+  G5PostMatch? match;
+  bool? isLike;
+
+  G5PostItem({
+    this.id,
+    this.content,
+    this.image,
+    this.likeCount,
+    this.commentCount,
+    this.createTime,
+    this.author,
+    this.match,
+    this.isLike,
+  });
+
+  factory G5PostItem.fromJson(Map<String, dynamic> json) {
+    return G5PostItem(
+      id: json['id'] as int?,
+      content: json['content'] as String?,
+      image: json['image'] as String?,
+      likeCount: json['like_count'] as int?,
+      commentCount: json['comment_count'] as int?,
+      createTime: json['create_time'] as int?,
+      author: json['author'] != null ? G5PostAuthor.fromJson(json['author']) : null,
+      match: json['match'] != null ? G5PostMatch.fromJson(json['match']) : null,
+      isLike: json['is_like'] as bool?,
+    );
+  }
+}
+
+class G5PostAuthor {
+  int? id;
+  String? name;
+  int? isSubscribe;
+  String? avatar;
+  int? memberId;
+
+  G5PostAuthor({
+    this.id,
+    this.name,
+    this.isSubscribe,
+    this.avatar,
+    this.memberId,
+  });
+
+  factory G5PostAuthor.fromJson(Map<String, dynamic> json) {
+    return G5PostAuthor(
+      id: json['id'] as int?,
+      name: json['name'] as String?,
+      isSubscribe: json['is_subscribe'] as int?,
+      avatar: json['avatar'] as String?,
+      memberId: json['member_id'] as int?,
+    );
+  }
+}
+
+class G5PostMatch {
+  int? matchType;
+  int? matchId;
+  int? competitionId;
+  int? seasonId;
+  int? startTime;
+  int? statusId;
+  String? statusName;
+  String? competitionName;
+  String? homeTeamName;
+  String? homeTeamLogo;
+  String? awayTeamName;
+  String? awayTeamLogo;
+  int? homeScore;
+  int? awayScore;
+
+  G5PostMatch({
+    this.matchType,
+    this.matchId,
+    this.competitionId,
+    this.seasonId,
+    this.startTime,
+    this.statusId,
+    this.statusName,
+    this.competitionName,
+    this.homeTeamName,
+    this.homeTeamLogo,
+    this.awayTeamName,
+    this.awayTeamLogo,
+    this.homeScore,
+    this.awayScore,
+  });
+
+  factory G5PostMatch.fromJson(Map<String, dynamic> json) {
+    return G5PostMatch(
+      matchType: json['match_type'] as int?,
+      matchId: json['match_id'] as int?,
+      competitionId: json['competition_id'] as int?,
+      seasonId: json['season_id'] as int?,
+      startTime: json['start_time'] as int?,
+      statusId: json['status_id'] as int?,
+      statusName: json['status_name'] as String?,
+      competitionName: json['competition_name'] as String?,
+      homeTeamName: json['home_team_name'] as String?,
+      homeTeamLogo: json['home_team_logo'] as String?,
+      awayTeamName: json['away_team_name'] as String?,
+      awayTeamLogo: json['away_team_logo'] as String?,
+      homeScore: json['home_score'] as int?,
+      awayScore: json['away_score'] as int?,
+    );
   }
 }
