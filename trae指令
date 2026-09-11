@@ -1,7 +1,87 @@
 
-实现指数历史界面：按照/Users/guyilin/Desktop/ZogoLive/football_odd_detail.html，当点击比赛详情指数菜单，然后再点击指数列表到指数指数历史详情页，如下图，
 
 
+
+
+
+
+
+
+
+
+给odds_history_page右边的列表数据请求，请求接口为：/api/v1/football/match/odd-histories，请方式为GET，
+请求参数： 
+{
+    "match_id": 10004459809，int类型
+    "company_id":23423,  integer 公司 ID
+}
+参数说明：match_id代表的是该比赛的ID，company_id是公司的id，上一页点击哪里push的要带进来，odds_history_page左边的公司列表点中了也要传公司id进来重新请求数据,
+
+数据结构为：{
+    "code": 0,
+    "data": {
+        "asia": [
+            {
+                "updated_at": 0,
+                "match_offset": "string",
+                "home": "string",
+                "draw": "string",
+                "away": "string",
+                "state": 0,
+                "closed": 0,
+                "score": "string"
+            }
+        ],
+        "bs": [
+            {
+                "updated_at": 0,
+                "match_offset": "string",
+                "home": "string",
+                "draw": "string",
+                "away": "string",
+                "state": 0,
+                "closed": 0,
+                "score": "string"
+            }
+        ],
+        "cr": [
+            {
+                "updated_at": 0,
+                "match_offset": "string",
+                "home": "string",
+                "draw": "string",
+                "away": "string",
+                "state": 0,
+                "closed": 0,
+                "score": "string"
+            }
+        ],
+        "eu": [
+            {
+                "updated_at": 0,
+                "match_offset": "string",
+                "home": 0,
+                "draw": 0,
+                "away": 0,
+                "state": 0,
+                "closed": 0,
+                "score": "string"
+            }
+        ]
+    },
+    "message": "string"
+}
+
+数据说明：asia=让球让分，eu=胜平负,bs=进球数,cr=角球
+
+
+
+
+
+将odds_history_page顶部选项卡的菜单修改成：让球让分、胜平负、进球数、角球；右上角的关注按钮删除掉
+
+
+实现指数历史界面：按照/Users/guyilin/Desktop/ZogoLive/football_odd_detail.html，当点击比赛详情指数菜单，然后再点击指数列表到指数指数历史详情页，如图，我要实现的的就是html里的这个界面，当点击指数列表时候push到这个指数历史界面，给我实现UI效果
 
 
 
@@ -16,7 +96,7 @@
 UI部分：
 比赛详情历史对战的UI参考 footBallDetail.html的指数菜单，一定要高还原度
 
-列表一共分为4段：第一段是让球让分，第二段是胜平负，第三段是进球数，第四段是角球
+列表一共分为4段：第一段是让球让分(亚指)，第二段是胜平负（欧指），第三段是进球数（大小球），第四段是角球（角球）
 请求接口为：/api/v1/football/match/odds，请求方式为GET请求
 请求参数： 
 {

@@ -3,6 +3,7 @@ import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_match_model.dart';
 import 'package:zogolive/models/g5_odds_model.dart';
 import 'package:zogolive/models/g5_process_model.dart';
+import 'package:zogolive/pages/odds_history_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -477,18 +478,18 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildOddsSection('让球让分', _oddsData?.asia, ['主队', '盘口', '客队']),
+        _buildOddsSection('让球让分', _oddsData?.asia, ['主队', '盘口', '客队'], 'asia'),
         const SizedBox(height: 20),
-        _buildOddsSection('胜平负', _oddsData?.eu, ['主胜', '平局', '客胜']),
+        _buildOddsSection('胜平负', _oddsData?.eu, ['主胜', '平局', '客胜'], 'eu'),
         const SizedBox(height: 20),
-        _buildOddsSection('进球数', _oddsData?.bs, ['大', '盘口', '小']),
+        _buildOddsSection('进球数', _oddsData?.bs, ['大', '盘口', '小'], 'bs'),
         const SizedBox(height: 20),
-        _buildOddsSection('角球', _oddsData?.cr, ['大', '盘口', '小']),
+        _buildOddsSection('角球', _oddsData?.cr, ['大', '盘口', '小'], 'cr'),
       ],
     );
   }
 
-  Widget _buildOddsSection(String title, List<G5OddsCompany>? companies, List<String> headers) {
+  Widget _buildOddsSection(String title, List<G5OddsCompany>? companies, List<String> headers, String oddsType) {
     if (companies == null || companies.isEmpty) {
       return const SizedBox();
     }
@@ -529,17 +530,30 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
             ),
           ),
           // 列表
-          ...companies.map((c) => _buildOddsCompanyRow(c)).toList(),
+          ...companies.map((c) => _buildOddsCompanyRow(c, companies, oddsType)).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildOddsCompanyRow(G5OddsCompany company) {
+  Widget _buildOddsCompanyRow(G5OddsCompany company, List<G5OddsCompany> allCompanies, String oddsType) {
     bool hasPre = company.pre != null;
     bool hasSpot = company.spot != null;
 
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => OddsHistoryPage(
+              match: widget.match,
+              initialCompany: company,
+              allCompanies: allCompanies,
+              oddsType: oddsType,
+            ),
+          ),
+        );
+      },
+      child: Container(
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
       ),
@@ -613,7 +627,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildOddsValueText(String? current, String? initial) {
