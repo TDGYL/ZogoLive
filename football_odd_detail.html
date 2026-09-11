@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>足球指数详情与变动时间轴 - iOS Style</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google SF Pro inspired font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        ios: {
+                            bg: '#0D0E12',
+                            card: '#1C1E24',
+                            cardBorder: '#2A2D37',
+                            accent: '#0A84FF',
+                            up: '#FF3B30',      /* Red for up/increase in Asian/CN odds */
+                            down: '#30D158',    /* Green for down/decrease */
+                            same: '#8E8E93',
+                            subtext: '#98989F'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: #050508;
+            color: #F2F2F7;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Hide scrollbars for clean iOS look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* iOS Screen Transition Animation */
+        .screen-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 440px;
+            height: 100vh;
+            max-height: 920px;
+            margin: 0 auto;
+            background: #0D0E12;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.38s ease;
+            will-change: transform, opacity;
+            display: flex;
+            flex-direction: column;
+            background: #0D0E12;
+        }
+
+        .screen-main {
+            transform: translateX(0);
+            z-index: 10;
+        }
+        .screen-main.pushed {
+            transform: translateX(-30%);
+            opacity: 0.6;
+        }
+
+        .screen-detail {
+            transform: translateX(100%);
+            z-index: 20;
+        }
+        .screen-detail.active {
+            transform: translateX(0);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Blur Header */
+        .ios-blur-header {
+            background: rgba(22, 24, 31, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Dynamic Glows */
+        .glow-up {
+            animation: flashUp 0.8s ease-out;
+        }
+        .glow-down {
+            animation: flashDown 0.8s ease-out;
+        }
+        @keyframes flashUp {
+            0% { background-color: rgba(255, 59, 48, 0.35); }
+            100% { background-color: transparent; }
+        }
+        @keyframes flashDown {
+            0% { background-color: rgba(48, 209, 88, 0.35); }
+            100% { background-color: transparent; }
+        }
+
+        /* Custom Scroll Snap for Timeline */
+        .timeline-scroll {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-black">
+
+    <div class="screen-container sm:rounded-[48px] border border-gray-800/60 flex flex-col relative overflow-hidden">
+        
+        <!-- iOS Top Status Bar -->
+        <div class="w-full pt-3 px-6 flex justify-between items-center text-xs font-semibold text-white/90 z-50 select-none pointer-events-none">
+            <span id="ios-clock">09:41</span>
+            <div class="w-24 h-4 bg-black rounded-full flex items-center justify-center">
+                <div class="w-12 h-2 bg-neutral-900 rounded-full"></div>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-three-quarters text-sm"></i>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 1: FOOTBALL DETAIL INDEX OVERVIEW   -->
+        <!-- ========================================== -->
+        <div id="screen-main" class="screen screen-main">
+            <!-- Nav Bar -->
+            <div class="ios-blur-header px-4 py-3 border-b border-ios-cardBorder/60 sticky top-0 z-30 flex items-center justify-between">
+                <button class="text-ios-accent flex items-center gap-1 text-sm font-medium">
+                    <i class="fa-solid fa-chevron-left text-base"></i> 赛事详情
+                </button>
+                <div class="text-center">
+                    <h1 class="text-xs text-ios-subtext uppercase tracking-wider font-semibold">欧冠联赛 · 淘汰赛</h1>
+                    <p class="text-sm font-bold text-white">曼城 vs 皇家马德里</p>
+                </div>
+                <button class="text-ios-accent text-lg">
+                    <i class="fa-regular fa-star"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto no-scrollbar pb-6">
+                <!-- Mini Score Board Card -->
+                <div class="m-3 p-4 rounded-2xl bg-gradient-to-br from-neutral-900 via-ios-card to-neutral-900 border border-ios-cardBorder relative overflow-hidden">
+                    <div class="absolute right-3 top-3 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-semibold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                        78' 进行中
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                        <!-- Home Team -->
+                        <div class="flex flex-col items-center w-1/3">
+                            <div class="w-12 h-12 rounded-full bg-sky-900/40 border border-sky-400/30 flex items-center justify-center mb-1">
+                                <i class="fa-solid fa-shield-halved text-sky-400 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-bold text-white text-center">曼城</span>
+                            <span class="text-[10px] text-ios-subtext">主场</span>
+                        </div>
+                        
+                        <!-- Score -->
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="text-2xl font-black text-white tracking-widest font-mono">2 - 1</div>
+                            <div class="text-[11px] text-ios-subtext mt-1">半场: 1-0 | 角球: 6-3</div>
+                        </div>
+
+                        <!-- Away Team -->
+                        <div class="flex flex-col items-center w-1/3">
+                            <div class="w-12 h-12 rounded-full bg-purple-900/40 border border-purple-400/30 flex items-center justify-center mb-1">
+                                <i class="fa-solid fa-crown text-amber-400 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-bold text-white text-center">皇家马德里</span>
+                            <span class="text-[10px] text-ios-subtext">客场</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub Navigation Tabs (footBallDetail.html Header Style) -->
+                <div class="px-3 mb-2">
+                    <div class="flex bg-neutral-900/90 p-1 rounded-xl border border-ios-cardBorder/50 text-xs">
+                        <button class="flex-1 py-1.5 text-center text-ios-subtext font-medium">概况</button>
+                        <button class="flex-1 py-1.5 text-center text-ios-subtext font-medium">阵容</button>
+                        <button class="flex-1 py-1.5 text-center text-white bg-ios-card rounded-lg font-bold shadow-sm border border-neutral-700/50">指数</button>
+                        <button class="flex-1 py-1.5 text-center text-ios-subtext font-medium">分析</button>
+                        <button class="flex-1 py-1.5 text-center text-ios-subtext font-medium">情报</button>
+                    </div>
+                </div>
+
+                <!-- Index Type Secondary Switcher -->
+                <div class="px-3 flex gap-2 text-xs font-medium my-3 overflow-x-auto no-scrollbar">
+                    <button class="px-3 py-1.5 rounded-lg bg-ios-accent text-white font-semibold">让球 (亚指)</button>
+                    <button class="px-3 py-1.5 rounded-lg bg-ios-card border border-ios-cardBorder text-ios-subtext hover:text-white">胜平负 (欧指)</button>
+                    <button class="px-3 py-1.5 rounded-lg bg-ios-card border border-ios-cardBorder text-ios-subtext hover:text-white">大小球</button>
+                    <button class="px-3 py-1.5 rounded-lg bg-ios-card border border-ios-cardBorder text-ios-subtext hover:text-white">角球数</button>
+                </div>
+
+                <!-- Prompt Notice -->
+                <div class="mx-3 mb-2 px-3 py-2 bg-ios-accent/10 border border-ios-accent/30 rounded-xl flex items-center justify-between text-xs text-ios-accent">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>点击任意公司行，深入查看<b>指数变动时间轴</b></span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </div>
+
+                <!-- Index Table Header -->
+                <div class="px-4 py-2 text-[11px] font-semibold text-ios-subtext flex items-center justify-between border-b border-ios-cardBorder/40">
+                    <span class="w-1/4">博彩公司</span>
+                    <span class="w-1/3 text-center">初盘 (初始)</span>
+                    <span class="w-1/3 text-right">即时 (变化)</span>
+                </div>
+
+                <!-- Bookmaker List (Push trigger items) -->
+                <div id="index-list-container" class="divide-y divide-ios-cardBorder/30">
+                    <!-- Populated dynamically via JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 2: INDEX DETAIL & TIMELINE (Pushed) -->
+        <!-- ========================================== -->
+        <div id="screen-detail" class="screen screen-detail">
+            <!-- iOS Back Header -->
+            <div class="ios-blur-header px-3 py-3 border-b border-ios-cardBorder/60 sticky top-0 z-30 flex items-center justify-between">
+                <button id="btn-back" class="text-ios-accent flex items-center gap-1 text-sm font-semibold active:opacity-60 transition-opacity">
+                    <i class="fa-solid fa-chevron-left text-base"></i> 指数列表
+                </button>
+                <div class="text-center">
+                    <span id="detail-header-company" class="text-sm font-bold text-white">Bet365</span>
+                    <p id="detail-header-type" class="text-[10px] text-ios-subtext">让球指数动态变化</p>
+                </div>
+                <div class="flex items-center gap-3 text-ios-accent text-sm">
+                    <button id="btn-toggle-favorite" class="hover:opacity-80"><i class="fa-regular fa-star"></i></button>
+                    <button id="btn-share" class="hover:opacity-80"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+                </div>
+            </div>
+
+            <!-- Top Filter Bar inside Detail View -->
+            <div class="bg-neutral-900 border-b border-ios-cardBorder p-2 flex items-center justify-between gap-2 text-xs">
+                <!-- iOS Segmented Control -->
+                <div class="flex-1 bg-black/60 p-1 rounded-lg border border-ios-cardBorder/80 flex">
+                    <button data-type="ah" class="detail-type-btn flex-1 py-1 text-center rounded-md text-white font-bold bg-ios-card shadow">亚指</button>
+                    <button data-type="1x2" class="detail-type-btn flex-1 py-1 text-center rounded-md text-ios-subtext font-medium">欧指</button>
+                    <button data-type="ou" class="detail-type-btn flex-1 py-1 text-center rounded-md text-ios-subtext font-medium">大小球</button>
+                </div>
+                <button id="btn-chart-toggle" class="px-2.5 py-1.5 rounded-lg bg-ios-card border border-ios-cardBorder text-ios-accent text-xs font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-chart-line"></i> 走势
+                </button>
+            </div>
+
+            <!-- SVG Trend Graph Container (Collapsible) -->
+            <div id="chart-section" class="bg-gradient-to-b from-ios-card/80 to-neutral-900/90 border-b border-ios-cardBorder px-4 py-3 transition-all duration-300">
+                <div class="flex justify-between items-center text-[11px] text-ios-subtext mb-1 font-mono">
+                    <span>主胜/低水: <span id="chart-max-handicap" class="text-white font-semibold">1.05</span></span>
+                    <span id="chart-title-text" class="text-ios-accent font-semibold">曼城 -0.75 (半/一)</span>
+                    <span>客胜/高水: <span id="chart-min-handicap" class="text-white font-semibold">0.80</span></span>
+                </div>
+                
+                <!-- Canvas / SVG Dynamic Chart -->
+                <div class="w-full h-28 relative mt-1">
+                    <svg id="odds-svg-chart" class="w-full h-full overflow-visible" viewBox="0 0 320 90" preserveAspectRatio="none">
+                        <!-- Horizontal Grid Lines -->
+                        <line x1="0" y1="15" x2="320" y2="15" stroke="#2A2D37" stroke-dasharray="2,2"/>
+                        <line x1="0" y1="45" x2="320" y2="45" stroke="#3A3D4A" stroke-dasharray="3,3"/>
+                        <line x1="0" y1="75" x2="320" y2="75" stroke="#2A2D37" stroke-dasharray="2,2"/>
+                        
+                        <!-- Goal Event Vertical Lines -->
+                        <line x1="113" y1="0" x2="113" y2="90" stroke="#FF3B30" stroke-opacity="0.4" stroke-width="1.5"/>
+                        <line x1="241" y1="0" x2="241" y2="90" stroke="#FF3B30" stroke-opacity="0.4" stroke-width="1.5"/>
+
+                        <!-- Trend Path -->
+                        <path id="svg-trend-path" d="M 0,45 L 60,45 L 113,25 L 160,35 L 241,60 L 280,30 L 320,30" 
+                              fill="none" stroke="#0A84FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        
+                        <!-- Goal Markers -->
+                        <circle cx="113" cy="25" r="4" fill="#FF3B30" stroke="#FFFFFF" stroke-width="1.5"/>
+                        <circle cx="241" cy="60" r="4" fill="#FF3B30" stroke="#FFFFFF" stroke-width="1.5"/>
+                    </svg>
+                    <!-- Time Labels on Chart -->
+                    <div class="flex justify-between text-[9px] text-ios-subtext font-mono mt-1">
+                        <span>初盘</span>
+                        <span>18' ⚽1-0</span>
+                        <span>45' 中场</span>
+                        <span>68' ⚽1-1</span>
+                        <span>78' 即时</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CORE SPLIT CONTENT: Left = Bookmaker List, Right = Timeline Changes -->
+            <div class="flex-1 flex overflow-hidden">
+                
+                <!-- LEFT SIDEBAR: Company Selector -->
+                <div class="w-28 bg-neutral-950/80 border-r border-ios-cardBorder/60 overflow-y-auto no-scrollbar flex flex-col divide-y divide-ios-cardBorder/30">
+                    <div class="p-2 text-[10px] font-bold text-ios-subtext uppercase tracking-wider bg-black/40 text-center">
+                        博彩公司
+                    </div>
+                    <div id="company-sidebar-list" class="flex-1 divide-y divide-ios-cardBorder/30">
+                        <!-- Populated dynamic company side buttons -->
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL: Time Timeline & Data Change Logs -->
+                <div class="flex-1 bg-ios-bg flex flex-col overflow-hidden">
+                    
+                    <!-- Table Subhead -->
+                    <div class="bg-neutral-900/90 px-3 py-2 text-[10px] font-bold text-ios-subtext flex justify-between items-center border-b border-ios-cardBorder/50">
+                        <span class="w-14">时间/比分</span>
+                        <span class="flex-1 text-center">主队水位</span>
+                        <span class="w-16 text-center">盘口</span>
+                        <span class="flex-1 text-center">客队水位</span>
+                    </div>
+
+                    <!-- Timeline Scrollable Logs -->
+                    <div id="timeline-log-container" class="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2 timeline-scroll">
+                        <!-- Dynamic timeline log rows go here -->
+                    </div>
+
+                    <!-- Bottom Instant Summary Sticky Bar -->
+                    <div class="bg-neutral-900 border-t border-ios-cardBorder p-3 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+                            <span class="text-ios-subtext text-[11px]">即时指数</span>
+                        </div>
+                        <div class="flex items-center gap-3 font-mono font-bold">
+                            <span id="summary-home-odds" class="text-ios-up">1.02 ▲</span>
+                            <span id="summary-handicap" class="text-white px-2 py-0.5 rounded bg-neutral-800 border border-neutral-700">半球/一球</span>
+                            <span id="summary-away-odds" class="text-ios-down">0.84 ▼</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA MODEL & STATE ---
+        const companiesData = [
+            {
+                id: 'bet365',
+                name: 'Bet365',
+                isFav: true,
+                initial: { home: '0.90', handicap: '半球/一球', away: '0.96' },
+                instant: { home: '1.02', handicap: '半球/一球', away: '0.84', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "1.02", handicap: "半球/一球", away: "0.84", status: "up", isGoal: false },
+                    { time: "68'", score: "1-1", home: "0.94", handicap: "半球", away: "0.92", status: "down", isGoal: true, goalTeam: "皇冠 进球" },
+                    { time: "55'", score: "1-0", home: "0.88", handicap: "半球/一球", away: "0.98", status: "same", isGoal: false },
+                    { time: "45'", score: "1-0", home: "0.85", handicap: "半球/一球", away: "1.01", status: "down", isGoal: false, note: "中场" },
+                    { time: "18'", score: "1-0", home: "1.05", handicap: "一球", away: "0.81", status: "up", isGoal: true, goalTeam: "曼城 进球" },
+                    { time: "05'", score: "0-0", home: "0.92", handicap: "半球/一球", away: "0.94", status: "up", isGoal: false },
+                    { time: "初盘", score: "0-0", home: "0.90", handicap: "半球/一球", away: "0.96", status: "same", isGoal: false }
+                ]
+            },
+            {
+                id: 'crown',
+                name: '皇冠 (Crown)',
+                isFav: true,
+                initial: { home: '0.93', handicap: '半球/一球', away: '0.93' },
+                instant: { home: '0.98', handicap: '半球/一球', away: '0.88', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "0.98", handicap: "半球/一球", away: "0.88", status: "up", isGoal: false },
+                    { time: "68'", score: "1-1", home: "0.91", handicap: "半球", away: "0.95", status: "down", isGoal: true },
+                    { time: "45'", score: "1-0", home: "0.83", handicap: "半球/一球", away: "1.03", status: "down", isGoal: false },
+                    { time: "18'", score: "1-0", home: "1.02", handicap: "一球", away: "0.84", status: "up", isGoal: true },
+                    { time: "初盘", score: "0-0", home: "0.93", handicap: "半球/一球", away: "0.93", status: "same", isGoal: false }
+                ]
+            },
+            {
+                id: 'macau',
+                name: '澳门彩票',
+                isFav: false,
+                initial: { home: '0.86', handicap: '半球', away: '0.96' },
+                instant: { home: '0.95', handicap: '半球/一球', away: '0.87', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "0.95", handicap: "半球/一球", away: "0.87", status: "up", isGoal: false },
+                    { time: "68'", score: "1-1", home: "0.88", handicap: "半球", away: "0.94", status: "down", isGoal: true },
+                    { time: "18'", score: "1-0", home: "1.00", handicap: "半球/一球", away: "0.82", status: "up", isGoal: true },
+                    { time: "初盘", score: "0-0", home: "0.86", handicap: "半球", away: "0.96", status: "same", isGoal: false }
+                ]
+            },
+            {
+                id: 'easybet',
+                name: '易胜博',
+                isFav: false,
+                initial: { home: '0.91', handicap: '半球/一球', away: '0.95' },
+                instant: { home: '1.00', handicap: '半球/一球', away: '0.86', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "1.00", handicap: "半球/一球", away: "0.86", status: "up", isGoal: false },
+                    { time: "68'", score: "1-1", home: "0.92", handicap: "半球", away: "0.92", status: "down", isGoal: true },
+                    { time: "初盘", score: "0-0", home: "0.91", handicap: "半球/一球", away: "0.95", status: "same", isGoal: false }
+                ]
+            },
+            {
+                id: 'william',
+                name: '威廉希尔',
+                isFav: true,
+                initial: { home: '0.88', handicap: '半球/一球', away: '0.98' },
+                instant: { home: '0.97', handicap: '半球/一球', away: '0.89', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "0.97", handicap: "半球/一球", away: "0.89", status: "up", isGoal: false },
+                    { time: "68'", score: "1-1", home: "0.90", handicap: "半球", away: "0.94", status: "down", isGoal: true },
+                    { time: "初盘", score: "0-0", home: "0.88", handicap: "半球/一球", away: "0.98", status: "same", isGoal: false }
+                ]
+            },
+            {
+                id: 'ladbrokes',
+                name: '立博 (Ladbrokes)',
+                isFav: false,
+                initial: { home: '0.89', handicap: '半球/一球', away: '0.93' },
+                instant: { home: '0.96', handicap: '半球/一球', away: '0.88', trend: 'up' },
+                timeline: [
+                    { time: "78'", score: "2-1", home: "0.96", handicap: "半球/一球", away: "0.88", status: "up", isGoal: false },
+                    { time: "初盘", score: "0-0", home: "0.89", handicap: "半球/一球", away: "0.93", status: "same", isGoal: false }
+                ]
+            }
+        ];
+
+        let selectedCompanyId = 'bet365';
+        let currentOddsType = 'ah'; // 'ah' (Asian), '1x2' (Euro), 'ou' (Over/Under)
+
+        // --- DOM Elements ---
+        const screenMain = document.getElementById('screen-main');
+        const screenDetail = document.getElementById('screen-detail');
+        const indexListContainer = document.getElementById('index-list-container');
+        const companySidebarList = document.getElementById('company-sidebar-list');
+        const timelineLogContainer = document.getElementById('timeline-log-container');
+        const btnBack = document.getElementById('btn-back');
+        const btnChartToggle = document.getElementById('btn-chart-toggle');
+        const chartSection = document.getElementById('chart-section');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 30000);
+
+            renderMainIndexList();
+            renderCompanySidebar();
+            renderTimelineLogs(selectedCompanyId);
+
+            // Back button
+            btnBack.addEventListener('click', popDetailScreen);
+
+            // Chart view toggle button
+            btnChartToggle.addEventListener('click', () => {
+                if (chartSection.classList.contains('hidden')) {
+                    chartSection.classList.remove('hidden');
+                    btnChartToggle.classList.add('text-ios-accent');
+                } else {
+                    chartSection.classList.add('hidden');
+                    btnChartToggle.classList.remove('text-ios-accent');
+                }
+            });
+
+            // Segmented tabs listener inside detail view
+            document.querySelectorAll('.detail-type-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.detail-type-btn').forEach(b => {
+                        b.classList.remove('text-white', 'bg-ios-card', 'shadow', 'font-bold');
+                        b.classList.add('text-ios-subtext', 'font-medium');
+                    });
+                    const target = e.currentTarget;
+                    target.classList.add('text-white', 'bg-ios-card', 'shadow', 'font-bold');
+                    target.classList.remove('text-ios-subtext', 'font-medium');
+                    
+                    currentOddsType = target.dataset.type;
+                    renderTimelineLogs(selectedCompanyId);
+                });
+            });
+        });
+
+        // Clock display
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('ios-clock').textContent = `${hours}:${minutes}`;
+        }
+
+        // Navigation: Push Screen
+        function pushDetailScreen(companyId) {
+            selectedCompanyId = companyId;
+            updateDetailHeader();
+            renderCompanySidebar();
+            renderTimelineLogs(companyId);
+
+            screenMain.classList.add('pushed');
+            screenDetail.classList.add('active');
+        }
+
+        // Navigation: Pop Screen
+        function popDetailScreen() {
+            screenDetail.classList.remove('active');
+            screenMain.classList.remove('pushed');
+        }
+
+        function renderMainIndexList() {
+            indexListContainer.innerHTML = '';
+            companiesData.forEach(comp => {
+                const row = document.createElement('div');
+                row.className = 'px-4 py-3.5 flex items-center justify-between hover:bg-ios-card/50 active:bg-ios-card transition-colors cursor-pointer';
+                
+                const isUp = comp.instant.trend === 'up';
+                const trendColor = isUp ? 'text-ios-up' : 'text-ios-down';
+                const trendArrow = isUp ? '▲' : '▼';
+
+                row.innerHTML = `
+                    <div class="w-1/4 flex items-center gap-1.5">
+                        <i class="fa-solid fa-star text-[10px] ${comp.isFav ? 'text-amber-400' : 'text-neutral-700'}"></i>
+                        <span class="text-xs font-semibold text-white truncate">${comp.name}</span>
+                    </div>
+                    <div class="w-1/3 text-center font-mono text-[11px] text-ios-subtext">
+                        <span>${comp.initial.home}</span>
+                        <span class="px-1 text-neutral-400">${comp.initial.handicap}</span>
+                        <span>${comp.initial.away}</span>
+                    </div>
+                    <div class="w-1/3 text-right font-mono text-[11px] font-bold">
+                        <span class="${trendColor}">${comp.instant.home} ${trendArrow}</span>
+                        <span class="px-1 text-white">${comp.instant.handicap}</span>
+                        <span class="text-ios-subtext">${comp.instant.away}</span>
+                    </div>
+                `;
+
+                row.addEventListener('click', () => {
+                    pushDetailScreen(comp.id);
+                });
+
+                indexListContainer.appendChild(row);
+            });
+        }
+
+        // Update detail screen header
+        function updateDetailHeader() {
+            const comp = companiesData.find(c => c.id === selectedCompanyId) || companiesData[0];
+            document.getElementById('detail-header-company').textContent = comp.name;
+            document.getElementById('summary-home-odds').textContent = `${comp.instant.home} ▲`;
+            document.getElementById('summary-handicap').textContent = comp.instant.handicap;
+            document.getElementById('summary-away-odds').textContent = `${comp.instant.away} ▼`;
+            
+            const starIcon = document.getElementById('btn-toggle-favorite').querySelector('i');
+            if(comp.isFav) {
+                starIcon.className = "fa-solid fa-star text-amber-400";
+            } else {
+                starIcon.className = "fa-regular fa-star";
+            }
+        }
+
+        function renderCompanySidebar() {
+            companySidebarList.innerHTML = '';
+            companiesData.forEach(comp => {
+                const isSelected = comp.id === selectedCompanyId;
+                const btn = document.createElement('button');
+                btn.className = `w-full py-3 px-2 text-center flex flex-col items-center justify-center transition-all ${
+                    isSelected 
+                        ? 'bg-ios-card border-l-4 border-ios-accent text-white font-bold shadow-inner' 
+                        : 'text-ios-subtext hover:text-white hover:bg-neutral-900/50'
+                }`;
+
+                btn.innerHTML = `
+                    <span class="text-[11px] truncate w-full">${comp.name}</span>
+                    <span class="text-[9px] font-mono mt-0.5 ${comp.instant.trend === 'up' ? 'text-ios-up' : 'text-ios-down'}">
+                        ${comp.instant.handicap}
+                    </span>
+                `;
+
+                btn.addEventListener('click', () => {
+                    selectedCompanyId = comp.id;
+                    updateDetailHeader();
+                    renderCompanySidebar();
+                    renderTimelineLogs(comp.id);
+                });
+
+                companySidebarList.appendChild(btn);
+            });
+        }
+
+        function renderTimelineLogs(companyId) {
+            timelineLogContainer.innerHTML = '';
+            const comp = companiesData.find(c => c.id === companyId) || companiesData[0];
+
+            comp.timeline.forEach((item, index) => {
+                const logRow = document.createElement('div');
+                
+                // Color coding for odds movement
+                let homeOddsClass = "text-gray-300";
+                let awayOddsClass = "text-gray-300";
+                let arrow = "";
+
+                if (item.status === 'up') {
+                    homeOddsClass = "text-ios-up font-bold";
+                    awayOddsClass = "text-ios-down font-medium";
+                    arrow = "▲";
+                } else if (item.status === 'down') {
+                    homeOddsClass = "text-ios-down font-medium";
+                    awayOddsClass = "text-ios-up font-bold";
+                    arrow = "▼";
+                }
+
+                // Render Goal Event Marker
+                if (item.isGoal) {
+                    const goalBanner = document.createElement('div');
+                    goalBanner.className = "my-1 px-3 py-1 bg-red-500/15 border border-red-500/30 rounded-xl flex items-center justify-between text-xs text-red-400 font-medium";
+                    goalBanner.innerHTML = `
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-futbol animate-spin"></i>
+                            <span>进球 ! ${item.goalTeam || ''} (${item.score})</span>
+                        </div>
+                        <span class="font-mono text-[10px]">${item.time}</span>
+                    `;
+                    timelineLogContainer.appendChild(goalBanner);
+                }
+
+                logRow.className = `p-2.5 rounded-xl border border-ios-cardBorder/60 bg-ios-card/70 flex items-center justify-between text-xs font-mono relative overflow-hidden ${index === 0 ? 'ring-1 ring-ios-accent/50 glow-up' : ''}`;
+                
+                logRow.innerHTML = `
+                    <!-- Time & Score -->
+                    <div class="w-14 flex flex-col justify-center">
+                        <span class="text-[11px] font-bold text-white">${item.time}</span>
+                        <span class="text-[9px] text-ios-subtext">${item.score}</span>
+                    </div>
+
+                    <!-- Home Odds -->
+                    <div class="flex-1 text-center font-bold ${homeOddsClass}">
+                        ${item.home} ${item.status === 'up' ? '<span class="text-[9px]">▲</span>' : ''}
+                    </div>
+
+                    <!-- Handicap Line -->
+                    <div class="w-16 text-center">
+                        <span class="px-1.5 py-0.5 bg-neutral-900 border border-neutral-700/80 rounded text-[10px] font-semibold text-white">
+                            ${item.handicap}
+                        </span>
+                    </div>
+
+                    <!-- Away Odds -->
+                    <div class="flex-1 text-center ${awayOddsClass}">
+                        ${item.away} ${item.status === 'down' ? '<span class="text-[9px]">▼</span>' : ''}
+                    </div>
+                `;
+
+                timelineLogContainer.appendChild(logRow);
+            });
+        }
+    </script>
+</body>
+</html>

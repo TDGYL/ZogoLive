@@ -1,4 +1,42 @@
 
+实现指数历史界面：按照/Users/guyilin/Desktop/ZogoLive/football_odd_detail.html，当点击比赛详情指数菜单，然后再点击指数列表到指数指数历史详情页，如下图，
+
+
+
+
+
+
+
+
+
+按照/Users/guyilin/Desktop/ZogoLive/footBallDetail.html点击菜单的指数部分数据参考，当点击指数列表的数据时候，push进去一个指数详情界面，详情核心是随一场比赛时间轴的变化,左边是公司列表，右边是数据列表，指数随之变动的UI图,适配苹果的样式
+
+
+给我做比赛详情点击指数菜单部分
+UI部分：
+比赛详情历史对战的UI参考 footBallDetail.html的指数菜单，一定要高还原度
+
+列表一共分为4段：第一段是让球让分，第二段是胜平负，第三段是进球数，第四段是角球
+请求接口为：/api/v1/football/match/odds，请求方式为GET请求
+请求参数： 
+{
+    "match_id": 10004459809，int类型
+}
+
+
+请求参考/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/Odds/ViewModel/LPMatchOddViewModel.m的requestMatchDetailOddWithParams方法
+
+段落对应的数据：asia=让球让分，eu=胜平负,bs=进球数,cr=角球
+
+每个段落里包含公司的数据：init=初盘，spot=即时，pre=赛前
+
+
+
+
+
+
+
+
 给我做比赛详情的历史对战
 UI部分：
 比赛详情历史对战的UI参考 footBallDetail.html的历史对战部分，先给我画出UI图
@@ -14,11 +52,6 @@ UI部分：
 历史交锋取historyTotal，最对多只用6次比赛的数据，主队对战记录取homeTotal，客队对战记录取awayTotal
 
 请求的数据模型参考：/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/stats/Model/LPStatsTableModel.m
-
-
-
-
-
 
 
 

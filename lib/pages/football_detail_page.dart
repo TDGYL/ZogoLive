@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_match_model.dart';
+import 'package:zogolive/models/g5_odds_model.dart';
 import 'package:zogolive/models/g5_process_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
@@ -28,12 +29,46 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   List<G5MatchItem>? _awayTotal;
   bool _isAnalysisLoading = true;
 
+  G5OddsData? _oddsData;
+  bool _isOddsLoading = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _fetchProcessData();
     _fetchAnalysisData();
+    _fetchOddsData();
+  }
+
+  Future<void> _fetchOddsData() async {
+    try {
+      final response = await G5NetworkManager().get(
+        '/api/v1/football/match/odds',
+        queryParameters: {'match_id': widget.match.matchId},
+      );
+
+      if (response.code == 0 && response.data != null) {
+        if (mounted) {
+          setState(() {
+            _oddsData = G5OddsData.fromJson(response.data as Map<String, dynamic>);
+            _isOddsLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isOddsLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isOddsLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchAnalysisData() async {
@@ -428,11 +463,173 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
       children: [
         _buildIncidentsTab(),
         _buildStatsTab(),
-        const Center(
-            child: Text('指数 (待开发)',
-                style: TextStyle(color: G5Colors.textSecondary))),
+        _buildOddsTab(),
         _buildAnalysisTab(),
       ],
+    );
+  }
+
+  Widget _buildOddsTab() {
+    if (_isOddsLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: G5Colors.accentEmerald));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildOddsSection('让球让分', _oddsData?.asia, ['主队', '盘口', '客队']),
+        const SizedBox(height: 20),
+        _buildOddsSection('胜平负', _oddsData?.eu, ['主胜', '平局', '客胜']),
+        const SizedBox(height: 20),
+        _buildOddsSection('进球数', _oddsData?.bs, ['大', '盘口', '小']),
+        const SizedBox(height: 20),
+        _buildOddsSection('角球', _oddsData?.cr, ['大', '盘口', '小']),
+      ],
+    );
+  }
+
+  Widget _buildOddsSection(String title, List<G5OddsCompany>? companies, List<String> headers) {
+    if (companies == null || companies.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: G5Colors.pitchCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: G5Colors.pitchBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 标题
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // 表头
+          Container(
+            color: G5Colors.pitchElevated,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Row(
+              children: [
+                const SizedBox(width: 80, child: Text('公司', style: TextStyle(color: G5Colors.textSecondary, fontSize: 12))),
+                const SizedBox(width: 40, child: Text('', style: TextStyle(color: G5Colors.textSecondary, fontSize: 12))),
+                Expanded(child: Text(headers[0], textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12))),
+                Expanded(child: Text(headers[1], textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12))),
+                Expanded(child: Text(headers[2], textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12))),
+              ],
+            ),
+          ),
+          // 列表
+          ...companies.map((c) => _buildOddsCompanyRow(c)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOddsCompanyRow(G5OddsCompany company) {
+    bool hasPre = company.pre != null;
+    bool hasSpot = company.spot != null;
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      child: Row(
+        children: [
+          // 公司名称
+          SizedBox(
+            width: 80,
+            child: Text(
+              company.name ?? '--',
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 初始/赛前/即时 标签
+          SizedBox(
+            width: 40,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('初盘', style: TextStyle(color: G5Colors.textSecondary, fontSize: 12)),
+                if (hasPre) ...[
+                  const SizedBox(height: 8),
+                  const Text('赛前', style: TextStyle(color: G5Colors.accentBlue, fontSize: 12)),
+                ],
+                if (hasSpot) ...[
+                  const SizedBox(height: 8),
+                  const Text('即时', style: TextStyle(color: G5Colors.accentEmerald, fontSize: 12)),
+                ]
+              ],
+            ),
+          ),
+          // 数据展示区
+          Expanded(
+            child: Column(
+              children: [
+                // 初盘数据
+                Row(
+                  children: [
+                    Expanded(child: Text(company.ini?.home ?? '-', textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 13))),
+                    Expanded(child: Text(company.ini?.draw ?? '-', textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 13))),
+                    Expanded(child: Text(company.ini?.away ?? '-', textAlign: TextAlign.center, style: const TextStyle(color: G5Colors.textSecondary, fontSize: 13))),
+                  ],
+                ),
+                // 赛前数据
+                if (hasPre) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _buildOddsValueText(company.pre?.home, company.ini?.home)),
+                      Expanded(child: _buildOddsValueText(company.pre?.draw, company.ini?.draw)),
+                      Expanded(child: _buildOddsValueText(company.pre?.away, company.ini?.away)),
+                    ],
+                  ),
+                ],
+                // 即时数据
+                if (hasSpot) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _buildOddsValueText(company.spot?.home, company.pre?.home ?? company.ini?.home)),
+                      Expanded(child: _buildOddsValueText(company.spot?.draw, company.pre?.draw ?? company.ini?.draw)),
+                      Expanded(child: _buildOddsValueText(company.spot?.away, company.pre?.away ?? company.ini?.away)),
+                    ],
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOddsValueText(String? current, String? initial) {
+    Color color = Colors.white;
+    if (current != null && initial != null) {
+      double? curVal = double.tryParse(current);
+      double? iniVal = double.tryParse(initial);
+      if (curVal != null && iniVal != null) {
+        if (curVal > iniVal) color = G5Colors.accentCrimson; // 涨了变红 (或绿，根据习惯)
+        else if (curVal < iniVal) color = G5Colors.accentEmerald; // 跌了变绿
+      }
+    }
+    return Text(
+      current ?? '-',
+      textAlign: TextAlign.center,
+      style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold),
     );
   }
 
