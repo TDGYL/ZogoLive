@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>足球比赛详情 - 暗黑极客风</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#10B981', // Emerald green highlight
+              light: '#34D399',
+              dark: '#059669',
+              blue: '#3B82F6',
+              accent: '#8B5CF6'
+            },
+            dark: {
+              bg: '#0A0D14',
+              card: '#121824',
+              subcard: '#1A2232',
+              border: 'rgba(255, 255, 255, 0.08)',
+              text: '#94A3B8'
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* iOS Custom Scrollbar Hide */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* Glowing card accent */
+    .glow-box {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.15);
+    }
+    
+    .glow-blue {
+      box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Pitch Pattern Background */
+    .pitch-bg {
+      background-color: #0d131f;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+        linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+    }
+
+    /* Tab Switch Indicator Smooth Transition */
+    .tab-active {
+      color: #10B981;
+      border-bottom: 2px solid #10B981;
+    }
+
+    /* Heart Pulse Animation */
+    @keyframes heartBeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(0.95); }
+      75% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    .heart-active {
+      animation: heartBeat 0.4s ease-in-out;
+      color: #EF4444 !important;
+    }
+
+    /* Floating Toast Animation */
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -20px); }
+    }
+    .toast-anim {
+      animation: toastFade 2.2s ease-in-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-0 sm:p-4 md:p-6 font-sans antialiased selection:bg-brand selection:text-white">
+
+  <!-- iPhone Outer Shell Mockup Frame -->
+  <div class="w-full max-w-[430px] h-[100vh] sm:h-[880px] bg-dark-bg sm:rounded-[50px] shadow-2xl border-0 sm:border-[8px] border-slate-800 flex flex-col relative overflow-hidden sm:ring-1 sm:ring-white/10">
+    
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800/90 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-full text-xs font-medium shadow-xl flex items-center gap-2 toast-anim">
+      <i id="toast-icon" class="fa-solid fa-heart text-red-500"></i>
+      <span id="toast-msg">比赛已加入收藏</span>
+    </div>
+
+    <!-- Top Status Bar (iOS style) -->
+    <div class="pt-3 px-7 flex justify-between items-center text-xs font-semibold text-slate-300 z-30 select-none">
+      <span>21:45</span>
+      <!-- Dynamic Island Mock -->
+      <div class="w-28 h-5 bg-black rounded-full flex items-center justify-end px-2 gap-1.5 border border-white/5">
+        <div class="w-2.5 h-2.5 rounded-full bg-blue-900/60 border border-blue-500/40"></div>
+        <div class="w-2 h-2 rounded-full bg-emerald-900/60 border border-emerald-500/40"></div>
+      </div>
+      <div class="flex items-center gap-1.5 text-xs">
+        <i class="fa-solid fa-signal text-[10px]"></i>
+        <i class="fa-solid fa-wifi text-[10px]"></i>
+        <i class="fa-solid fa-battery-three-quarters text-xs"></i>
+      </div>
+    </div>
+
+    <!-- App Header Nav Bar -->
+    <div class="px-4 py-3 flex items-center justify-between z-20 border-b border-white/5 bg-dark-bg/80 backdrop-blur-md sticky top-0">
+      <button class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition">
+        <i class="fa-solid fa-chevron-left text-sm"></i>
+      </button>
+      
+      <div class="text-center">
+        <span class="text-xs text-brand-light font-medium tracking-wide uppercase flex items-center justify-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 欧洲冠军联赛 · 1/4决赛
+        </span>
+        <h1 class="text-xs font-bold text-slate-400 mt-0.5">第二回合 (总比分 4 - 3)</h1>
+      </div>
+
+      <!-- Favorite & Share Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="btn-favorite" onclick="toggleFavorite()" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-red-400 transition group" title="收藏比赛">
+          <i id="icon-favorite" class="fa-regular fa-heart text-base transition-transform group-active:scale-125"></i>
+        </button>
+        <button onclick="showToast('已复制比赛分享链接', 'fa-share-nodes text-brand')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-share-nodes text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Scrollable Body Area -->
+    <div class="flex-1 overflow-y-auto no-scrollbar pitch-bg pb-12">
+      
+      <!-- Match Hero / Score Card Section -->
+      <div class="p-4">
+        <div class="bg-gradient-to-b from-dark-card to-dark-subcard border border-white/10 rounded-2xl p-4 shadow-xl relative overflow-hidden glow-box">
+          
+          <!-- Background Subtle Graphic -->
+          <div class="absolute -right-10 -bottom-10 text-white/5 text-9xl font-black italic pointer-events-none select-none">
+            UCL
+          </div>
+
+          <!-- Live Status Tag & Ref -->
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-4 pb-2 border-b border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span> 完场
+              </span>
+              <span class="text-slate-400 text-[11px]"><i class="fa-regular fa-clock mr-1"></i>09-11 03:00</span>
+            </div>
+            <span class="text-[11px] text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>伯纳乌球场</span>
+          </div>
+
+          <!-- Teams VS Matrix -->
+          <div class="grid grid-cols-7 items-center my-2">
+            <!-- Home Team -->
+            <div class="col-span-3 flex flex-col items-center text-center cursor-pointer group" onclick="showToast('查看皇家马德里球队详情', 'fa-shield-halved text-blue-400')">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/60 p-2 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform relative">
+                <!-- Team Logo Placeholder / SVG -->
+                <svg class="w-12 h-12" viewBox="0 0 100 100" fill="none">
+                  <circle cx="50" cy="50" r="42" fill="#1E293B" stroke="#F59E0B" stroke-width="4"/>
+                  <path d="M50 15 L62 30 L38 30 Z" fill="#F59E0B"/>
+                  <text x="50" y="62" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">RMA</text>
+                </svg>
+                <span class="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold border border-slate-900">主</span>
+              </div>
+              <h2 class="font-bold text-sm text-slate-100 mt-2 group-hover:text-brand-light transition">皇家马德里</h2>
+              <span class="text-[10px] text-slate-400 mt-0.5">西甲 · No.1</span>
+            </div>
+
+            <!-- Score Center Box -->
+            <div class="col-span-1 flex flex-col items-center justify-center text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <span class="text-3xl font-black text-white tracking-tight">2</span>
+                <span class="text-xl font-bold text-slate-500">-</span>
+                <span class="text-3xl font-black text-slate-300 tracking-tight">1</span>
+              </div>
+              <div class="mt-1 bg-white/5 px-2 py-0.5 rounded text-[10px] text-slate-400 border border-white/5 font-mono">
+                半场: 1-0
+              </div>
+            </div>
+
+            <!-- Away Team -->
+            <div class="col-span-3 flex flex-col items-center text-center cursor-pointer group" onclick="showToast('查看曼彻斯特城球队详情', 'fa-shield-halved text-cyan-400')">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/60 p-2 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform relative">
+                <svg class="w-12 h-12" viewBox="0 0 100 100" fill="none">
+                  <circle cx="50" cy="50" r="42" fill="#0284C7" stroke="#38BDF8" stroke-width="4"/>
+                  <path d="M30 40 L50 25 L70 40 L50 75 Z" fill="#E0F2FE" opacity="0.8"/>
+                  <text x="50" y="62" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">MCI</text>
+                </svg>
+                <span class="absolute -top-1 -right-1 bg-slate-700 text-slate-300 text-[9px] px-1.5 py-0.2 rounded-full font-bold border border-slate-900">客</span>
+              </div>
+              <h2 class="font-bold text-sm text-slate-100 mt-2 group-hover:text-cyan-400 transition">曼彻斯特城</h2>
+              <span class="text-[10px] text-slate-400 mt-0.5">英超 · No.2</span>
+            </div>
+          </div>
+
+          <!-- Quick Goal Summary Cards -->
+          <div class="mt-4 pt-3 border-t border-white/5 text-xs grid grid-cols-2 gap-2 text-slate-300">
+            <div class="flex items-center gap-1.5 bg-slate-900/60 p-2 rounded-lg border border-white/5">
+              <i class="fa-solid fa-futbol text-brand-light text-xs"></i>
+              <div class="truncate text-[11px]">
+                <span class="font-semibold text-slate-200">贝林厄姆</span> 23', <span class="font-semibold text-slate-200">维尼修斯</span> 78'
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 bg-slate-900/60 p-2 rounded-lg border border-white/5">
+              <i class="fa-solid fa-futbol text-red-400 text-xs"></i>
+              <div class="truncate text-[11px]">
+                <span class="font-semibold text-slate-200">哈兰德</span> 54' (点球)
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (iOS Segment Bar Style) -->
+      <div class="px-4 sticky top-[61px] z-20 bg-dark-bg/95 backdrop-blur-md py-2 border-b border-white/10">
+        <div class="flex space-x-1 bg-slate-900/80 p-1 rounded-xl border border-white/5 text-xs font-medium overflow-x-auto no-scrollbar">
+          <button onclick="switchTab('tab-events', this)" class="tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all bg-brand/20 text-brand-light font-bold border border-brand/30 shadow">
+            事件
+          </button>
+          <button onclick="switchTab('tab-stats', this)" class="tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200">
+            数据/比例
+          </button>
+          <button onclick="switchTab('tab-odds', this)" class="tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200">
+            指数
+          </button>
+          <button onclick="switchTab('tab-h2h', this)" class="tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200">
+            历史对战
+          </button>
+          <button onclick="switchTab('tab-squad', this)" class="tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200">
+            阵容
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT CONTAINER -->
+      <div class="p-4 space-y-4">
+
+        <!-- TAB 1: MATCH EVENTS TIMELINE -->
+        <div id="tab-events" class="tab-content block space-y-3">
+          
+          <div class="flex items-center justify-between text-xs text-slate-400 px-1 font-semibold">
+            <span>主队: 皇家马德里</span>
+            <span class="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full text-[10px]">90分钟战罢</span>
+            <span>客队: 曼城</span>
+          </div>
+
+          <!-- Timeline Container Card -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg relative">
+            
+            <!-- Central Timeline Bar -->
+            <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-slate-800 -translate-x-1/2"></div>
+
+            <div class="space-y-6 relative text-xs">
+
+              <!-- Event Item: End Match -->
+              <div class="flex items-center justify-center my-1">
+                <span class="bg-slate-800 text-slate-300 text-[10px] font-bold px-3 py-1 rounded-full border border-slate-700 z-10 shadow">
+                  全场比赛结束 2 - 1
+                </span>
+              </div>
+
+              <!-- Event: Goal (Home) 78' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3">
+                  <div class="font-bold text-slate-100 flex items-center justify-end gap-1.5">
+                    <span>维尼修斯</span>
+                    <i class="fa-solid fa-futbol text-brand-light text-sm animate-bounce"></i>
+                  </div>
+                  <div class="text-[10px] text-slate-400">助攻: 莫德里奇</div>
+                </div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-brand/20 border border-brand text-brand-light font-black text-[11px] flex items-center justify-center shadow-lg">
+                    78'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3"></div>
+              </div>
+
+              <!-- Event: Yellow Card (Away) 71' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3"></div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px] flex items-center justify-center">
+                    71'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3">
+                  <div class="font-semibold text-slate-200 flex items-center gap-1.5">
+                    <span class="w-2.5 h-3.5 bg-amber-400 rounded-sm inline-block shadow-sm"></span>
+                    <span>罗德里</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400">战术犯规</div>
+                </div>
+              </div>
+
+              <!-- Event: Substitution (Home) 65' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3">
+                  <div class="font-medium text-slate-200 flex items-center justify-end gap-1">
+                    <span>莫德里奇</span>
+                    <i class="fa-solid fa-arrows-rotate text-emerald-400 text-xs"></i>
+                  </div>
+                  <div class="text-[10px] text-slate-500">换下: 克罗斯</div>
+                </div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px] flex items-center justify-center">
+                    65'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3"></div>
+              </div>
+
+              <!-- Event: Goal (Away) 54' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3"></div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-red-500/20 border border-red-500 text-red-400 font-black text-[11px] flex items-center justify-center shadow-lg">
+                    54'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3">
+                  <div class="font-bold text-slate-100 flex items-center gap-1.5">
+                    <i class="fa-solid fa-futbol text-red-400 text-sm"></i>
+                    <span>哈兰德</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400">点球命中</div>
+                </div>
+              </div>
+
+              <!-- Event: Half time -->
+              <div class="flex items-center justify-center my-1">
+                <span class="bg-slate-800/80 text-slate-400 text-[10px] font-medium px-3 py-0.5 rounded-full border border-slate-700/60 z-10">
+                  半场休息 1 - 0
+                </span>
+              </div>
+
+              <!-- Event: VAR Check 38' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3">
+                  <div class="font-medium text-purple-300 flex items-center justify-end gap-1">
+                    <span>VAR 检查争议</span>
+                    <i class="fa-solid fa-tv text-purple-400 text-xs"></i>
+                  </div>
+                  <div class="text-[10px] text-slate-400">无点球判罚</div>
+                </div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-purple-900/40 border border-purple-500/50 text-purple-300 font-bold text-[10px] flex items-center justify-center">
+                    38'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3"></div>
+              </div>
+
+              <!-- Event: Goal (Home) 23' -->
+              <div class="grid grid-cols-9 items-center">
+                <div class="col-span-4 text-right pr-3">
+                  <div class="font-bold text-slate-100 flex items-center justify-end gap-1.5">
+                    <span>贝林厄姆</span>
+                    <i class="fa-solid fa-futbol text-brand-light text-sm"></i>
+                  </div>
+                  <div class="text-[10px] text-slate-400">助攻: 巴尔韦德</div>
+                </div>
+                <div class="col-span-1 flex justify-center z-10">
+                  <span class="w-7 h-7 rounded-full bg-brand/20 border border-brand text-brand-light font-black text-[11px] flex items-center justify-center shadow-lg">
+                    23'
+                  </span>
+                </div>
+                <div class="col-span-4 pl-3"></div>
+              </div>
+
+              <!-- Event: Start Match -->
+              <div class="flex items-center justify-center my-1">
+                <span class="bg-slate-800 text-slate-400 text-[10px] font-medium px-3 py-0.5 rounded-full border border-slate-700 z-10">
+                  比赛开始
+                </span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: STATS & GOAL RATIO SECTION -->
+        <div id="tab-stats" class="tab-content hidden space-y-4">
+          
+          <!-- Key Stats Comparison Card -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <h3 class="text-xs font-bold text-slate-300 mb-3 flex items-center justify-between border-b border-white/5 pb-2">
+              <span>技术统计对比</span>
+              <span class="text-[10px] text-slate-500 font-normal">实时精准数据</span>
+            </h3>
+
+            <div class="space-y-3.5 text-xs">
+              
+              <!-- Stat Item: Possession -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">48%</span>
+                  <span class="text-slate-300">控球率</span>
+                  <span class="text-cyan-400 font-bold">52%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 48%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 52%"></div>
+                </div>
+              </div>
+
+              <!-- Stat Item: Expected Goals (xG) -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">1.84</span>
+                  <span class="text-slate-300">预期进球 (xG)</span>
+                  <span class="text-cyan-400 font-bold">1.25</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 60%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 40%"></div>
+                </div>
+              </div>
+
+              <!-- Stat Item: Total Shots -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">14 (6)</span>
+                  <span class="text-slate-300">射门 (射正)</span>
+                  <span class="text-cyan-400 font-bold">11 (4)</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 56%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 44%"></div>
+                </div>
+              </div>
+
+              <!-- Stat Item: Dangerous Attacks -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">52</span>
+                  <span class="text-slate-300">危险进攻</span>
+                  <span class="text-cyan-400 font-bold">45</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 54%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 46%"></div>
+                </div>
+              </div>
+
+              <!-- Stat Item: Corners -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">6</span>
+                  <span class="text-slate-300">角球</span>
+                  <span class="text-cyan-400 font-bold">4</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 60%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 40%"></div>
+                </div>
+              </div>
+
+              <!-- Stat Item: Pass Accuracy -->
+              <div>
+                <div class="flex justify-between text-[11px] font-medium mb-1">
+                  <span class="text-emerald-400 font-bold">89%</span>
+                  <span class="text-slate-300">传球成功率</span>
+                  <span class="text-cyan-400 font-bold">92%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 49%"></div>
+                  <div class="bg-cyan-500 h-full rounded-r-full" style="width: 51%"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Goal Ratio & Time Slot Analysis Card -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <h3 class="text-xs font-bold text-slate-300 mb-3 flex items-center justify-between border-b border-white/5 pb-2">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-brand-light"></i> 进球时间段分布比例</span>
+              <span class="text-[10px] text-slate-500">本赛季平均数据</span>
+            </h3>
+
+            <!-- Time slot ratio histogram -->
+            <div class="space-y-2 mt-2">
+              <!-- 0-15m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">0-15'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 15%">15%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 10%">10%</div>
+                </div>
+              </div>
+
+              <!-- 16-30m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">16-30'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 28%">28%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 18%">18%</div>
+                </div>
+              </div>
+
+              <!-- 31-45m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">31-45'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 12%">12%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 22%">22%</div>
+                </div>
+              </div>
+
+              <!-- 46-60m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">46-60'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 18%">18%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 25%">25%</div>
+                </div>
+              </div>
+
+              <!-- 61-75m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">61-75'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 22%">22%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 15%">15%</div>
+                </div>
+              </div>
+
+              <!-- 76-90m -->
+              <div class="flex items-center text-[10px] gap-2">
+                <span class="w-10 text-slate-400 font-mono">76-90'</span>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-emerald-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 32%">32%</div>
+                </div>
+                <div class="flex-1 bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                  <div class="bg-cyan-500/80 h-full flex items-center justify-center text-[8px] text-slate-900 font-bold" style="width: 30%">30%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-center gap-6 mt-3 pt-2 border-t border-white/5 text-[10px]">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded bg-emerald-500"></span>
+                <span class="text-slate-300">皇马 (绝杀率高)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded bg-cyan-500"></span>
+                <span class="text-slate-300">曼城 (后半程爆发)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 3: MATCH ODDS & INDEX SECTION -->
+        <div id="tab-odds" class="tab-content hidden space-y-4">
+          
+          <!-- Asian Handicap (亚指) Card -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+              <h3 class="text-xs font-bold text-slate-200">让球让分 (亚指)</h3>
+              <span class="text-[10px] bg-brand/10 text-brand-light px-2 py-0.5 rounded border border-brand/20">主流参考</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-center text-xs">
+                <thead>
+                  <tr class="text-slate-500 text-[10px] border-b border-white/5">
+                    <th class="py-1.5 text-left font-normal">公司</th>
+                    <th class="py-1.5 font-normal">类型</th>
+                    <th class="py-1.5 font-normal">主胜(皇马)</th>
+                    <th class="py-1.5 font-normal">盘口</th>
+                    <th class="py-1.5 font-normal">客胜(曼城)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 font-mono text-[11px]">
+                  <tr>
+                    <td class="py-2 text-left font-sans font-semibold text-slate-300">澳门</td>
+                    <td class="text-slate-500 text-[10px]">即时</td>
+                    <td class="text-red-400 font-bold">0.92 <i class="fa-solid fa-arrow-up text-[9px]"></i></td>
+                    <td class="text-slate-200 font-sans font-bold bg-white/5 rounded">平手/半球</td>
+                    <td class="text-emerald-400">0.94 <i class="fa-solid fa-arrow-down text-[9px]"></i></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td class="text-slate-500 text-[10px]">初盘</td>
+                    <td class="text-slate-400">0.88</td>
+                    <td class="text-slate-400 font-sans">平手</td>
+                    <td class="text-slate-400">0.98</td>
+                  </tr>
+
+                  <tr>
+                    <td class="py-2 text-left font-sans font-semibold text-slate-300">365</td>
+                    <td class="text-slate-500 text-[10px]">即时</td>
+                    <td class="text-red-400 font-bold">0.95 <i class="fa-solid fa-arrow-up text-[9px]"></i></td>
+                    <td class="text-slate-200 font-sans font-bold bg-white/5 rounded">平手/半球</td>
+                    <td class="text-emerald-400">0.91 <i class="fa-solid fa-arrow-down text-[9px]"></i></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td class="text-slate-500 text-[10px]">初盘</td>
+                    <td class="text-slate-400">0.90</td>
+                    <td class="text-slate-400 font-sans">平手/半球</td>
+                    <td class="text-slate-400">0.96</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- European 1X2 Odds Card -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+              <h3 class="text-xs font-bold text-slate-200">胜平负 (欧指)</h3>
+              <span class="text-[10px] text-slate-400">即时 / 初盘对比</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <!-- Home Win -->
+              <div class="bg-slate-900/80 p-2.5 rounded-xl border border-white/5">
+                <span class="text-[10px] text-slate-400 block mb-1">主胜 (皇马)</span>
+                <span class="text-base font-bold font-mono text-red-400 block">2.25</span>
+                <span class="text-[9px] text-slate-500 font-mono">初: 2.40</span>
+              </div>
+              <!-- Draw -->
+              <div class="bg-slate-900/80 p-2.5 rounded-xl border border-white/5">
+                <span class="text-[10px] text-slate-400 block mb-1">平局</span>
+                <span class="text-base font-bold font-mono text-slate-200 block">3.50</span>
+                <span class="text-[9px] text-slate-500 font-mono">初: 3.40</span>
+              </div>
+              <!-- Away Win -->
+              <div class="bg-slate-900/80 p-2.5 rounded-xl border border-white/5">
+                <span class="text-[10px] text-slate-400 block mb-1">客胜 (曼城)</span>
+                <span class="text-base font-bold font-mono text-emerald-400 block">3.10</span>
+                <span class="text-[9px] text-slate-500 font-mono">初: 2.85</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Over/Under (大小球) -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+              <h3 class="text-xs font-bold text-slate-200">进球数 (大小球)</h3>
+              <span class="text-[10px] text-brand-light">大 2.75 球</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-center text-xs font-mono">
+              <div class="bg-slate-900/60 p-2 rounded-lg border border-white/5 flex justify-between items-center px-3">
+                <span class="text-slate-400 font-sans text-[11px]">大球 (＞2.75)</span>
+                <span class="text-brand-light font-bold">0.93</span>
+              </div>
+              <div class="bg-slate-900/60 p-2 rounded-lg border border-white/5 flex justify-between items-center px-3">
+                <span class="text-slate-400 font-sans text-[11px]">小球 (＜2.75)</span>
+                <span class="text-slate-300 font-bold">0.91</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 4: HEAD TO HEAD HISTORY (H2H) SECTION -->
+        <div id="tab-h2h" class="tab-content hidden space-y-4">
+          
+          <!-- H2H Summary Bar -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <h3 class="text-xs font-bold text-slate-200 mb-2">近6次交锋统计</h3>
+            
+            <div class="flex items-center justify-between my-3 text-xs">
+              <div class="text-center">
+                <span class="text-xl font-bold text-emerald-400 block">3胜</span>
+                <span class="text-[10px] text-slate-400">皇家马德里</span>
+              </div>
+              <div class="text-center">
+                <span class="text-xl font-bold text-slate-300 block">2平</span>
+                <span class="text-[10px] text-slate-400">平局</span>
+              </div>
+              <div class="text-center">
+                <span class="text-xl font-bold text-cyan-400 block">1胜</span>
+                <span class="text-[10px] text-slate-400">曼彻斯特城</span>
+              </div>
+            </div>
+
+            <!-- Form Badges -->
+            <div class="mt-3 pt-3 border-t border-white/5">
+              <div class="flex justify-between items-center text-[11px] mb-2">
+                <span class="text-slate-300">皇马近况:</span>
+                <div class="flex gap-1 font-bold">
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-slate-700 text-slate-300 border border-slate-600 flex items-center justify-center text-[10px]">平</span>
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-red-500/20 text-red-400 border border-red-500/40 flex items-center justify-center text-[10px]">负</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-[11px]">
+                <span class="text-slate-300">曼城近况:</span>
+                <div class="flex gap-1 font-bold">
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-red-500/20 text-red-400 border border-red-500/40 flex items-center justify-center text-[10px]">负</span>
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px]">胜</span>
+                  <span class="w-5 h-5 rounded bg-slate-700 text-slate-300 border border-slate-600 flex items-center justify-center text-[10px]">平</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historical Matches List -->
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg space-y-2.5">
+            <h3 class="text-xs font-bold text-slate-300 mb-2">历史对战记录</h3>
+
+            <!-- H2H Match 1 -->
+            <div class="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+              <div class="text-[10px] text-slate-500 w-16">2024-04-18<br>欧冠</div>
+              <div class="flex-1 flex items-center justify-center gap-2 font-semibold">
+                <span class="text-slate-200">曼城</span>
+                <span class="bg-brand/20 text-brand-light px-2 py-0.5 rounded font-mono font-bold">1 - 1</span>
+                <span class="text-emerald-400">皇马</span>
+              </div>
+              <span class="text-[10px] text-slate-400 w-12 text-right">点球胜</span>
+            </div>
+
+            <!-- H2H Match 2 -->
+            <div class="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+              <div class="text-[10px] text-slate-500 w-16">2024-04-10<br>欧冠</div>
+              <div class="flex-1 flex items-center justify-center gap-2 font-semibold">
+                <span class="text-emerald-400">皇马</span>
+                <span class="bg-brand/20 text-brand-light px-2 py-0.5 rounded font-mono font-bold">3 - 3</span>
+                <span class="text-slate-200">曼城</span>
+              </div>
+              <span class="text-[10px] text-slate-400 w-12 text-right">平局</span>
+            </div>
+
+            <!-- H2H Match 3 -->
+            <div class="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+              <div class="text-[10px] text-slate-500 w-16">2023-05-18<br>欧冠</div>
+              <div class="flex-1 flex items-center justify-center gap-2 font-semibold">
+                <span class="text-cyan-400">曼城</span>
+                <span class="bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded font-mono font-bold">4 - 0</span>
+                <span class="text-slate-400">皇马</span>
+              </div>
+              <span class="text-[10px] text-cyan-400 w-12 text-right">曼城胜</span>
+            </div>
+
+            <!-- H2H Match 4 -->
+            <div class="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+              <div class="text-[10px] text-slate-500 w-16">2022-05-05<br>欧冠</div>
+              <div class="flex-1 flex items-center justify-center gap-2 font-semibold">
+                <span class="text-emerald-400">皇马</span>
+                <span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">3 - 1</span>
+                <span class="text-slate-400">曼城</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 w-12 text-right">皇马胜</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- TAB 5: SQUAD / LINEUP SECTION -->
+        <div id="tab-squad" class="tab-content hidden space-y-4">
+          <div class="bg-dark-card border border-white/10 rounded-2xl p-4 shadow-lg">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+              <h3 class="text-xs font-bold text-slate-200">首发阵容 (4-3-3 vs 4-1-4-1)</h3>
+              <span class="text-[10px] text-slate-400">已确认官方阵型</span>
+            </div>
+
+            <!-- Pitch Tactical Graphic -->
+            <div class="w-full h-64 bg-emerald-950/60 rounded-xl border border-emerald-500/20 relative p-2 overflow-hidden flex flex-col justify-between">
+              <!-- Half Pitch Line -->
+              <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-emerald-500/20"></div>
+              <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-emerald-500/20"></div>
+
+              <!-- Home Team Nodes (Top half) -->
+              <div class="relative z-10 space-y-3">
+                <div class="flex justify-around">
+                  <span class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[9px] font-bold shadow">维尼修斯</span>
+                  <span class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[9px] font-bold shadow">姆巴佩</span>
+                  <span class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[9px] font-bold shadow">罗德里戈</span>
+                </div>
+                <div class="flex justify-around px-6">
+                  <span class="px-2 py-0.5 bg-emerald-800 text-slate-200 rounded text-[9px] font-bold">贝林厄姆</span>
+                  <span class="px-2 py-0.5 bg-emerald-800 text-slate-200 rounded text-[9px] font-bold">巴尔韦德</span>
+                </div>
+              </div>
+
+              <!-- Away Team Nodes (Bottom half) -->
+              <div class="relative z-10 space-y-3">
+                <div class="flex justify-around px-6">
+                  <span class="px-2 py-0.5 bg-cyan-800 text-slate-200 rounded text-[9px] font-bold">德布劳内</span>
+                  <span class="px-2 py-0.5 bg-cyan-800 text-slate-200 rounded text-[9px] font-bold">福登</span>
+                </div>
+                <div class="flex justify-around">
+                  <span class="px-2 py-0.5 bg-cyan-600 text-white rounded text-[9px] font-bold shadow">格拉利什</span>
+                  <span class="px-2 py-0.5 bg-cyan-600 text-white rounded text-[9px] font-bold shadow">哈兰德</span>
+                  <span class="px-2 py-0.5 bg-cyan-600 text-white rounded text-[9px] font-bold shadow">B席</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="mt-3 text-center">
+              <button onclick="showToast('裁判组：奥尔萨托 (意大利)', 'fa-user-ninja text-amber-400')" class="text-[11px] text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-white/5 hover:text-white transition">
+                <i class="fa-solid fa-whistle mr-1"></i> 查看裁判与教练组名单
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar (iOS App Style) -->
+    <div class="bg-dark-card/95 backdrop-blur-lg border-t border-white/10 px-6 py-2 flex justify-between items-center text-slate-400 z-30 select-none">
+      <button onclick="showToast('返回比赛大厅', 'fa-trophy text-brand-light')" class="flex flex-col items-center gap-0.5 text-brand-light">
+        <i class="fa-solid fa-trophy text-base"></i>
+        <span class="text-[9px] font-bold">赛事</span>
+      </button>
+      <button onclick="showToast('正在加载实时滚球', 'fa-futbol text-blue-400')" class="flex flex-col items-center gap-0.5 hover:text-slate-200 transition">
+        <i class="fa-solid fa-futbol text-base"></i>
+        <span class="text-[9px] font-medium">比分</span>
+      </button>
+      <button onclick="showToast('查看社区讨论区', 'fa-comments text-purple-400')" class="flex flex-col items-center gap-0.5 hover:text-slate-200 transition relative">
+        <i class="fa-solid fa-comments text-base"></i>
+        <span class="text-[9px] font-medium">讨论</span>
+        <span class="absolute -top-1 right-1 w-2 h-2 rounded-full bg-red-500"></span>
+      </button>
+      <button onclick="showToast('个人收藏夹', 'fa-bookmark text-amber-400')" class="flex flex-col items-center gap-0.5 hover:text-slate-200 transition">
+        <i class="fa-solid fa-user text-base"></i>
+        <span class="text-[9px] font-medium">我的</span>
+      </button>
+    </div>
+
+    <!-- Home Indicator Bar (iOS Style) -->
+    <div class="bg-dark-card pb-1.5 flex justify-center z-30">
+      <div class="w-32 h-1 bg-slate-600/60 rounded-full"></div>
+    </div>
+
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // State management for Favorite Match Toggle
+    let isFavorited = false;
+
+    function toggleFavorite() {
+      const btn = document.getElementById('btn-favorite');
+      const icon = document.getElementById('icon-favorite');
+      isFavorited = !isFavorited;
+
+      if (isFavorited) {
+        icon.className = 'fa-solid fa-heart text-base heart-active';
+        btn.classList.add('border-red-500/40', 'bg-red-500/10');
+        showToast('比赛已加入我的收藏', 'fa-heart text-red-500');
+      } else {
+        icon.className = 'fa-regular fa-heart text-base text-slate-400';
+        btn.classList.remove('border-red-500/40', 'bg-red-500/10');
+        showToast('已取消收藏该比赛', 'fa-heart-crack text-slate-400');
+      }
+    }
+
+    // Segmented Tab Switching
+    function switchTab(tabId, element) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      // Show selected tab
+      const target = document.getElementById(tabId);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+
+      // Update button styling
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200';
+      });
+
+      element.className = 'tab-btn flex-1 min-w-[65px] py-2 rounded-lg text-center transition-all bg-brand/20 text-brand-light font-bold border border-brand/30 shadow';
+    }
+
+    // Floating Toast Notification system
+    let toastTimeout;
+    function showToast(message, iconClass) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = message;
+      if (iconClass) {
+        toastIcon.className = 'fa-solid ' + iconClass;
+      }
+
+      toast.classList.remove('hidden');
+      
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2200);
+    }
+  </script>
+</body>
+</html>

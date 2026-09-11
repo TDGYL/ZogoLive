@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:zogolive/pages/main_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
+import 'package:zogolive/utils/g5_sp_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await G5SpManager.init(); // 确保 SharedPreferences 先初始化
   await G5AuthManager().init();
   runApp(const MyApp());
 }
