@@ -1,9 +1,89 @@
 
 
 
+进入球队详情的时候，通过比赛详情的G5MatchItem的联赛competition_id传到球队详情，然后给球队详情的赛程的/api/v1/football/matches请求和/api/v1/info/list请求使用
 
 
 
+球队详情的赛程菜单页严格按照teamDetail.html的赛程菜单界面还原，顶部分类去掉，只展示列表，接口请求为/api/v1/football/matches，请求方式为POST请求，
+请求参数： 
+{
+   "tab": 0，int类型
+   "page": 1，int类型
+    "size": 10，int类型
+    "timestamp":1793934444,int类型
+    "competition_ids":[1313123]
+}
+
+参数说明：tab、page、size固定，timestamp传入明天的时间戳，competition_ids是传入这个球队所属的联赛id数组
+
+数据返回的结构和首页的比赛列表一样，然后列表可以点击进入比赛详情
+
+
+
+
+
+
+在球队详情的概览下请求球队最新动态，请求接口为：/api/v1/info/list，请求方式为get请求。
+请求参数： 
+{
+   "page": 1，int类型
+    "size": 5，int类型
+    "competition_id": 10181，int类型
+}
+参数说明，page和size是固定的，competition_id是联赛ID，通过请求球队详情获取的competition_id传进去
+
+数据结构和news_page勤求的资讯是一样的
+
+把概览下的近期战绩删除掉
+
+
+按照teamDetail.html，给我生成球队详情，当点击比赛详情顶部的球队头像时候，push到球队详情
+
+球队想求的请求接口为：/api/v1/football/team/data，请求方式为GET请求
+请求参数： 
+{
+    "team_id": 10181，int类型
+}
+参数说明：team_id代表的是球队ID，点击球队头像的时候传进去
+
+返回的数据结构为：
+{
+    "code": 0,
+    "data": {
+        "competition_id": 82,
+        "competition_name": "ENG Premier League",
+        "name": "Manchester City",
+        "logo": "https://cdn.sportnanoapi.com/football/team/c4a6528a2ee147b99c9885ef24385a4e.png",
+        "foundation_time": 1880,
+        "country_name": "England",
+        "country_logo": "https://cdn.sportnanoapi.com/football/country/916957927a5ee63e040631bd442ada34.png",
+        "venue_name": "Etihad Stadium",
+        "venue_capacity": 55097,
+        "manager_name": "Pep Guardiola",
+        "manager_logo": "https://cdn.sportnanoapi.com/football/player/6ca196de87589a3a2768e9740ab64100.png",
+        "market_value": 1050000000,
+        "is_subscribe": false,
+        "website": "http://www.mcfc.co.uk/"
+    },
+    "message": ""
+}
+参数说明：market_value=总身价，manager_name=主教练名，foundation_time成立时间
+
+
+
+资讯：/api/v1/info/list
+
+
+
+
+
+
+
+
+
+
+按照/Users/guyilin/Desktop/ZogoLive/footBallDetail.html的界面风格，给我生成一个球队详情的界面,适配苹果手机样式
 
 
 
@@ -89,7 +169,7 @@
 
 
 
-按照/Users/guyilin/Desktop/ZogoLive/footBallDetail.html点击菜单的指数部分数据参考，当点击指数列表的数据时候，push进去一个指数详情界面，详情核心是随一场比赛时间轴的变化,左边是公司列表，右边是数据列表，指数随之变动的UI图,适配苹果的样式
+按照/Users/guyilin/Desktop/ZogoLive/footBallDetail.html的界面风格，给我生成一个球队详情的界面，
 
 
 给我做比赛详情点击指数菜单部分

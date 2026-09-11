@@ -1,0 +1,726 @@
+import 'package:flutter/material.dart';
+import 'package:zogolive/base/g5_base_view_controller.dart';
+import 'package:zogolive/models/g5_match_model.dart';
+import 'package:zogolive/models/g5_news_model.dart';
+import 'package:zogolive/models/g5_team_model.dart';
+import 'package:zogolive/pages/football_detail_page.dart';
+import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_network_manager.dart';
+
+class TeamDetailPage extends G5BaseViewController {
+  final int teamId;
+  final int? competitionId;
+
+  const TeamDetailPage({Key? key, required this.teamId, this.competitionId}) : super(key: key);
+
+  @override
+  State<TeamDetailPage> createState() => _TeamDetailPageState();
+}
+
+class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final List<String> _tabs = ['概览', '赛程', '阵容', '数据', '积分榜'];
+
+  bool _isLoading = true;
+  G5TeamData? _teamData;
+
+  bool _isNewsLoading = false;
+  List<G5NewsItem> _newsList = [];
+
+  bool _isMatchesLoading = false;
+  List<G5MatchItem> _matchesList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    
+    // 如果外部传入了 competitionId，则立即发起赛程和新闻的请求，不必等 teamData 返回
+    if (widget.competitionId != null) {
+      _fetchTeamNews(widget.competitionId!);
+      _fetchTeamMatches(widget.competitionId!);
+    }
+    
+    _fetchTeamData();
+  }
+
+  Future<void> _fetchTeamData() async {
+    try {
+      final response = await G5NetworkManager().get(
+        '/api/v1/football/team/data',
+        queryParameters: {'team_id': widget.teamId},
+      );
+
+      if (response.code == 0 && response.data != null) {
+        if (mounted) {
+          setState(() {
+            _teamData = G5TeamData.fromJson(response.data as Map<String, dynamic>);
+            _isLoading = false;
+          });
+          
+          // 如果外部没有传入 competitionId，但是详情接口返回了，则使用返回的 id 去请求（兜底）
+          if (widget.competitionId == null && _teamData?.competitionId != null) {
+            _fetchTeamNews(_teamData!.competitionId!);
+            _fetchTeamMatches(_teamData!.competitionId!);
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchTeamNews(int competitionId) async {
+    setState(() {
+      _isNewsLoading = true;
+    });
+    try {
+      final response = await G5NetworkManager().get(
+        '/api/v1/info/list',
+        queryParameters: {
+          'page': 1,
+          'size': 5,
+          'competition_id': competitionId,
+        },
+      );
+      if (response.code == 0 && response.data != null) {
+        final data = G5NewsData.fromJson(response.data as Map<String, dynamic>);
+        if (mounted) {
+          setState(() {
+            _newsList = data.results ?? [];
+            _isNewsLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isNewsLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isNewsLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchTeamMatches(int competitionId) async {
+    setState(() {
+      _isMatchesLoading = true;
+    });
+    try {
+      final now = DateTime.now();
+      // 获取明天的时间戳
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      final timestamp = (tomorrow.millisecondsSinceEpoch / 1000).floor();
+
+      final response = await G5NetworkManager().post(
+        '/api/v1/football/matches',
+        data: {
+          'tab': 0,
+          'page': 1,
+          'size': 10,
+          'timestamp': timestamp,
+          'competition_ids': [competitionId],
+        },
+      );
+      if (response.code == 0 && response.data != null) {
+        final data = G5MatchData.fromJson(response.data as Map<String, dynamic>);
+        if (mounted) {
+          setState(() {
+            _matchesList = data.results ?? [];
+            _isMatchesLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isMatchesLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isMatchesLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget buildBody(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: G5Colors.accentEmerald));
+    }
+
+    if (_teamData == null) {
+      return const Center(child: Text('暂无球队数据', style: TextStyle(color: G5Colors.textSecondary)));
+    }
+
+    return Column(
+      children: [
+        _buildHeaderCard(),
+        _buildTabBar(),
+        Expanded(
+          child: _buildTabBarView(),
+        ),
+      ],
+    );
+  }
+
+  @override
+  PreferredSizeWidget? buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: G5Colors.pitch,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Text(
+        _teamData?.name ?? '球队详情',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      centerTitle: true,
+    );
+  }
+
+  Widget _buildHeaderCard() {
+    final team = _teamData!;
+    
+    // 身价格式化
+    String marketValueStr = '-';
+    if (team.marketValue != null) {
+      if (team.marketValue! >= 100000000) {
+        marketValueStr = '€${(team.marketValue! / 100000000).toStringAsFixed(1)}亿';
+      } else if (team.marketValue! >= 10000) {
+        marketValueStr = '€${(team.marketValue! / 10000).toStringAsFixed(0)}万';
+      } else {
+        marketValueStr = '€${team.marketValue}';
+      }
+    }
+
+    return Container(
+      color: G5Colors.pitch,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        children: [
+          // 顶部：头像、名称、标签
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: G5Colors.pitchElevated,
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: team.logo != null && team.logo!.isNotEmpty
+                    ? Image.network(
+                        team.logo!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.shield, color: G5Colors.textSecondary, size: 30),
+                      )
+                    : const Icon(Icons.shield, color: G5Colors.textSecondary, size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            team.name ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (team.competitionName != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              color: G5Colors.accentEmerald.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: G5Colors.accentEmerald.withOpacity(0.3)),
+                            ),
+                            child: Text(
+                              team.competitionName!,
+                              style: const TextStyle(
+                                color: G5Colors.accentEmerald,
+                                fontSize: 10,
+                              ),
+                            ),
+                          )
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${team.name ?? ''} • ${team.countryName ?? ''}',
+                      style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: G5Colors.pitchElevated,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: G5Colors.pitchBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.shield, color: G5Colors.accentGold, size: 10),
+                              const SizedBox(width: 4),
+                              Text('成立 ${team.foundationTime ?? "-"}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: G5Colors.pitchElevated,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: G5Colors.pitchBorder),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on, color: G5Colors.accentBlue, size: 10),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    team.venueName ?? "-",
+                                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 20),
+          // 底部数据网格
+          Container(
+            padding: const EdgeInsets.only(top: 16),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: G5Colors.pitchBorder)),
+            ),
+            child: Row(
+              children: [
+                _buildQuickMetric('总身价', marketValueStr, Colors.white),
+                _buildQuickMetric('国家', team.countryName ?? '-', G5Colors.accentGold),
+                _buildQuickMetric('主教练', team.managerName ?? '-', Colors.white),
+                _buildQuickMetric('容量', team.venueCapacity != null ? '${team.venueCapacity}' : '-', Colors.white),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickMetric(String label, String value, Color valueColor) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: G5Colors.pitchElevated.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: G5Colors.pitchBorder),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: G5Colors.pitch,
+        border: Border(
+          top: BorderSide(color: G5Colors.pitchBorder),
+          bottom: BorderSide(color: G5Colors.pitchBorder)
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        indicatorColor: G5Colors.accentBlue,
+        indicatorWeight: 3,
+        labelColor: G5Colors.accentBlue,
+        unselectedLabelColor: G5Colors.textSecondary,
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        tabs: _tabs.map((e) => Tab(text: e)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTabBarView() {
+    return TabBarView(
+      controller: _tabController,
+      children: _tabs.map((tabName) {
+        if (tabName == '概览') {
+          return _buildOverviewTab();
+        } else if (tabName == '赛程') {
+          return _buildFixturesTab();
+        }
+        return Center(
+            child: Text('$tabName (待开发)',
+                style: const TextStyle(color: G5Colors.textSecondary)));
+      }).toList(),
+    );
+  }
+
+  Widget _buildFixturesTab() {
+    if (_isMatchesLoading) {
+      return const Center(child: CircularProgressIndicator(color: G5Colors.accentEmerald));
+    }
+    
+    if (_matchesList.isEmpty) {
+      return const Center(child: Text('暂无赛程数据', style: TextStyle(color: G5Colors.textSecondary)));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _matchesList.length,
+      itemBuilder: (context, index) {
+        final match = _matchesList[index];
+        bool isFinished = match.statusId == 8; // 8代表完赛
+        bool isLive = match.statusId != null && match.statusId! > 1 && match.statusId! < 8; // 进行中
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => FootballDetailPage(match: match),
+            ));
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isFinished ? G5Colors.pitchElevated : G5Colors.pitchCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isLive ? G5Colors.accentEmerald.withOpacity(0.4) : G5Colors.pitchBorder,
+              ),
+              boxShadow: isLive
+                  ? [BoxShadow(color: G5Colors.accentEmerald.withOpacity(0.1), blurRadius: 8)]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // 左侧时间和赛事
+                SizedBox(
+                  width: 60,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _formatMatchDate(match.matchTime),
+                        style: TextStyle(
+                          color: isLive ? G5Colors.accentEmerald : G5Colors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: isLive ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        match.competitionName ?? '',
+                        style: const TextStyle(color: G5Colors.textSecondary, fontSize: 9),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // 中间主客队和比分
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 主队
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                match.homeTeamName ?? '',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            if (match.homeTeamLogo != null && match.homeTeamLogo!.isNotEmpty)
+                              ClipOval(
+                                child: Image.network(match.homeTeamLogo!, width: 24, height: 24, fit: BoxFit.cover),
+                              ),
+                          ],
+                        ),
+                      ),
+                      
+                      // 比分
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: G5Colors.pitch,
+                          borderRadius: BorderRadius.circular(4),
+                          border: isLive ? Border.all(color: G5Colors.accentEmerald.withOpacity(0.5)) : null,
+                        ),
+                        child: Text(
+                          isFinished || isLive ? '${match.homeNormalScore} - ${match.awayNormalScore}' : _formatMatchTimeOnly(match.matchTime),
+                          style: TextStyle(
+                            color: isLive ? G5Colors.accentEmerald : (isFinished ? Colors.white : G5Colors.accentGold),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      
+                      // 客队
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            if (match.awayTeamLogo != null && match.awayTeamLogo!.isNotEmpty)
+                              ClipOval(
+                                child: Image.network(match.awayTeamLogo!, width: 24, height: 24, fit: BoxFit.cover, errorBuilder: (c, e, s) => const SizedBox(width: 24, height: 24)),
+                              ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                match.awayTeamName ?? '',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // 右侧状态
+                SizedBox(
+                  width: 50,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isLive 
+                            ? G5Colors.accentEmerald.withOpacity(0.1) 
+                            : (isFinished ? G5Colors.accentEmerald.withOpacity(0.1) : G5Colors.accentGold.withOpacity(0.1)),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isLive 
+                              ? G5Colors.accentEmerald.withOpacity(0.2) 
+                              : (isFinished ? G5Colors.accentEmerald.withOpacity(0.2) : G5Colors.accentGold.withOpacity(0.2)),
+                        ),
+                      ),
+                      child: Text(
+                        match.statusName ?? '未开赛',
+                        style: TextStyle(
+                          color: isLive 
+                              ? G5Colors.accentEmerald 
+                              : (isFinished ? G5Colors.accentEmerald : G5Colors.accentGold),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatMatchDate(int? timestamp) {
+    if (timestamp == null) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+  
+  String _formatMatchTimeOnly(int? timestamp) {
+    if (timestamp == null) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildOverviewTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: G5Colors.pitchCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: G5Colors.pitchBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.newspaper, color: G5Colors.accentBlue, size: 16),
+                  SizedBox(width: 8),
+                  Text('球队最新动态', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_isNewsLoading)
+                const Center(child: CircularProgressIndicator(color: G5Colors.accentEmerald))
+              else if (_newsList.isEmpty)
+                const Text('暂无最新新闻数据', style: TextStyle(color: G5Colors.textSecondary, fontSize: 12))
+              else
+                ..._newsList.map((news) => _buildNewsRow(news)).toList(),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildNewsRow(G5NewsItem news) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 80,
+            height: 60,
+            decoration: BoxDecoration(
+              color: G5Colors.pitchElevated,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: news.cover != null && news.cover!.isNotEmpty
+                ? Image.network(news.cover!, fit: BoxFit.cover)
+                : const Icon(Icons.image, color: G5Colors.textSecondary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  news.title ?? '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _formatTime(news.createdAt),
+                  style: const TextStyle(
+                    color: G5Colors.textSecondary,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(int? timestamp) {
+    if (timestamp == null) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}分钟前';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}小时前';
+    } else {
+      return '${date.month}-${date.day}';
+    }
+  }
+}

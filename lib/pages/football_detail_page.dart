@@ -4,6 +4,7 @@ import 'package:zogolive/models/g5_match_model.dart';
 import 'package:zogolive/models/g5_odds_model.dart';
 import 'package:zogolive/models/g5_process_model.dart';
 import 'package:zogolive/pages/odds_history_page.dart';
+import 'package:zogolive/pages/team_detail_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -302,45 +303,57 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
             children: [
               // 主队
               Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: G5Colors.pitchElevated,
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.1)),
+                child: GestureDetector(
+                  onTap: () {
+                    if (widget.match.homeTeamId != null) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => TeamDetailPage(
+                          teamId: widget.match.homeTeamId!,
+                          competitionId: widget.match.competitionId,
+                        ),
+                      ));
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: G5Colors.pitchElevated,
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: match.homeTeamLogo != null &&
+                                match.homeTeamLogo!.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  match.homeTeamLogo!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.shield,
+                                          color: G5Colors.textSecondary,
+                                          size: 30),
+                                ),
+                              )
+                            : const Icon(Icons.shield,
+                                color: G5Colors.textSecondary, size: 30),
                       ),
-                      child: match.homeTeamLogo != null &&
-                              match.homeTeamLogo!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                match.homeTeamLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.shield,
-                                        color: G5Colors.textSecondary,
-                                        size: 30),
-                              ),
-                            )
-                          : const Icon(Icons.shield,
-                              color: G5Colors.textSecondary, size: 30),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      match.homeTeamName ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 10),
+                      Text(
+                        match.homeTeamName ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               // 比分
@@ -390,45 +403,57 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
               ),
               // 客队
               Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: G5Colors.pitchElevated,
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.1)),
+                child: GestureDetector(
+                  onTap: () {
+                    if (widget.match.awayTeamId != null) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => TeamDetailPage(
+                          teamId: widget.match.awayTeamId!,
+                          competitionId: widget.match.competitionId,
+                        ),
+                      ));
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: G5Colors.pitchElevated,
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: match.awayTeamLogo != null &&
+                                match.awayTeamLogo!.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  match.awayTeamLogo!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.shield,
+                                          color: G5Colors.textSecondary,
+                                          size: 30),
+                                ),
+                              )
+                            : const Icon(Icons.shield,
+                                color: G5Colors.textSecondary, size: 30),
                       ),
-                      child: match.awayTeamLogo != null &&
-                              match.awayTeamLogo!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                match.awayTeamLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.shield,
-                                        color: G5Colors.textSecondary,
-                                        size: 30),
-                              ),
-                            )
-                          : const Icon(Icons.shield,
-                              color: G5Colors.textSecondary, size: 30),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      match.awayTeamName ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 10),
+                      Text(
+                        match.awayTeamName ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
