@@ -23,11 +23,79 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   G5ProcessData? _processData;
   bool _isLoading = true;
 
+  List<G5MatchItem>? _historyTotal;
+  List<G5MatchItem>? _homeTotal;
+  List<G5MatchItem>? _awayTotal;
+  bool _isAnalysisLoading = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _fetchProcessData();
+    _fetchAnalysisData();
+  }
+
+  Future<void> _fetchAnalysisData() async {
+    try {
+      final response = await G5NetworkManager().get(
+        '/api/v1/football/match/analysis',
+        queryParameters: {'match_id': widget.match.matchId},
+      );
+
+      if (response.code == 0 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        
+        final hist = data['history'] as Map<String, dynamic>?;
+        final fix = data['fixture'] as Map<String, dynamic>?;
+
+        List<G5MatchItem>? historyTotal;
+        List<G5MatchItem>? homeTotal;
+        List<G5MatchItem>? awayTotal;
+
+        if (hist != null && hist['vs'] != null) {
+          historyTotal = (hist['vs'] as List)
+              .map((e) => G5MatchItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+          historyTotal = historyTotal.take(6).toList();
+        }
+
+        if (fix != null && fix['home'] != null) {
+          homeTotal = (fix['home'] as List)
+              .map((e) => G5MatchItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+          homeTotal = homeTotal.take(6).toList();
+        }
+
+        if (fix != null && fix['away'] != null) {
+          awayTotal = (fix['away'] as List)
+              .map((e) => G5MatchItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+          awayTotal = awayTotal.take(6).toList();
+        }
+
+        if (mounted) {
+          setState(() {
+            _historyTotal = historyTotal;
+            _homeTotal = homeTotal;
+            _awayTotal = awayTotal;
+            _isAnalysisLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isAnalysisLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAnalysisLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchProcessData() async {
@@ -363,11 +431,331 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         const Center(
             child: Text('指数 (待开发)',
                 style: TextStyle(color: G5Colors.textSecondary))),
-        const Center(
-            child: Text('历史对战 (待开发)',
-                style: TextStyle(color: G5Colors.textSecondary))),
+        _buildAnalysisTab(),
       ],
     );
+  }
+
+  Widget _buildAnalysisTab() {
+    if (_isAnalysisLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: G5Colors.accentEmerald));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildStatsCard(),
+        const SizedBox(height: 20),
+        _buildHistoryMatchesCard('历史交锋', _historyTotal, widget.match.homeTeamId),
+        const SizedBox(height: 20),
+        _buildHistoryMatchesCard('近期战绩 - ${widget.match.homeTeamName ?? '主队'}', _homeTotal, widget.match.homeTeamId),
+        const SizedBox(height: 20),
+        _buildHistoryMatchesCard('近期战绩 - ${widget.match.awayTeamName ?? '客队'}', _awayTotal, widget.match.awayTeamId),
+      ],
+    );
+  }
+
+  Widget _buildStatsCard() {
+    // 计算历史交锋的胜平负（以主队视角）
+    int homeWin = 0;
+    int draw = 0;
+    int awayWin = 0;
+    if (_historyTotal != null) {
+      for (var m in _historyTotal!) {
+        if (m.homeNormalScore != null && m.awayNormalScore != null) {
+          // 如果当前页面的主队是历史交锋里的主队
+          if (m.homeTeamId == widget.match.homeTeamId) {
+            if (m.homeNormalScore! > m.awayNormalScore!) homeWin++;
+            else if (m.homeNormalScore! < m.awayNormalScore!) awayWin++;
+            else draw++;
+          } else {
+             // 如果当前页面的主队是历史交锋里的客队
+            if (m.awayNormalScore! > m.homeNormalScore!) homeWin++;
+            else if (m.awayNormalScore! < m.homeNormalScore!) awayWin++;
+            else draw++;
+          }
+        }
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: G5Colors.pitchCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: G5Colors.pitchBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '近6次交锋统计',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatItem('$homeWin胜', widget.match.homeTeamName ?? '', G5Colors.accentEmerald),
+              _buildStatItem('$draw平', '平局', Colors.white),
+              _buildStatItem('$awayWin胜', widget.match.awayTeamName ?? '', G5Colors.accentBlue),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildRecentFormRow('${widget.match.homeTeamName ?? '主队'}近况:', _homeTotal, widget.match.homeTeamId),
+          const SizedBox(height: 12),
+          _buildRecentFormRow('${widget.match.awayTeamName ?? '客队'}近况:', _awayTotal, widget.match.awayTeamId),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, Color valueColor) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: G5Colors.textSecondary,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentFormRow(String label, List<G5MatchItem>? matches, int? targetTeamId) {
+    List<Widget> formBadges = [];
+    if (matches != null) {
+      for (var m in matches) {
+        String result = '-';
+        Color bgColor = G5Colors.pitchElevated;
+        if (m.homeNormalScore != null && m.awayNormalScore != null) {
+           bool isHome = m.homeTeamId == targetTeamId;
+           if (m.homeNormalScore! == m.awayNormalScore!) {
+             result = '平';
+             bgColor = G5Colors.pitchBorder;
+           } else if ((isHome && m.homeNormalScore! > m.awayNormalScore!) || (!isHome && m.awayNormalScore! > m.homeNormalScore!)) {
+             result = '胜';
+             bgColor = G5Colors.accentEmerald.withOpacity(0.2);
+           } else {
+             result = '负';
+             bgColor = G5Colors.accentCrimson.withOpacity(0.2);
+           }
+        }
+        
+        Color textColor = Colors.white;
+        if (result == '胜') textColor = G5Colors.accentEmerald;
+        if (result == '负') textColor = G5Colors.accentCrimson;
+        if (result == '平') textColor = G5Colors.textSecondary;
+
+        formBadges.add(
+          Container(
+            margin: const EdgeInsets.only(left: 6),
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: textColor.withOpacity(0.3)),
+            ),
+            child: Text(
+              result,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          )
+        );
+      }
+    }
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: G5Colors.textSecondary,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const Spacer(),
+        Row(children: formBadges),
+      ],
+    );
+  }
+
+  Widget _buildHistoryMatchesCard(String title, List<G5MatchItem>? matches, int? targetTeamId) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: G5Colors.pitchCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: G5Colors.pitchBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (matches == null || matches.isEmpty)
+             const Text('暂无数据', style: TextStyle(color: G5Colors.textSecondary))
+          else
+            ...matches.map((m) => _buildHistoryMatchRow(m, targetTeamId)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryMatchRow(G5MatchItem m, int? targetTeamId) {
+    bool homeIsCurrentHome = m.homeTeamId == targetTeamId;
+    bool awayIsCurrentHome = m.awayTeamId == targetTeamId;
+
+    String resultText = '平局';
+    Color resultColor = G5Colors.textSecondary;
+    if (m.homeNormalScore != null && m.awayNormalScore != null) {
+      if (m.homeNormalScore! > m.awayNormalScore!) {
+        resultText = '${m.homeTeamName}胜';
+        resultColor = homeIsCurrentHome ? G5Colors.accentEmerald : G5Colors.accentBlue;
+      } else if (m.homeNormalScore! < m.awayNormalScore!) {
+        resultText = '${m.awayTeamName}胜';
+        resultColor = awayIsCurrentHome ? G5Colors.accentEmerald : G5Colors.accentBlue;
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        // 点击跳转到这局比赛的详情页
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => FootballDetailPage(match: m),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
+        ),
+        child: Row(
+          children: [
+          // 左侧：时间和赛事
+          SizedBox(
+            width: 80,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatMatchDate(m.matchTime),
+                  style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  m.competitionName ?? '',
+                  style: const TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // 中间：主客队比分
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    m.homeTeamName ?? '',
+                    style: TextStyle(
+                      color: homeIsCurrentHome ? G5Colors.accentEmerald : Colors.white, 
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold
+                    ),
+                    textAlign: TextAlign.right,
+                    softWrap: true,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: G5Colors.pitchElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${m.homeNormalScore ?? 0} - ${m.awayNormalScore ?? 0}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    m.awayTeamName ?? '',
+                    style: TextStyle(
+                      color: awayIsCurrentHome ? G5Colors.accentEmerald : Colors.white, 
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold
+                    ),
+                    textAlign: TextAlign.left,
+                    softWrap: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 右侧：结果
+            SizedBox(
+              width: 60,
+              child: Text(
+                resultText,
+                style: TextStyle(color: resultColor, fontSize: 12),
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatMatchDate(int? timestamp) {
+    if (timestamp == null || timestamp == 0) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return '${date.year.toString().substring(2)}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildIncidentsTab() {

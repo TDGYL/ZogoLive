@@ -1,4 +1,31 @@
 
+给我做比赛详情的历史对战
+UI部分：
+比赛详情历史对战的UI参考 footBallDetail.html的历史对战部分，先给我画出UI图
+历史对战列表里分为三段：第一段是历史交锋 第二段是主队的历史战队记录，第三段是客队的战队记录
+
+数据部分：
+接口：/api/v1/football/match/analysis，请求方式给Get请求，
+请求参数： 
+{
+    "match_id": 10004459809，int类型
+}
+请求逻辑参考/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/stats/LPStatsViewModel.m
+历史交锋取historyTotal，最对多只用6次比赛的数据，主队对战记录取homeTotal，客队对战记录取awayTotal
+
+请求的数据模型参考：/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/stats/Model/LPStatsTableModel.m
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 请求比赛详情底下菜单中 事件和数据的接口，接口url=/api/v1/basketball/match/process，请求方式为get请求
