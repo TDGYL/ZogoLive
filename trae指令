@@ -1,5 +1,65 @@
 
 
+
+请求比赛详情底下菜单中 事件和数据的接口，接口url=/api/v1/basketball/match/process，请求方式为get请求
+
+请求参数： 
+{
+    "match_id": 10004459809，int类型
+}
+其中match_id为比赛ID，动态传入比赛ID，目前match_id先固定写死条数数据
+
+返回的数据接口为：
+{
+    "code": 0,
+    "data": {
+       "stats": [
+            {
+                "away": 106,
+                "home": 156,
+                "type": 23
+            }, 
+           {
+                "away": 36,
+                "home": 64,
+                "type": 25
+            }],
+        "incidents": [
+            {
+                "type": 3,
+                "type_v2": 0,
+                "position": 1,
+                "time": 10,
+                "second": 556,
+                "home_score": 0,
+                "away_score": 0,
+                "player_id": 90391,
+                "player_name": "哈桑·恩达姆",
+                "var_reason": 0,
+                "var_result": 0,
+                "reason_type": 0,
+                "assist1_id": 0,
+                "assist2_id": 0,
+                "in_player_id": 0,
+                "out_player_id": 0
+            }],
+ "message": "success"}
+
+其中incidents属于事件菜单部分，stats属于数据菜单部分
+数据stats的界面参照footBallDetail.html的 数据/比例， 对应的数据类型参照：/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/RealTime/Model/LPRealTimeModel.m的- (NSString *)typeName(表示数据类型)方法
+
+事件incidents的界面参照footBallDetail.html的 事件，对应的数据类型参照/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Module/MatchDetail/SubVC/RealTime/Model/LPRealTimeEventModel.m的- (NSString *)custPlayerName(表示事件任务)和- (NSString *)custTypeName（表示事件类型)
+
+
+
+
+
+
+
+优化比赛详情界面，按照根据footBallDetail.html的模版，增加比赛时间显示，顶部卡片要高度还原
+将赛况改成事件，将聊天室改成历史对战
+
+
 根据footBallDetail.html创建一个新的界面（足球详情界面），当点击足球列表卡片时候push到该界面，比赛详情绘制要求
 1、导航中间显示的是联赛标签
 2、中间比赛卡片去掉哈兰德和贝林厄姆的比赛事件

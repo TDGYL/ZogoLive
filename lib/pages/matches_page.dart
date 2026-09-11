@@ -4,6 +4,7 @@ import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_match_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:zogolive/pages/football_detail_page.dart';
 
 class MatchesPage extends G5BaseViewController {
   const MatchesPage({Key? key}) : super(key: key);
@@ -437,26 +438,34 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       statusDisplay = "${match.minutes}' LIVE";
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: G5Colors.pitchCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isLive
-              ? G5Colors.accentEmerald.withOpacity(0.3)
-              : G5Colors.pitchBorder,
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => FootballDetailPage(match: match),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: G5Colors.pitchCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isLive
+                ? G5Colors.accentEmerald.withOpacity(0.3)
+                : G5Colors.pitchBorder,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
+        child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -684,6 +693,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
             ],
           ),
         ],
+      ),
       ),
     );
   }
