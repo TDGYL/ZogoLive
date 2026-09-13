@@ -12,116 +12,106 @@ class PostMatchSearchPage extends G5BaseViewController {
   State<PostMatchSearchPage> createState() => _PostMatchSearchPageState();
 }
 
-class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
   final EasyRefreshController _refreshController = EasyRefreshController(
     controlFinishRefresh: true,
-    controlFinishLoad: true,
   );
 
-  List<G5MatchItem> _matches = [];
-  int _page = 1;
-  final int _size = 20;
-  bool _isFirstLoading = true;
+  List<G5MatchItem> _searchMatches = [];
+  List<G5MatchItem> _hotMatches = [];
+  bool _isSearchLoading = false;
+  bool _isHotLoading = true;
   String _searchKeyword = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        // 切换 Tab 时重置搜索词并刷新
-        _searchKeyword = '';
-        _refreshController.callRefresh();
-      }
-    });
-  }
 
   @override
   void initData() {
     super.initData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshController.callRefresh();
+      _fetchHotData();
     });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _refreshController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchData({required bool isRefresh}) async {
-    if (isRefresh) {
-      _page = 1;
-    } else {
-      _page++;
-    }
+  Future<void> _fetchHotData() async {
+    setState(() {
+      _isHotLoading = true;
+    });
 
-    // “全部”和“热门”使用同一个 GET 接口
     final response = await G5NetworkManager().get(
       '/api/livespeed/index/search/match/hot',
     );
 
     if (response.isSuccess) {
-      final List<dynamic> rawData = response.data ?? [];
+      List<dynamic> rawData = [];
+      if (response.data is List) {
+        rawData = response.data as List<dynamic>;
+      } else if (response.data is Map<String, dynamic> &&
+          response.data['data'] is List) {
+        rawData = response.data['data'] as List<dynamic>;
+      }
 
-      // 解析数据并过滤 category == 1 的足球比赛
-      List<G5MatchItem> newItems = rawData
+      final newItems = rawData
           .map((json) => _parseSearchMatch(json as Map<String, dynamic>))
-          .where((match) =>
-              match.categoryId ==
-              1) // 假设我们把 category 映射到了 categoryId 字段上，或者通过一个特定字段标识，这里我们可以在 _parseSearchMatch 里处理。
+          .where((match) => match.categoryId == 1)
           .toList();
 
-      // 简单本地过滤搜索
-      if (_searchKeyword.isNotEmpty) {
-        newItems = newItems.where((match) {
-          final home = match.homeTeamName ?? '';
-          final away = match.awayTeamName ?? '';
-          return home.contains(_searchKeyword) || away.contains(_searchKeyword);
-        }).toList();
-      }
-
       setState(() {
-        if (isRefresh) {
-          _matches = newItems;
-        } else {
-          _matches.addAll(newItems);
-        }
-        if (_isFirstLoading) {
-          _isFirstLoading = false;
-        }
+        _hotMatches = newItems;
+        _isHotLoading = false;
       });
-
-      if (isRefresh) {
-        _refreshController.finishRefresh(IndicatorResult.success);
-        _refreshController.resetFooter();
-      } else {
-        _refreshController.finishLoad(
-          newItems.length < _size
-              ? IndicatorResult.noMore
-              : IndicatorResult.success,
-        );
-      }
     } else {
       setState(() {
-        if (_isFirstLoading) {
-          _isFirstLoading = false;
-        }
+        _isHotLoading = false;
       });
-      if (isRefresh) {
-        _refreshController.finishRefresh(IndicatorResult.fail);
-      } else {
-        _refreshController.finishLoad(IndicatorResult.fail);
-      }
     }
   }
 
-  // 手动解析搜索接口返回的字段，映射为 G5MatchItem
+  Future<void> _fetchSearchData(String keyword) async {
+    if (keyword.trim().isEmpty) {
+      setState(() {
+        _searchMatches = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchLoading = true;
+    });
+
+    final response = await G5NetworkManager().get(
+      '/api/livespeed/index/search',
+      queryParameters: {'text': keyword.trim()},
+    );
+
+    if (response.isSuccess) {
+      List<dynamic> rawData = [];
+      final Map<String, dynamic>? dataObj =
+          response.data as Map<String, dynamic>?;
+      if (dataObj != null && dataObj['matches'] != null) {
+        rawData = dataObj['matches'] as List<dynamic>;
+      }
+
+      final newItems = rawData
+          .map((json) => _parseSearchMatch(json as Map<String, dynamic>))
+          .where((match) => match.categoryId == 1)
+          .toList();
+
+      setState(() {
+        _searchMatches = newItems;
+        _isSearchLoading = false;
+      });
+    } else {
+      setState(() {
+        _isSearchLoading = false;
+      });
+    }
+  }
+
   G5MatchItem _parseSearchMatch(Map<String, dynamic> json) {
     return G5MatchItem(
       matchId:
@@ -167,50 +157,126 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage>
       ),
       centerTitle: true,
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(100),
-        child: Column(
+        preferredSize: const Size.fromHeight(60),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Container(
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: G5Colors.pitchElevated,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: TextField(
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              textAlignVertical: TextAlignVertical.center,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  _searchKeyword = val.trim();
+                  _fetchSearchData(_searchKeyword);
+                }
+              },
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                hintText: '搜索球队名称...',
+                hintStyle:
+                    TextStyle(color: G5Colors.textSecondary, fontSize: 12),
+                prefixIcon:
+                    Icon(Icons.search, color: G5Colors.textSecondary, size: 18),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (val) {
+                _searchKeyword = val;
+                if (val.isEmpty) {
+                  setState(() {
+                    _searchMatches = [];
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatchCard(G5MatchItem match) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop(match);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: G5Colors.pitchCard,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: G5Colors.pitchBorder),
+        ),
+        child: Row(
           children: [
-            // 搜索框
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                height: 36,
-                decoration: BoxDecoration(
-                  color: G5Colors.pitchElevated,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: TextField(
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  decoration: const InputDecoration(
-                    hintText: '搜索球队名称...',
-                    hintStyle:
-                        TextStyle(color: G5Colors.textSecondary, fontSize: 12),
-                    prefixIcon: Icon(Icons.search,
-                        color: G5Colors.textSecondary, size: 18),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: Text(match.homeTeamName ?? '',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                   ),
-                  onChanged: (val) {
-                    _searchKeyword = val;
-                    _refreshController.callRefresh();
-                  },
-                ),
+                  const SizedBox(width: 8),
+                  if (match.homeTeamLogo != null &&
+                      match.homeTeamLogo!.isNotEmpty)
+                    Image.network(match.homeTeamLogo!,
+                        width: 24,
+                        height: 24,
+                        errorBuilder: (c, e, s) =>
+                            const SizedBox(width: 24, height: 24)),
+                ],
               ),
             ),
-            // TabBar
-            TabBar(
-              controller: _tabController,
-              isScrollable: false,
-              indicatorColor: G5Colors.accentBlue,
-              indicatorWeight: 3,
-              labelColor: G5Colors.accentBlue,
-              unselectedLabelColor: G5Colors.textSecondary,
-              labelStyle:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: '全部'),
-                Tab(text: '热门'),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: G5Colors.pitchElevated,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text('VS',
+                  style: TextStyle(
+                      color: G5Colors.accentGold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
+            ),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  if (match.awayTeamLogo != null &&
+                      match.awayTeamLogo!.isNotEmpty)
+                    Image.network(match.awayTeamLogo!,
+                        width: 24,
+                        height: 24,
+                        errorBuilder: (c, e, s) =>
+                            const SizedBox(width: 24, height: 24)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(match.awayTeamName ?? '',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -218,13 +284,18 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage>
     );
   }
 
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      color: G5Colors.pitch,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Text(title,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+    );
+  }
+
   @override
   Widget buildBody(BuildContext context) {
-    if (_isFirstLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: G5Colors.accentEmerald));
-    }
-
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
@@ -233,111 +304,132 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage>
         readyText: '正在刷新...',
         processingText: '正在刷新...',
         processedText: '刷新成功',
-        noMoreText: '没有更多',
         failedText: '刷新失败',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
       ),
-      footer: const ClassicFooter(
-        dragText: '上拉加载',
-        armedText: '释放加载',
-        readyText: '正在加载...',
-        processingText: '正在加载...',
-        processedText: '加载成功',
-        noMoreText: '没有更多数据了',
-        failedText: '加载失败',
-        iconTheme: IconThemeData(color: G5Colors.accentEmerald),
-        textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
-      ),
-      onRefresh: () => _fetchData(isRefresh: true),
-      onLoad: () => _fetchData(isRefresh: false),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _matches.length,
-        itemBuilder: (context, index) {
-          final match = _matches[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop(match);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: G5Colors.pitchCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: G5Colors.pitchBorder),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Flexible(
-                          child: Text(match.homeTeamName ?? '',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        const SizedBox(width: 8),
-                        if (match.homeTeamLogo != null &&
-                            match.homeTeamLogo!.isNotEmpty)
-                          Image.network(match.homeTeamLogo!,
-                              width: 24,
-                              height: 24,
-                              errorBuilder: (c, e, s) =>
-                                  const SizedBox(width: 24, height: 24)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: G5Colors.pitchElevated,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text('VS',
-                        style: TextStyle(
-                            color: G5Colors.accentGold,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        if (match.awayTeamLogo != null &&
-                            match.awayTeamLogo!.isNotEmpty)
-                          Image.network(match.awayTeamLogo!,
-                              width: 24,
-                              height: 24,
-                              errorBuilder: (c, e, s) =>
-                                  const SizedBox(width: 24, height: 24)),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(match.awayTeamName ?? '',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      onRefresh: () async {
+        await _fetchHotData();
+        if (_searchKeyword.isNotEmpty) {
+          await _fetchSearchData(_searchKeyword);
+        }
+        _refreshController.finishRefresh(IndicatorResult.success);
+      },
+      child: CustomScrollView(
+        slivers: [
+          // ================= 第一段：全部（搜索结果） =================
+          if (_searchKeyword.isNotEmpty)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SectionHeaderDelegate('全部 (搜索结果)'),
+            ),
+          if (_searchKeyword.isNotEmpty && _isSearchLoading)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(
+                  child:
+                      CircularProgressIndicator(color: G5Colors.accentEmerald),
+                ),
               ),
             ),
-          );
-        },
+          if (_searchKeyword.isNotEmpty &&
+              !_isSearchLoading &&
+              _searchMatches.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(
+                  child: Text('暂无搜索数据',
+                      style: TextStyle(color: G5Colors.textSecondary)),
+                ),
+              ),
+            ),
+          if (_searchKeyword.isNotEmpty &&
+              !_isSearchLoading &&
+              _searchMatches.isNotEmpty)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildMatchCard(_searchMatches[index]),
+                childCount: _searchMatches.length,
+              ),
+            ),
+
+          // ================= 第二段：热门 =================
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SectionHeaderDelegate('热门'),
+          ),
+          if (_isHotLoading)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(
+                  child:
+                      CircularProgressIndicator(color: G5Colors.accentEmerald),
+                ),
+              ),
+            ),
+          if (!_isHotLoading && _hotMatches.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(
+                  child: Text('暂无热门数据',
+                      style: TextStyle(color: G5Colors.textSecondary)),
+                ),
+              ),
+            ),
+          if (!_isHotLoading && _hotMatches.isNotEmpty)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildMatchCard(_hotMatches[index]),
+                childCount: _hotMatches.length,
+              ),
+            ),
+
+          // 底部留白
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 40),
+          )
+        ],
       ),
     );
+  }
+}
+
+// 模拟 iOS TableView 的吸顶 Section Header
+class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final String title;
+
+  _SectionHeaderDelegate(this.title);
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: G5Colors.pitch.withOpacity(0.95), // 半透明效果，类似于 iOS 磨砂
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 44.0;
+
+  @override
+  double get minExtent => 44.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return oldDelegate is _SectionHeaderDelegate && oldDelegate.title != title;
   }
 }

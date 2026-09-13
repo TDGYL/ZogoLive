@@ -40,44 +40,41 @@ class G5NetworkManager {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         // 打印请求信息
-        if (kDebugMode) {
-          print('\n==================== G5Network Request ====================');
-          print('Method: ${options.method}');
-          print('URL: ${options.baseUrl}${options.path}');
-          if (options.queryParameters.isNotEmpty) {
-            print('QueryParameters: ${options.queryParameters}');
-          }
-          print('Headers: ${options.headers}');
-          if (options.data != null) {
-            print('Data: ${options.data}');
-          }
-          print('===========================================================\n');
+        print('\n==================== G5Network Request ====================');
+        print('Method: ${options.method}');
+        print('URL: ${options.baseUrl}${options.path}');
+        if (options.queryParameters.isNotEmpty) {
+          print('QueryParameters: ${options.queryParameters}');
         }
+        print('Headers: ${options.headers}');
+        if (options.data != null) {
+          print('Data: ${options.data}');
+        }
+        print('===========================================================\n');
+        
         return handler.next(options);
       },
       onResponse: (response, handler) {
         // 打印响应信息
-        if (kDebugMode) {
-          print('\n==================== G5Network Response ===================');
-          print('URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
-          print('StatusCode: ${response.statusCode}');
-          print('Data: ${response.data}');
-          print('===========================================================\n');
-        }
+        print('\n==================== G5Network Response ===================');
+        print('URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
+        print('StatusCode: ${response.statusCode}');
+        print('Data: ${response.data}');
+        print('===========================================================\n');
+        
         return handler.next(response);
       },
       onError: (DioException e, handler) {
         // 打印错误信息
-        if (kDebugMode) {
-          print('\n==================== G5Network Error ======================');
-          print('URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
-          print('Error: ${e.message}');
-          if (e.response != null) {
-            print('StatusCode: ${e.response?.statusCode}');
-            print('Data: ${e.response?.data}');
-          }
-          print('===========================================================\n');
+        print('\n==================== G5Network Error ======================');
+        print('URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
+        print('Error: ${e.message}');
+        if (e.response != null) {
+          print('StatusCode: ${e.response?.statusCode}');
+          print('Data: ${e.response?.data}');
         }
+        print('===========================================================\n');
+        
         return handler.next(e);
       },
     ));

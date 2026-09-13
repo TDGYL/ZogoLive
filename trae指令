@@ -2,35 +2,21 @@
 
 
 
-发布帖子的选择关联球队接口说明，菜单全部展示的是搜索结果url=/api/livespeed/index/search/match/hot,请求方式为GET请求，
-不用请求参数
-}
 
-返回的数据结构为：
+
+
+
+post_match_search_page做优化：
+1、搜索框的字和放大镜垂直居中
+2、菜单全部项界面不开始搜索不用显示loading
+
+
+发布帖子的选择关联球队接口说明
+第一个菜单：全部，(刚进来没有数据，界面展示数据为空)展示数据的是搜索结果url=/api/livespeed/index/search,请求方式为GET请求，
+请求参数
 {
-    "code": 0,
-    "data": [
-        {
-            "match_id": 30003750903,
-            "match_time": 1698751800,
-            "category": 2,
-            "competition_name": "WCBA",
-            "home_team_id": 3020597,
-            "home_team_name": "陕西天泽女篮",
-            "home_team_logo": "https://kq3-online-release-1258443845.cos.ap-beijing.myqcloud.com/basketball/team/b27fd77709bbba6555908e28ace0a6c5.png",
-            "home_team_score": 0,
-            "away_team_id": 3012469,
-            "away_team_name": "四川远达女篮",
-            "away_team_logo": "https://kq3-online-release-1258443845.cos.ap-beijing.myqcloud.com/basketball/team/6af2ed6add64ebb5eafa3e229ee38f67.png",
-            "away_team_score": 0
-        }],
-  "message": "success"
+"text":"西班牙"
 }
-数据说明：过滤出category=1的才是足球。
-
-
-发布帖子的选择关联球队接口说明，菜单热门的接口为url=/api/livespeed/index/search/match/hot,请求方式为GET请求，
-不用请求参数
 
 返回的数据结构为：
 {
@@ -50,10 +36,50 @@
             "away_team_name": "四川远达女篮",
             "away_team_logo": "https://kq3-online-release-1258443845.cos.ap-beijing.myqcloud.com/basketball/team/6af2ed6add64ebb5eafa3e229ee38f67.png",
             "away_team_score": 0
+        }],
+   "users": [
+        {
+                "id": 0,
+                "uuid": 0,
+                "avatar": "string",
+                "nickname": "string",
+                "is_living": 0,
+                "is_expert": 0,
+                "is_vip": 0,
+                "follow_type": 0
         }],},
   "message": "success"
 }
+数据说明：data里边的matches数组部分为搜索比赛的数据，过滤出category=1的才是足球。
+
+
+
+第二个菜单：热门,的接口为url=/api/livespeed/index/search/match/hot,请求方式为GET请求，
+不用请求参数
+
+返回的数据结构为：
+{
+    "code": 0,
+   "data":[ 
+        {
+            "match_id": 30003750903,
+            "match_time": 1698751800,
+            "category": 2,
+            "competition_name": "WCBA",
+            "home_team_id": 3020597,
+            "home_team_name": "陕西天泽女篮",
+            "home_team_logo": "https://kq3-online-release-1258443845.cos.ap-beijing.myqcloud.com/basketball/team/b27fd77709bbba6555908e28ace0a6c5.png",
+            "home_team_score": 0,
+            "away_team_id": 3012469,
+            "away_team_name": "四川远达女篮",
+            "away_team_logo": "https://kq3-online-release-1258443845.cos.ap-beijing.myqcloud.com/basketball/team/6af2ed6add64ebb5eafa3e229ee38f67.png",
+            "away_team_score": 0
+        ]
+  "message": "success"
+}
 数据说明：过滤出category=1的才是足球, matches内部的数据模型可以直接用首页的比赛列表的模型
+
+
 
 
 首页第二页社区列表的字段image字符串是标签，将列表里卡片的图片展示换成标签展示，如果单个标签长度大于屏幕宽度的3/4，则后边以...展示，多个标签横向排列，如果装不下就换行展示
@@ -61,7 +87,7 @@
 
 
 发布帖子的接口说明，当输入框的字符长度小于10时候，不能发送，并toast提示输入的话题要超过10个字
-接口url=/api/livespeed/community/save，请求方式为POST，
+接口url=/api/v1/community/save，请求方式为POST，
 {
    "id": 0，int类型
    "content": 0，int类型
@@ -95,7 +121,7 @@
 
 
 
-创建一个webview，首页资讯列表和球队详情的资讯push到这个界面，这个界面的请求url=/api/livespeed/info/detail，请求方式为GET请求，
+创建一个webview，首页资讯列表和球队详情的资讯push到这个界面，这个界面的请求url=/api/v1/info/detail，请求方式为GET请求，
 请求参数： 
 {
    "id": 1313，int类型
@@ -106,7 +132,7 @@
 
 
 
-球队详情的积分榜菜单页严格按照teamDetail.html的阵积分榜单界面还原，接口请求为/api/livespeed/football/team/rank，请求方式为GET请求，
+球队详情的积分榜菜单页严格按照teamDetail.html的阵积分榜单界面还原，接口请求为/api/v1/football/team/rank，请求方式为GET请求，
 请求参数： 
 {
    "competition_id": 1313，int类型
@@ -190,7 +216,7 @@
 
 
 
-球队详情的阵容菜单页严格按照teamDetail.html的阵容菜单界面还原，接口请求为/api/livespeed/football/team/lineup，请求方式为GET请求，
+球队详情的阵容菜单页严格按照teamDetail.html的阵容菜单界面还原，接口请求为/api/v1/football/team/lineup，请求方式为GET请求，
 请求参数： 
 {
    "team_id": 1313，int类型
@@ -233,11 +259,11 @@
 
 
 
-进入球队详情的时候，通过比赛详情的G5MatchItem的联赛competition_id传到球队详情，然后给球队详情的赛程的/api/livespeed/football/matches请求和/api/livespeed/info/list请求使用
+进入球队详情的时候，通过比赛详情的G5MatchItem的联赛competition_id传到球队详情，然后给球队详情的赛程的/api/v1/football/matches请求和/api/v1/info/list请求使用
 
 
 
-球队详情的赛程菜单页严格按照teamDetail.html的赛程菜单界面还原，顶部分类去掉，只展示列表，接口请求为/api/livespeed/football/matches，请求方式为POST请求，
+球队详情的赛程菜单页严格按照teamDetail.html的赛程菜单界面还原，顶部分类去掉，只展示列表，接口请求为/api/v1/football/matches，请求方式为POST请求，
 请求参数： 
 {
    "tab": 0，int类型
@@ -256,7 +282,7 @@
 
 
 
-在球队详情的概览下请求球队最新动态，请求接口为：/api/livespeed/info/list，请求方式为get请求。
+在球队详情的概览下请求球队最新动态，请求接口为：/api/v1/info/list，请求方式为get请求。
 请求参数： 
 {
    "page": 1，int类型
@@ -272,7 +298,7 @@
 
 按照teamDetail.html，给我生成球队详情，当点击比赛详情顶部的球队头像时候，push到球队详情
 
-球队想求的请求接口为：/api/livespeed/football/team/data，请求方式为GET请求
+球队想求的请求接口为：/api/v1/football/team/data，请求方式为GET请求
 请求参数： 
 {
     "team_id": 10181，int类型
@@ -304,7 +330,7 @@
 
 
 
-资讯：/api/livespeed/info/list
+资讯：/api/v1/info/list
 
 
 
@@ -321,7 +347,7 @@
 
 
 
-给odds_history_page右边的列表数据请求，请求接口为：/api/livespeed/football/match/odd-histories，请方式为GET，
+给odds_history_page右边的列表数据请求，请求接口为：/api/v1/football/match/odd-histories，请方式为GET，
 请求参数： 
 {
     "match_id": 10004459809，int类型
@@ -409,7 +435,7 @@ UI部分：
 比赛详情历史对战的UI参考 footBallDetail.html的指数菜单，一定要高还原度
 
 列表一共分为4段：第一段是让球让分(亚指)，第二段是胜平负（欧指），第三段是进球数（大小球），第四段是角球（角球）
-请求接口为：/api/livespeed/football/match/odds，请求方式为GET请求
+请求接口为：/api/v1/football/match/odds，请求方式为GET请求
 请求参数： 
 {
     "match_id": 10004459809，int类型
@@ -435,7 +461,7 @@ UI部分：
 历史对战列表里分为三段：第一段是历史交锋 第二段是主队的历史战队记录，第三段是客队的战队记录
 
 数据部分：
-接口：/api/livespeed/football/match/analysis，请求方式给Get请求，
+接口：/api/v1/football/match/analysis，请求方式给Get请求，
 请求参数： 
 {
     "match_id": 10004459809，int类型
@@ -453,7 +479,7 @@ UI部分：
 
 
 
-请求比赛详情底下菜单中 事件和数据的接口，接口url=/api/livespeed/basketball/match/process，请求方式为get请求
+请求比赛详情底下菜单中 事件和数据的接口，接口url=/api/v1/basketball/match/process，请求方式为get请求
 
 请求参数： 
 {
@@ -529,14 +555,14 @@ UI部分：
 
 ========================================登录数据请求======
 
-/api/livespeed/auth/send-verify
-/api/livespeed/auth/login
-/api/livespeed/member
+/api/v1/auth/send-verify
+/api/v1/auth/login
+/api/v1/member
 g5live@gmail.com默认验证1111
 
 
 login_page.dart点击登录的时候，
-第一步：调用/api/livespeed/auth/login接口,请求方式为POST请求，
+第一步：调用/api/v1/auth/login接口,请求方式为POST请求，
 入参为：
 {
     "channel": "email",
@@ -560,7 +586,7 @@ login_page.dart点击登录的时候，
 
 
 第二步：
-等第一步成功回调，然后调用/api/livespeed/member请求用户信息，请求方式为GET请求，
+等第一步成功回调，然后调用/api/v1/member请求用户信息，请求方式为GET请求，
 请求参数为空，依赖了请求头的authorization
 
 返回的数据结构是
@@ -613,7 +639,7 @@ login_page.dart点击登录的时候，
 
 
 
-第三页资讯接入数据请求，请求接口为：/api/livespeed/info/list
+第三页资讯接入数据请求，请求接口为：/api/v1/info/list
 请求参数，入参{
     "type": 1, integer，类型
     "page": 1, integer，页码
@@ -690,7 +716,7 @@ login_page.dart点击登录的时候，
 
 community_page.dart的界面重新写，界面UI参考index.html的第二个界面社区列表
 
-第二页社区接入数据请求，比赛接口为：/api/livespeed/community/list，请求方式为get请求，
+第二页社区接入数据请求，比赛接口为：/api/v1/community/list，请求方式为get请求，
 请求参数，入参{
     "type": 2, integer，类型
     "page": 1, integer，页码
@@ -729,7 +755,7 @@ community_page.dart的界面重新写，界面UI参考index.html的第二个界�
 参考/Users/guyilin/Desktop/LivePulse/LivePulse/Class/Network/LPNetworking的网络请求框架，封装自己的flutter的网络请求，baseUrl=https://api.livepulseapp.com
 
 
- 然后第一页的比赛列表接入请求数据，比赛列表接口为：/api/livespeed/football/matches，请求方式给POST请求，
+ 然后第一页的比赛列表接入请求数据，比赛列表接口为：/api/v1/football/matches，请求方式给POST请求，
  请求参数，入参{
     "tab": 0, integer，类型
     "page": 1, integer，页码
