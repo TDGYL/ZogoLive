@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZogoLive - 帖子详情</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        accent: '#ff3b30',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar hiding */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* iOS safe areas */
+        .pb-safe {
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+        .pt-safe {
+            padding-top: max(0.75rem, env(safe-area-inset-top));
+        }
+
+        /* Glassmorphism support */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Tap active effect for mobile */
+        .active-scale:active {
+            transform: scale(0.96);
+            transition: transform 0.15s ease;
+        }
+
+        /* Like animation heart */
+        @keyframes pulse-heart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.35); }
+            100% { transform: scale(1); }
+        }
+        .heart-bounce {
+            animation: pulse-heart 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Toast fade animation */
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .toast-animate {
+            animation: toastIn 0.25s forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-900 antialiased selection:bg-brand-500 selection:text-white min-h-screen flex justify-center">
+
+    <!-- Container wrapper for iPhone device simulation / Responsive frame -->
+    <div class="w-full max-w-md bg-white min-h-screen relative shadow-2xl flex flex-col pb-24 overflow-x-hidden">
+
+        <!-- Header -->
+        <header class="sticky top-0 z-40 glass-header border-b border-gray-100 px-4 pt-safe pb-3 flex items-center justify-between transition-all duration-200" id="main-header">
+            <button onclick="showToast('返回社区大厅')" class="w-9 h-9 rounded-full bg-gray-100/80 hover:bg-gray-200 flex items-center justify-center text-gray-700 active-scale">
+                <i class="fa-solid font-bold fa-chevron-left text-sm"></i>
+            </button>
+            
+            <!-- Mid Title / User Info preview on scroll -->
+            <div class="flex items-center space-x-2 opacity-0 transition-opacity duration-300" id="header-user-info">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200" alt="Avatar">
+                <span class="text-sm font-semibold truncate max-w-[120px]">林小乐 Zogo</span>
+                <button onclick="toggleFollow(this)" class="px-2.5 py-1 text-xs font-medium rounded-full bg-brand-600 text-white active-scale">
+                    + 关注
+                </button>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center space-x-2">
+                <button onclick="openShareModal()" class="w-9 h-9 rounded-full bg-gray-100/80 hover:bg-gray-200 flex items-center justify-center text-gray-700 active-scale">
+                    <i class="fa-solid fa-arrow-up-from-bracket text-sm"></i>
+                </button>
+                <button onclick="showActionMenu()" class="w-9 h-9 rounded-full bg-gray-100/80 hover:bg-gray-200 flex items-center justify-center text-gray-700 active-scale">
+                    <i class="fa-solid fa-ellipsis text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 px-4 pt-4">
+
+            <!-- Author Profile Bar -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" 
+                             class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm" alt="Author">
+                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5">
+                            <h2 class="font-bold text-gray-900 text-base">林小乐 Zogo</h2>
+                            <span class="bg-blue-50 text-brand-600 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                                <i class="fa-solid fa-circle-check text-[9px]"></i> 创作者
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">2026-09-12 · 上海 · 极客探索圈</p>
+                    </div>
+                </div>
+
+                <button id="main-follow-btn" onclick="toggleFollow(this)" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-brand-600 text-white shadow-sm hover:bg-brand-700 active-scale transition-colors">
+                    + 关注
+                </button>
+            </div>
+
+            <!-- Post Text Content -->
+            <article class="space-y-3 mb-4">
+                <h1 class="text-xl font-bold text-gray-900 tracking-tight leading-snug">
+                    全新设计语言下的 ZogoLive 移动端社区交互UI探索 🚀
+                </h1>
+                <p class="text-gray-700 text-sm leading-relaxed tracking-normal whitespace-pre-line">
+                    今天跟大家分享我们团队在 iOS 平台针对“社区帖子+轻量化互动”做的一套全新 UI 范式。
+
+                    💡 核心设计细节包括：
+                    1. 顶栏随滚动平滑过渡，展示作者简易状态。
+                    2. 一级评论与二级回复逻辑明确，降低视觉干扰。
+                    3. 底部输入框在针对特定“一级评论”回复时，提供醒目的指引 Banner，支持一键取消切回帖子评论模式。
+
+                    大家觉得这个布局在手机端的体验怎么样？欢迎评论区讨论交流！👇
+                </p>
+
+                <!-- Tags / Topics -->
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2.5 py-1 rounded-full cursor-pointer hover:bg-brand-100">
+                        # UI交互设计
+                    </span>
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2.5 py-1 rounded-full cursor-pointer hover:bg-brand-100">
+                        # 苹果iOS适配
+                    </span>
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2.5 py-1 rounded-full cursor-pointer hover:bg-brand-100">
+                        # 前端开发
+                    </span>
+                </div>
+            </article>
+
+            <!-- Image Grid (Multi-image preview) -->
+            <div class="grid grid-cols-2 gap-2 mb-5 rounded-2xl overflow-hidden shadow-sm">
+                <div class="relative group cursor-pointer overflow-hidden aspect-4/3" onclick="openLightbox('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80')">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="Design UI 1">
+                </div>
+                <div class="relative group cursor-pointer overflow-hidden aspect-4/3" onclick="openLightbox('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80')">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="Design UI 2">
+                </div>
+            </div>
+
+            <!-- Stats / Social Engagements bar -->
+            <div class="flex items-center justify-between py-3 border-y border-gray-100 text-xs text-gray-500 mb-6">
+                <div class="flex items-center space-x-4">
+                    <span><strong class="text-gray-900 font-semibold" id="view-count">2,480</strong> 浏览</span>
+                    <span><strong class="text-gray-900 font-semibold" id="like-total-count">342</strong> 赞</span>
+                    <span><strong class="text-gray-900 font-semibold" id="collect-total-count">89</strong> 收藏</span>
+                </div>
+                <div class="text-gray-400">IP: 上海</div>
+            </div>
+
+            <!-- Comments Section Header -->
+            <section class="mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-baseline space-x-2">
+                        <h3 class="text-base font-bold text-gray-900">全部评论</h3>
+                        <span class="text-xs font-semibold text-gray-400" id="comment-count-badge">(3)</span>
+                    </div>
+
+                    <!-- Sort Tabs -->
+                    <div class="flex bg-gray-100 p-0.5 rounded-lg text-xs font-medium text-gray-600">
+                        <button onclick="switchSort(this)" class="px-2.5 py-1 rounded-md bg-white text-gray-900 shadow-sm transition">最热</button>
+                        <button onclick="switchSort(this)" class="px-2.5 py-1 rounded-md text-gray-500 hover:text-gray-900 transition">最新</button>
+                    </div>
+                </div>
+
+                <!-- Comments List Container -->
+                <div id="comments-container" class="space-y-5">
+
+                    <!-- Level 1 Comment Item 1 -->
+                    <div class="comment-item border-b border-gray-50 pb-4" data-comment-id="c1" data-user-name="张小伟 Alex">
+                        <div class="flex space-x-3">
+                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="User Avatar">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-gray-800 truncate">张小伟 Alex</h4>
+                                    <button onclick="toggleCommentLike(this)" class="flex items-center space-x-1 text-gray-400 text-xs active-scale">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span class="like-num text-[11px]">24</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">2小时前 · 北京</p>
+                                
+                                <!-- Comment Body -->
+                                <p class="text-sm text-gray-800 mt-1.5 leading-snug">
+                                    这个一二级评论界限处理得很清晰！请问底部弹出回复栏时，是否有适配 iOS 软键盘的物理高度偏移？
+                                </p>
+
+                                <!-- Reply Trigger (Only level 1 triggers target reply) -->
+                                <div class="mt-2 flex items-center space-x-3">
+                                    <button onclick="prepareReply('c1', '张小伟 Alex')" class="text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-full active-scale transition">
+                                        <i class="fa-regular fa-comment text-[10px] mr-1"></i>回复
+                                    </button>
+                                </div>
+
+                                <!-- Level 2 Nested Replies (Under Level 1) -->
+                                <div class="mt-3 bg-gray-50/80 rounded-xl p-3 space-y-3" id="replies-c1">
+                                    <!-- Level 2 item -->
+                                    <div class="flex space-x-2.5 text-xs">
+                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80" class="w-6 h-6 rounded-full object-cover flex-shrink-0" alt="Author">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-1">
+                                                    <span class="font-bold text-gray-900">林小乐 Zogo</span>
+                                                    <span class="bg-brand-50 text-brand-600 text-[9px] px-1 rounded font-semibold">作者</span>
+                                                </div>
+                                                <span class="text-[10px] text-gray-400">1小时前</span>
+                                            </div>
+                                            <p class="text-gray-700 mt-1">
+                                                是的！使用了 webkit 的 safe-area 以及 dynamic viewport height (dvh) 适配，保证弹出键盘时不遮挡输入内容。
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Another Level 2 item -->
+                                    <div class="flex space-x-2.5 text-xs">
+                                        <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop&q=80" class="w-6 h-6 rounded-full object-cover flex-shrink-0" alt="User">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold text-gray-800">David UI</span>
+                                                <span class="text-[10px] text-gray-400">30分钟前</span>
+                                            </div>
+                                            <p class="text-gray-700 mt-1">
+                                                赞！整体体验非常接近 iOS 原生 Swift UI 的渲染感。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 1 Comment Item 2 -->
+                    <div class="comment-item border-b border-gray-50 pb-4" data-comment-id="c2" data-user-name="陈美美 Product">
+                        <div class="flex space-x-3">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="User Avatar">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-gray-800 truncate">陈美美 Product</h4>
+                                    <button onclick="toggleCommentLike(this)" class="flex items-center space-x-1 text-gray-400 text-xs active-scale">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span class="like-num text-[11px]">8</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">4小时前 · 深圳</p>
+                                
+                                <p class="text-sm text-gray-800 mt-1.5 leading-snug">
+                                    对手机屏幕适配得真好，深浅色对比适中，细节满分！
+                                </p>
+
+                                <div class="mt-2 flex items-center space-x-3">
+                                    <button onclick="prepareReply('c2', '陈美美 Product')" class="text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-full active-scale transition">
+                                        <i class="fa-regular fa-comment text-[10px] mr-1"></i>回复
+                                    </button>
+                                </div>
+
+                                <!-- Level 2 Empty Container for C2 -->
+                                <div class="mt-2 hidden space-y-2 bg-gray-50/80 rounded-xl p-3" id="replies-c2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 1 Comment Item 3 -->
+                    <div class="comment-item pb-4" data-comment-id="c3" data-user-name="前端老王">
+                        <div class="flex space-x-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="User Avatar">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-gray-800 truncate">前端老王</h4>
+                                    <button onclick="toggleCommentLike(this)" class="flex items-center space-x-1 text-gray-400 text-xs active-scale">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span class="like-num text-[11px]">3</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">5小时前 · 杭州</p>
+                                
+                                <p class="text-sm text-gray-800 mt-1.5 leading-snug">
+                                    期待上线！对只允许回复一级评论的设计赞同，避免了无限嵌套导致的深层层级缩进灾难。
+                                </p>
+
+                                <div class="mt-2 flex items-center space-x-3">
+                                    <button onclick="prepareReply('c3', '前端老王')" class="text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-full active-scale transition">
+                                        <i class="fa-regular fa-comment text-[10px] mr-1"></i>回复
+                                    </button>
+                                </div>
+
+                                <div class="mt-2 hidden space-y-2 bg-gray-50/80 rounded-xl p-3" id="replies-c3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Fixed iOS Bottom Action & Input Bar -->
+        <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 pb-safe shadow-lg transition-all" id="bottom-dock">
+            
+            <!-- Target Reply Banner (Visible only when replying to a 1st-level comment) -->
+            <div id="reply-target-banner" class="hidden bg-brand-50 px-4 py-2 border-b border-brand-100 flex items-center justify-between text-xs text-brand-700 animate-fadeIn">
+                <div class="flex items-center space-x-1.5 truncate">
+                    <i class="fa-solid fa-reply text-brand-500"></i>
+                    <span>正在回复一级评论：<strong id="reply-target-name">@用户名</strong></span>
+                </div>
+                <button onclick="cancelReplyMode()" class="text-gray-400 hover:text-gray-600 p-1 active-scale">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="px-3 py-2.5 flex items-center space-x-2">
+                <!-- Text Input Box -->
+                <div class="flex-1 relative flex items-center">
+                    <input type="text" 
+                           id="comment-input" 
+                           placeholder="说点什么吧..." 
+                           class="w-full bg-gray-100 hover:bg-gray-100/80 focus:bg-white text-sm text-gray-900 placeholder-gray-400 rounded-full pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                           onkeypress="handleKeyPress(event)">
+                    
+                    <button onclick="insertEmoji('😊')" class="absolute right-3 text-gray-400 hover:text-gray-600 active-scale">
+                        <i class="fa-regular fa-face-smile text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Right Quick Actions (When typing, change to Send Button) -->
+                <div id="default-actions" class="flex items-center space-x-1">
+                    <!-- Like Post Button -->
+                    <button onclick="togglePostLike(this)" class="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-red-500 active-scale transition" id="post-like-btn">
+                        <i class="fa-regular fa-heart text-xl"></i>
+                    </button>
+                    <!-- Favorite Button -->
+                    <button onclick="togglePostCollect(this)" class="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-amber-500 active-scale transition" id="post-collect-btn">
+                        <i class="fa-regular fa-bookmark text-xl"></i>
+                    </button>
+                    <!-- Share Button -->
+                    <button onclick="openShareModal()" class="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-brand-600 active-scale transition">
+                        <i class="fa-solid fa-share-nodes text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Send Button (Initially Hidden or Dynamic) -->
+                <button id="send-btn" onclick="submitComment()" class="hidden px-4 py-2 bg-brand-600 text-white font-semibold text-xs rounded-full hover:bg-brand-700 active-scale shadow-sm transition">
+                    发送
+                </button>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal -->
+        <div id="lightbox-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex flex-col justify-between items-center p-4 backdrop-blur-sm" onclick="closeLightbox()">
+            <div class="w-full flex justify-end">
+                <button class="text-white text-xl p-2 active-scale"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <img id="lightbox-img" src="" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" alt="Preview">
+            <p class="text-white/70 text-xs pb-4">点击任意区域关闭预览</p>
+        </div>
+
+        <!-- iOS Bottom Share Sheet Modal -->
+        <div id="share-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex flex-col justify-end transition-opacity duration-300" onclick="closeShareModal(event)">
+            <div class="bg-white rounded-t-3xl p-5 w-full max-w-md mx-auto space-y-4 shadow-2xl animate-slideUp" onclick="event.stopPropagation()">
+                <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto"></div>
+                <h4 class="text-center font-bold text-gray-800 text-sm">分享至</h4>
+                
+                <div class="grid grid-cols-4 gap-4 py-2 text-center text-xs text-gray-600">
+                    <button onclick="showToast('已复制微信分享链接'); closeShareModal();" class="flex flex-col items-center space-y-1 active-scale">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-brands fa-weixin"></i>
+                        </div>
+                        <span>微信好友</span>
+                    </button>
+
+                    <button onclick="showToast('已生成朋友圈海报'); closeShareModal();" class="flex flex-col items-center space-y-1 active-scale">
+                        <div class="w-12 h-12 bg-green-50 text-green-700 rounded-2xl flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                        <span>朋友圈</span>
+                    </button>
+
+                    <button onclick="copyPostLink()" class="flex flex-col items-center space-y-1 active-scale">
+                        <div class="w-12 h-12 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <span>复制链接</span>
+                    </button>
+
+                    <button onclick="showToast('已保存卡片图片'); closeShareModal();" class="flex flex-col items-center space-y-1 active-scale">
+                        <div class="w-12 h-12 bg-blue-50 text-brand-600 rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                            <i class="fa-regular fa-image"></i>
+                        </div>
+                        <span>生成海报</span>
+                    </button>
+                </div>
+
+                <button onclick="closeShareModal()" class="w-full py-3 bg-gray-100 text-gray-700 font-semibold rounded-2xl text-sm active-scale">
+                    取消
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-box" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
+
+    </div>
+
+    <script>
+        // State variables
+        let replyTargetCommentId = null; // null means replying to Post directly, string ID means replying to 1st-level comment
+        let isPostLiked = false;
+        let isPostCollected = false;
+        let postLikeCount = 342;
+        let postCollectCount = 89;
+        let totalCommentCount = 3;
+
+        // Header dynamic appearance on scroll
+        const headerUserInfo = document.getElementById('header-user-info');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 120) {
+                headerUserInfo.classList.remove('opacity-0');
+                headerUserInfo.classList.add('opacity-100');
+            } else {
+                headerUserInfo.classList.add('opacity-0');
+                headerUserInfo.classList.remove('opacity-100');
+            }
+        });
+
+        // Input field dynamic UI toggle (showing Send button when typing)
+        const commentInput = document.getElementById('comment-input');
+        const defaultActions = document.getElementById('default-actions');
+        const sendBtn = document.getElementById('send-btn');
+
+        commentInput.addEventListener('input', (e) => {
+            if (e.target.value.trim().length > 0) {
+                defaultActions.classList.add('hidden');
+                sendBtn.classList.remove('hidden');
+            } else {
+                defaultActions.classList.remove('hidden');
+                sendBtn.classList.add('hidden');
+            }
+        });
+
+        // Prepare reply to Level 1 Comment
+        function prepareReply(commentId, userName) {
+            replyTargetCommentId = commentId;
+            const banner = document.getElementById('reply-target-banner');
+            const targetNameSpan = document.getElementById('reply-target-name');
+            
+            targetNameSpan.innerText = `@${userName}`;
+            banner.classList.remove('hidden');
+
+            // Focus input
+            commentInput.focus();
+            commentInput.placeholder = `回复 @${userName}...`;
+            
+            showToast(`正在回复一级评论: @${userName}`);
+        }
+
+        // Cancel Reply Mode -> Return to main post comment mode
+        function cancelReplyMode() {
+            replyTargetCommentId = null;
+            const banner = document.getElementById('reply-target-banner');
+            banner.classList.add('hidden');
+            commentInput.placeholder = "说点什么吧...";
+        }
+
+        // Submit comment or reply
+        function submitComment() {
+            const text = commentInput.value.trim();
+            if (!text) return;
+
+            if (replyTargetCommentId) {
+                // Reply to 1st-level comment -> Append to Level 2 replies container under that Level 1 comment
+                const repliesContainer = document.getElementById(`replies-${replyTargetCommentId}`);
+                if (repliesContainer) {
+                    repliesContainer.classList.remove('hidden');
+                    
+                    const newReplyHTML = `
+                        <div class="flex space-x-2.5 text-xs animate-fadeIn">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80" class="w-6 h-6 rounded-full object-cover flex-shrink-0" alt="Me">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-gray-900">我 (You)</span>
+                                    <span class="text-[10px] text-gray-400">刚刚</span>
+                                </div>
+                                <p class="text-gray-700 mt-1">${escapeHtml(text)}</p>
+                            </div>
+                        </div>
+                    `;
+                    repliesContainer.insertAdjacentHTML('beforeend', newReplyHTML);
+                }
+                showToast('回复提交成功！');
+                cancelReplyMode();
+            } else {
+                // Comment on Post -> Create new 1st-level comment
+                totalCommentCount++;
+                const commentsContainer = document.getElementById('comments-container');
+                const newCommentId = `c_${Date.now()}`;
+                
+                const newCommentHTML = `
+                    <div class="comment-item border-b border-gray-50 pb-4 animate-fadeIn" data-comment-id="${newCommentId}" data-user-name="我 (You)">
+                        <div class="flex space-x-3">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="Me">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-gray-800 truncate">我 (You)</h4>
+                                    <button onclick="toggleCommentLike(this)" class="flex items-center space-x-1 text-gray-400 text-xs active-scale">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span class="like-num text-[11px]">0</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">刚刚 · 本地</p>
+                                
+                                <p class="text-sm text-gray-800 mt-1.5 leading-snug">${escapeHtml(text)}</p>
+
+                                <div class="mt-2 flex items-center space-x-3">
+                                    <button onclick="prepareReply('${newCommentId}', '我 (You)')" class="text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-full active-scale transition">
+                                        <i class="fa-regular fa-comment text-[10px] mr-1"></i>回复
+                                    </button>
+                                </div>
+
+                                <div class="mt-2 hidden space-y-2 bg-gray-50/80 rounded-xl p-3" id="replies-${newCommentId}"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                commentsContainer.insertAdjacentHTML('afterbegin', newCommentHTML);
+                document.getElementById('comment-count-badge').innerText = `(${totalCommentCount})`;
+                showToast('发布评论成功！');
+            }
+
+            // Reset input state
+            commentInput.value = '';
+            defaultActions.classList.remove('hidden');
+            sendBtn.classList.add('hidden');
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                submitComment();
+            }
+        }
+
+        function insertEmoji(emoji) {
+            commentInput.value += emoji;
+            commentInput.dispatchEvent(new Event('input'));
+            commentInput.focus();
+        }
+
+        // Toggle Post Like
+        function togglePostLike(btn) {
+            const icon = btn.querySelector('i');
+            isPostLiked = !isPostLiked;
+            if (isPostLiked) {
+                postLikeCount++;
+                icon.className = 'fa-solid fa-heart text-xl text-red-500 heart-bounce';
+                showToast('已点赞该帖子');
+            } else {
+                postLikeCount--;
+                icon.className = 'fa-regular fa-heart text-xl text-gray-600';
+            }
+            document.getElementById('like-total-count').innerText = postLikeCount.toLocaleString();
+        }
+
+        // Toggle Post Collect
+        function togglePostCollect(btn) {
+            const icon = btn.querySelector('i');
+            isPostCollected = !isPostCollected;
+            if (isPostCollected) {
+                postCollectCount++;
+                icon.className = 'fa-solid fa-bookmark text-xl text-amber-500 heart-bounce';
+                showToast('已收藏该帖子');
+            } else {
+                postCollectCount--;
+                icon.className = 'fa-regular fa-bookmark text-xl text-gray-600';
+            }
+            document.getElementById('collect-total-count').innerText = postCollectCount.toLocaleString();
+        }
+
+        // Toggle Comment Like
+        function toggleCommentLike(btn) {
+            const icon = btn.querySelector('i');
+            const numSpan = btn.querySelector('.like-num');
+            let count = parseInt(numSpan.innerText) || 0;
+
+            if (icon.classList.contains('fa-regular')) {
+                icon.className = 'fa-solid fa-heart text-red-500 heart-bounce';
+                btn.classList.add('text-red-500');
+                btn.classList.remove('text-gray-400');
+                numSpan.innerText = count + 1;
+            } else {
+                icon.className = 'fa-regular fa-heart';
+                btn.classList.remove('text-red-500');
+                btn.classList.add('text-gray-400');
+                numSpan.innerText = Math.max(0, count - 1);
+            }
+        }
+
+        // Author Follow Toggle
+        function toggleFollow(btn) {
+            const isFollowing = btn.dataset.following === 'true';
+            const allFollowBtns = [document.getElementById('main-follow-btn'), headerUserInfo.querySelector('button')];
+            
+            allFollowBtns.forEach(b => {
+                if (!b) return;
+                if (!isFollowing) {
+                    b.innerText = '已关注';
+                    b.className = 'px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 border border-gray-200 active-scale';
+                    b.dataset.following = 'true';
+                } else {
+                    b.innerText = '+ 关注';
+                    b.className = 'px-4 py-1.5 text-xs font-semibold rounded-full bg-brand-600 text-white shadow-sm hover:bg-brand-700 active-scale transition-colors';
+                    b.dataset.following = 'false';
+                }
+            });
+
+            showToast(!isFollowing ? '已关注作者' : '已取消关注');
+        }
+
+        // Lightbox modal logic
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-modal').classList.remove('hidden');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox-modal').classList.add('hidden');
+        }
+
+        // Share modal logic
+        function openShareModal() {
+            document.getElementById('share-modal').classList.remove('hidden');
+        }
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.add('hidden');
+        }
+        function copyPostLink() {
+            // execCommand copy standard pattern
+            const el = document.createElement('textarea');
+            el.value = window.location.href;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast('帖子链接已复制到剪贴板');
+            closeShareModal();
+        }
+
+        // Action menu placeholder
+        function showActionMenu() {
+            showToast('已举报或屏蔽该内容');
+        }
+
+        // Switch sort tab
+        function switchSort(btn) {
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(c => {
+                c.className = 'px-2.5 py-1 rounded-md text-gray-500 hover:text-gray-900 transition';
+            });
+            btn.className = 'px-2.5 py-1 rounded-md bg-white text-gray-900 shadow-sm transition';
+            showToast(`已切换为: ${btn.innerText}`);
+        }
+
+        // Toast Helper
+        function showToast(msg) {
+            const toastBox = document.getElementById('toast-box');
+            const toast = document.createElement('div');
+            toast.className = 'toast-animate bg-gray-900/90 text-white text-xs px-4 py-2 rounded-full shadow-lg backdrop-blur-md mb-2 flex items-center space-x-1.5';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-brand-500"></i> <span>${msg}</span>`;
+            toastBox.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 2200);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>

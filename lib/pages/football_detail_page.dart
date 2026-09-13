@@ -26,6 +26,9 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   G5ProcessData? _processData;
   bool _isLoading = true;
 
+  /// 比赛详情数据 - G5MatchItem?类型，接口返回的完整比赛数据（含球队ID），懒加载兜底widget.match
+  G5MatchItem? _matchDetail;
+
   List<G5MatchItem>? _historyTotal;
   List<G5MatchItem>? _homeTotal;
   List<G5MatchItem>? _awayTotal;
@@ -38,9 +41,37 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _fetchMatchDetail();
     _fetchProcessData();
     _fetchAnalysisData();
     _fetchOddsData();
+  }
+
+  /// 当前展示的比赛数据 - 优先使用详情接口返回数据，兜底页面传参
+  G5MatchItem get match => _matchDetail ?? widget.match;
+
+  /// 请求比赛详情
+  /// 接口：GET /api/livespeed/football/match/detail
+  /// 参数：match_id - int类型，比赛ID
+  /// 成功后用返回数据替换当前比赛数据（保证任意入口进入都能获取球队ID跳转球队详情）
+  Future<void> _fetchMatchDetail() async {
+    try {
+      final response = await G5NetworkManager().get(
+        '/api/livespeed/football/match/detail',
+        queryParameters: {'match_id': widget.match.matchId},
+      );
+
+      if (response.code == 0 && response.data != null) {
+        if (mounted) {
+          setState(() {
+            _matchDetail =
+                G5MatchItem.fromJson(response.data as Map<String, dynamic>);
+          });
+        }
+      }
+    } catch (e) {
+      // 请求失败时保持使用传入的比赛数据
+    }
   }
 
   Future<void> _fetchOddsData() async {
@@ -202,7 +233,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
-          widget.match.competitionName ?? '联赛',
+          match.competitionName ?? '联赛',
           style: const TextStyle(
             color: G5Colors.accentEmerald,
             fontSize: 12,
@@ -229,7 +260,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   }
 
   Widget _buildMatchCard() {
-    final match = widget.match;
+    final match = this.match;
     bool isLive =
         match.statusId == 2 || match.statusId == 3 || match.statusId == 4;
 
@@ -306,11 +337,11 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (widget.match.homeTeamId != null) {
+                    if (match.homeTeamId != null) {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (context) => TeamDetailPage(
-                          teamId: widget.match.homeTeamId!,
-                          competitionId: widget.match.competitionId,
+                          teamId: match.homeTeamId!,
+                          competitionId: match.competitionId,
                         ),
                       ));
                     }
@@ -406,11 +437,11 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (widget.match.awayTeamId != null) {
+                    if (match.awayTeamId != null) {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (context) => TeamDetailPage(
-                          teamId: widget.match.awayTeamId!,
-                          competitionId: widget.match.competitionId,
+                          teamId: match.awayTeamId!,
+                          competitionId: match.competitionId,
                         ),
                       ));
                     }
@@ -745,13 +776,13 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         _buildStatsCard(),
         const SizedBox(height: 20),
         _buildHistoryMatchesCard(
-            '历史交锋', _historyTotal, widget.match.homeTeamId),
+            '历史交锋', _historyTotal, match.homeTeamId),
         const SizedBox(height: 20),
-        _buildHistoryMatchesCard('近期战绩 - ${widget.match.homeTeamName ?? '主队'}',
-            _homeTotal, widget.match.homeTeamId),
+        _buildHistoryMatchesCard('近期战绩 - ${match.homeTeamName ?? '主队'}',
+            _homeTotal, match.homeTeamId),
         const SizedBox(height: 20),
-        _buildHistoryMatchesCard('近期战绩 - ${widget.match.awayTeamName ?? '客队'}',
-            _awayTotal, widget.match.awayTeamId),
+        _buildHistoryMatchesCard('近期战绩 - ${match.awayTeamName ?? '客队'}',
+            _awayTotal, match.awayTeamId),
       ],
     );
   }
@@ -765,7 +796,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
       for (var m in _historyTotal!) {
         if (m.homeNormalScore != null && m.awayNormalScore != null) {
           // 如果当前页面的主队是历史交锋里的主队
-          if (m.homeTeamId == widget.match.homeTeamId) {
+          if (m.homeTeamId == match.homeTeamId) {
             if (m.homeNormalScore! > m.awayNormalScore!)
               homeWin++;
             else if (m.homeNormalScore! < m.awayNormalScore!)
@@ -807,19 +838,19 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatItem('$homeWin胜', widget.match.homeTeamName ?? '',
+              _buildStatItem('$homeWin胜', match.homeTeamName ?? '',
                   G5Colors.accentEmerald),
               _buildStatItem('$draw平', '平局', Colors.white),
-              _buildStatItem('$awayWin胜', widget.match.awayTeamName ?? '',
+              _buildStatItem('$awayWin胜', match.awayTeamName ?? '',
                   G5Colors.accentBlue),
             ],
           ),
           const SizedBox(height: 24),
-          _buildRecentFormRow('${widget.match.homeTeamName ?? '主队'}近况:',
-              _homeTotal, widget.match.homeTeamId),
+          _buildRecentFormRow('${match.homeTeamName ?? '主队'}近况:',
+              _homeTotal, match.homeTeamId),
           const SizedBox(height: 12),
-          _buildRecentFormRow('${widget.match.awayTeamName ?? '客队'}近况:',
-              _awayTotal, widget.match.awayTeamId),
+          _buildRecentFormRow('${match.awayTeamName ?? '客队'}近况:',
+              _awayTotal, match.awayTeamId),
         ],
       ),
     );

@@ -22,6 +22,7 @@ class G5PostItem {
   int? id;
   String? content;
   String? image;
+  List<String>? images;
   int? likeCount;
   int? commentCount;
   int? createTime;
@@ -33,6 +34,7 @@ class G5PostItem {
     this.id,
     this.content,
     this.image,
+    this.images,
     this.likeCount,
     this.commentCount,
     this.createTime,
@@ -46,6 +48,9 @@ class G5PostItem {
       id: json['id'] as int?,
       content: json['content'] as String?,
       image: json['image'] as String?,
+      images: (json['images'] as List?)
+          ?.map((e) => e as String)
+          .toList(),
       likeCount: json['like_count'] as int?,
       commentCount: json['comment_count'] as int?,
       createTime: json['create_time'] as int?,
@@ -92,8 +97,10 @@ class G5PostMatch {
   int? statusId;
   String? statusName;
   String? competitionName;
+  int? homeTeamId;
   String? homeTeamName;
   String? homeTeamLogo;
+  int? awayTeamId;
   String? awayTeamName;
   String? awayTeamLogo;
   int? homeScore;
@@ -108,8 +115,10 @@ class G5PostMatch {
     this.statusId,
     this.statusName,
     this.competitionName,
+    this.homeTeamId,
     this.homeTeamName,
     this.homeTeamLogo,
+    this.awayTeamId,
     this.awayTeamName,
     this.awayTeamLogo,
     this.homeScore,
@@ -126,8 +135,10 @@ class G5PostMatch {
       statusId: json['status_id'] as int?,
       statusName: json['status_name'] as String?,
       competitionName: json['competition_name'] as String?,
+      homeTeamId: json['home_team_id'] as int?,
       homeTeamName: json['home_team_name'] as String?,
       homeTeamLogo: json['home_team_logo'] as String?,
+      awayTeamId: json['away_team_id'] as int?,
       awayTeamName: json['away_team_name'] as String?,
       awayTeamLogo: json['away_team_logo'] as String?,
       homeScore: json['home_score'] as int?,

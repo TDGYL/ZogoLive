@@ -2,6 +2,153 @@
 
 
 
+优化下，现在进入比赛详情community_detail_page文件，请求比赛详情接口url=/api/livespeed/football/match/detail，请求方式为get请求，
+参数为：
+{
+"match_id":123,int类型，
+}
+返回的数据为：
+ {"code":0,"data":{
+	    
+	  },"message":"ok"}
+
+参数说明，match_id是比赛id，返回的数据data就是比赛数据，对象模型直接用首页比赛列表的模型
+这样优化后，无论哪里进来，都可以跳转球队详情了
+
+
+
+
+
+{
+"id":123,int类型，
+}
+参数说明：id是帖子id
+
+返回的数据结构为：
+ {"code":0,"data":{
+	    "id":123,"content":"今天看好主队取胜",
+	    "images":["https://cdn.../post/a.png","https://cdn.../post/b.png"],
+	    "like_count":12,"comment_count":3,"create_time":1722800000,
+	    "author":{"id":456,"name":"用户A","avatar":"https://cdn.../avatar.png","member_id":456},
+	    "match":{"match_type":1,"match_id":1001,"competition_id":2001,"season_id":3001,
+	      "start_time":1722900000,"status_id":1,"status_name":"未开赛","competition_name":"英超",
+	      "home_team_name":"主队","home_team_logo":"https://cdn.../home.png",
+	      "away_team_name":"客队","away_team_logo":"https://cdn.../away.png",
+	      "home_score":0,"away_score":0},
+	    "is_like":false
+	  },"message":"ok"}
+
+
+其中data的数据模型和首页的社区列表模型一样，同步评论条右边的点赞按钮状态
+
+
+给我调试两个接口：
+第一个接口
+community_detail_page的评论列表的点赞接口url=/api/livespeed/support，请求方式为post请求，
+{
+"object_id":123,int类型，
+"object_type":3,int类型，
+"is_support",false了行
+}
+参数说明：object_id是评论ID，object_type固定写死=3，is_support=YES表示点赞，反之取消点赞
+要求用户登录才能点赞
+
+第二个接口
+community_detail_page底部的评论条右边的点赞是对帖子点赞，接口URL=/api/livespeed/community/like，请求方式为post请求，
+{
+"post_id":123,int类型，
+"type":1,int类型，
+}
+参数说明：post_id是帖子ID, type=1表示点赞
+点赞完同步上边的点赞数，要求用户登录才能点赞
+
+
+
+
+
+
+评论和回复的的url=/api/livespeed/community/comment/add，请求方式为post请求，
+当直接点击底部评论条时候是评论帖子，参数为：
+{
+"object_id":123,int类型，
+"words":"nice",string类型，
+}
+当点击一级评论的弹出的键盘时候是回复一级评论，参数为
+{
+"object_id":"12312",int类型，
+"words":"nice",String类型，
+"comment_id","234",int累心
+参数说明：
+object_id是帖子ID，comment_id是评论ID，words是评论内容
+
+数据返回结构为
+{"code":0,"data":{
+	    "comment":{
+	      "id":789,"object_id":123,"object_type":3,"user_id":456,"parent_id":0,
+	      "reply_to_user":0,"reply_to_comment":0,"words":"说得好","support":5,
+	      "is_reply_child":0,"comment_time":1722800000,"deleted_at":null,
+	      "user_pic":"https://cdn.../avatar.png","user_name":"用户A",
+	      "is_support":false,"remain_child_comment_count":3,
+	      "show_child_comments":[{
+	        "id":790,"object_id":123,"object_type":3,"user_id":457,"parent_id":789,
+	        "reply_to_user":456,"reply_to_comment":789,"words":"同感","support":0,
+	        "is_reply_child":1,"comment_time":1722800100,"deleted_at":null,
+	        "user_pic":"https://cdn.../b.png","user_name":"用户B","is_support":false,
+	        "remain_child_comment_count":0,"show_child_comments":null,
+	        "reply_to_user_name":"用户A"
+	      }],"reply_to_user_name":""
+	    },
+	    "parent":null },
+      "message":"ok"}
+参数说明：id=评论id，object_id=帖子ID，上边传入评论的comment_id就是返回数据的评论id
+当评论完时候插入返回的数据，然后刷新列表
+
+
+
+
+
+给community_detail_page中，请求评论列表，url=/api/livespeed/community/comment/list，请求方式为GET请求，
+请求参数
+{
+"object_id":"12312",String类型
+}
+参数说明：object_id为帖子的id，字符串类型
+
+数据返回结构为
+{"code":0,"data":{
+	    "total":20,
+	    "results":[{
+	      "id":789,"object_id":123,"object_type":3,"user_id":456,"parent_id":0,
+	      "reply_to_user":0,"reply_to_comment":0,"words":"说得好","support":5,
+	      "is_reply_child":0,"comment_time":1722800000,"deleted_at":null,
+	      "user_pic":"https://cdn.../avatar.png","user_name":"用户A",
+	      "is_support":false,"remain_child_comment_count":3,
+	      "show_child_comments":[{
+	        "id":790,"object_id":123,"object_type":3,"user_id":457,"parent_id":789,
+	        "reply_to_user":456,"reply_to_comment":789,"words":"同感","support":0,
+	        "is_reply_child":1,"comment_time":1722800100,"deleted_at":null,
+	        "user_pic":"https://cdn.../b.png","user_name":"用户B","is_support":false,
+	        "remain_child_comment_count":0,"show_child_comments":null,
+	        "reply_to_user_name":"用户A"
+	      }],"reply_to_user_name":""
+	    }],
+	    "parent":null },
+      "message":"ok"}
+
+数据说明：results是评论数据数组，每个数据show_child_comments对应的是回复数据，会数据的结构和评论数据一样
+
+
+
+
+
+
+根据community_detail给我生成帖子详情，要修改的几个地方：
+1、全部评论 右边的最热和最新删除掉
+2、底部评论的右边的收藏和分享按钮去掉，留住点赞就够了
+3、如果用户未登录，点击评论时候跳转到登录界面
+
+当点击社区列表时候push到该详情
+
 
 
 

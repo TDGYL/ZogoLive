@@ -3,6 +3,7 @@ import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_post_model.dart';
 import 'package:zogolive/pages/login_page.dart';
+import 'package:zogolive/pages/community_detail_page.dart';
 import 'package:zogolive/pages/post_community_page.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_colors.dart';
@@ -236,7 +237,15 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     final author = post.author;
     final match = post.match;
 
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CommunityDetailPage(post: post),
+          ),
+        );
+      },
+      child: Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -398,6 +407,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
               ),
             ),
         ],
+      ),
       ),
     );
   }
