@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_news_model.dart';
+import 'package:zogolive/pages/news_detail_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -209,148 +210,172 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
   }
 
   Widget _buildHeadlineCard(G5NewsItem news) {
-    return Container(
-      height: 180,
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: G5Colors.pitchBorder),
-        color: G5Colors.pitchElevated,
-      ),
-      child: Stack(
-        children: [
-          if (news.cover != null && news.cover!.isNotEmpty)
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  news.cover!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox(),
+    return GestureDetector(
+      onTap: () {
+        if (news.id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewsDetailPage(newsId: news.id!),
+            ),
+          );
+        }
+      },
+      child: Container(
+        height: 180,
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: G5Colors.pitchBorder),
+          color: G5Colors.pitchElevated,
+        ),
+        child: Stack(
+          children: [
+            if (news.cover != null && news.cover!.isNotEmpty)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    news.cover!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox(),
+                  ),
                 ),
               ),
-            ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  G5Colors.pitch.withOpacity(0.8),
-                  G5Colors.pitch,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    G5Colors.pitch.withOpacity(0.8),
+                    G5Colors.pitch,
+                  ],
+                ),
+              ),
+              padding: const EdgeInsets.all(14),
+              alignment: Alignment.bottomLeft,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    news.title ?? '',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.remove_red_eye,
+                          color: G5Colors.textSecondary, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
+                        style: const TextStyle(
+                          color: G5Colors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            padding: const EdgeInsets.all(14),
-            alignment: Alignment.bottomLeft,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  news.title ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    height: 1.3,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.remove_red_eye,
-                        color: G5Colors.textSecondary, size: 12),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
-                      style: const TextStyle(
-                        color: G5Colors.textSecondary,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildNormalNewsCard(G5NewsItem news) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: G5Colors.pitchCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: G5Colors.pitchBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 96,
-            height: 80,
-            decoration: BoxDecoration(
-              color: G5Colors.pitchElevated,
-              borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        if (news.id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewsDetailPage(newsId: news.id!),
             ),
-            child: news.cover != null && news.cover!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      news.cover!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.image,
-                          color: G5Colors.textSecondary),
-                    ),
-                  )
-                : const Icon(Icons.image, color: G5Colors.textSecondary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  news.title ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.remove_red_eye,
-                        color: G5Colors.textSecondary, size: 10),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
-                      style: const TextStyle(
-                        color: G5Colors.textSecondary,
-                        fontSize: 10,
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: G5Colors.pitchCard,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: G5Colors.pitchBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 96,
+              height: 80,
+              decoration: BoxDecoration(
+                color: G5Colors.pitchElevated,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: news.cover != null && news.cover!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        news.cover!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.image,
+                                color: G5Colors.textSecondary),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    )
+                  : const Icon(Icons.image, color: G5Colors.textSecondary),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    news.title ?? '',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.remove_red_eye,
+                          color: G5Colors.textSecondary, size: 10),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
+                        style: const TextStyle(
+                          color: G5Colors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

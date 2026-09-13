@@ -6,6 +6,7 @@ import 'package:zogolive/models/g5_team_lineup_model.dart';
 import 'package:zogolive/models/g5_team_model.dart';
 import 'package:zogolive/models/g5_team_rank_model.dart';
 import 'package:zogolive/pages/football_detail_page.dart';
+import 'package:zogolive/pages/news_detail_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -519,7 +520,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
       ),
       child: TabBar(
         controller: _tabController,
-        isScrollable: true,
+        isScrollable: false, // 改为 false 让选项卡均分宽度
         indicatorColor: G5Colors.accentBlue,
         indicatorWeight: 3,
         labelColor: G5Colors.accentBlue,
@@ -964,54 +965,66 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
   }
 
   Widget _buildNewsRow(G5NewsItem news) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.only(bottom: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80,
-            height: 60,
-            decoration: BoxDecoration(
-              color: G5Colors.pitchElevated,
-              borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        if (news.id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewsDetailPage(newsId: news.id!),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: news.cover != null && news.cover!.isNotEmpty
-                ? Image.network(news.cover!, fit: BoxFit.cover)
-                : const Icon(Icons.image, color: G5Colors.textSecondary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  news.title ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _formatTime(news.createdAt),
-                  style: const TextStyle(
-                    color: G5Colors.textSecondary,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(bottom: 12),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: G5Colors.pitchBorder)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 80,
+              height: 60,
+              decoration: BoxDecoration(
+                color: G5Colors.pitchElevated,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: news.cover != null && news.cover!.isNotEmpty
+                  ? Image.network(news.cover!, fit: BoxFit.cover)
+                  : const Icon(Icons.image, color: G5Colors.textSecondary),
             ),
-          )
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    news.title ?? '',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatTime(news.createdAt),
+                    style: const TextStyle(
+                      color: G5Colors.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.2.3
   easy_refresh: ^3.4.0
   captcha_plugin_flutter: '1.2.6'
+  webview_flutter: ^4.8.0
 
 dev_dependencies:
   flutter_test:

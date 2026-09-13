@@ -1,7 +1,14 @@
 
 
 
+创建一个webview，首页资讯列表和球队详情的资讯push到这个界面，这个界面的请求url=/api/v1/info/detail，请求方式为GET请求，
+请求参数： 
+{
+   "id": 1313，int类型
+}
+参数说明：id代表的是资讯id，push进来的时候将id携带进来动态传入
 
+返回的数据类型和首页的资讯列表一样，webview加载的是将封标题title、封面图cover和富文本content合并一块，头部显示发布时间和作者
 
 
 
