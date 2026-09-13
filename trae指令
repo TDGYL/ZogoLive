@@ -1,6 +1,137 @@
 
 
 
+
+
+
+
+球队详情的积分榜菜单页严格按照teamDetail.html的阵积分榜单界面还原，接口请求为/api/v1/football/team/rank，请求方式为GET请求，
+请求参数： 
+{
+   "competition_id": 1313，int类型
+  "season_id": 1313，int类型
+}
+
+参数说明：season_id固定传2026，competition_id为联赛id，从比赛详情传过来的动态ID
+返回的数据结构为：
+{
+    "code": 0,
+    "data": [
+        {
+            "promotion_name": "",
+            "list": [
+                {
+                    "team_id": 1010462,
+                    "team_name": "圣帕特里克",
+                    "logo": "https://kqiu3.oss-cn-qingdao.aliyuncs.com/football/team/a9300bd80909504c2d173dc8617c26c2.png",
+                    "promotion_id": 0,
+                    "points": 58,
+                    "position": 4,
+                    "note_zh": "",
+                    "total": 33,
+                    "won": 18,
+                    "draw": 4,
+                    "loss": 11,
+                    "goals": 52,
+                    "goals_against": 34
+                },
+                {
+                    "team_id": 1010067,
+                    "team_name": "波希米亚人",
+                    "logo": "https://kqiu3.oss-cn-qingdao.aliyuncs.com/football/team/0c13da2dbbd9c67f065fd064b3e37aff.png",
+                    "promotion_id": 0,
+                    "points": 53,
+                    "position": 5,
+                    "note_zh": "",
+                    "total": 33,
+                    "won": 15,
+                    "draw": 8,
+                    "loss": 10,
+                    "goals": 49,
+                    "goals_against": 42
+                }],
+"promotion_name": "降级球队",
+ "list": [
+                {
+                    "team_id": 1010462,
+                    "team_name": "圣帕特里克",
+                    "logo": "https://kqiu3.oss-cn-qingdao.aliyuncs.com/football/team/a9300bd80909504c2d173dc8617c26c2.png",
+                    "promotion_id": 0,
+                    "points": 58,
+                    "position": 4,
+                    "note_zh": "",
+                    "total": 33,
+                    "won": 18,
+                    "draw": 4,
+                    "loss": 11,
+                    "goals": 52,
+                    "goals_against": 34
+                },
+                {
+                    "team_id": 1010067,
+                    "team_name": "波希米亚人",
+                    "logo": "https://kqiu3.oss-cn-qingdao.aliyuncs.com/football/team/0c13da2dbbd9c67f065fd064b3e37aff.png",
+                    "promotion_id": 0,
+                    "points": 53,
+                    "position": 5,
+                    "note_zh": "",
+                    "total": 33,
+                    "won": 15,
+                    "draw": 8,
+                    "loss": 10,
+                    "goals": 49,
+                    "goals_against": 42
+                }]],
+    "message": "success"
+}
+数据说明: position=排名, points=积分，won=胜，draw=平，loss=负
+
+
+
+
+球队详情的阵容菜单页严格按照teamDetail.html的阵容菜单界面还原，接口请求为/api/v1/football/team/lineup，请求方式为GET请求，
+请求参数： 
+{
+   "team_id": 1313，int类型
+}
+
+参数说明：team_id表示球队ID，
+返回的数据结构为：
+{
+    "code": 0,
+    "data": [
+        {
+            "position": "Coach",
+            "person_list": []
+        },
+        {
+            "position": "F",
+            "person_list": [
+                {
+                    "id": 101339134,
+                    "name": "Marit Emaus·Flaa",
+                    "logo": "",
+                    "position": "F",
+                    "shirt_number": 27,
+                    "goals": 0,
+                    "matches": 0
+                }],
+        "position": "M",
+            "person_list": [
+                {
+                    "id": 101339134,
+                    "name": "Marit Emaus·Flaa",
+                    "logo": "",
+                    "position": "F",
+                    "shirt_number": 27,
+                    "goals": 0,
+                    "matches": 0
+                }],
+    "message": "success"}
+数据说明：position=F代表前锋，position=M代表前锋，代表中锋；如果person_list放回的数据是空的，那该段隐藏
+
+
+
 进入球队详情的时候，通过比赛详情的G5MatchItem的联赛competition_id传到球队详情，然后给球队详情的赛程的/api/v1/football/matches请求和/api/v1/info/list请求使用
 
 
