@@ -45,7 +45,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
     });
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/football/match/odd-histories',
+        '/api/livespeed/football/match/odd-histories',
         queryParameters: {
           'match_id': widget.match.matchId,
           'company_id': _selectedCompanyId,
@@ -55,7 +55,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
       if (response.code == 0 && response.data != null) {
         if (mounted) {
           setState(() {
-            _historyData = G5OddsHistoryData.fromJson(response.data as Map<String, dynamic>);
+            _historyData = G5OddsHistoryData.fromJson(
+                response.data as Map<String, dynamic>);
             _isLoading = false;
           });
         }
@@ -144,7 +145,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                   color: isSelected ? G5Colors.pitchCard : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected ? Colors.transparent : G5Colors.pitchBorder,
+                    color:
+                        isSelected ? Colors.transparent : G5Colors.pitchBorder,
                   ),
                 ),
                 alignment: Alignment.center,
@@ -153,7 +155,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                   style: TextStyle(
                     color: isSelected ? Colors.white : G5Colors.textSecondary,
                     fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -190,7 +193,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
               decoration: BoxDecoration(
                 color: isSelected ? G5Colors.pitchCard : Colors.transparent,
                 border: isSelected
-                    ? const Border(left: BorderSide(color: G5Colors.accentBlue, width: 4))
+                    ? const Border(
+                        left: BorderSide(color: G5Colors.accentBlue, width: 4))
                     : null,
               ),
               child: Column(
@@ -200,7 +204,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                     style: TextStyle(
                       color: isSelected ? Colors.white : G5Colors.textSecondary,
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
@@ -245,7 +250,9 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
     }
 
     if (currentList == null || currentList.isEmpty) {
-      return const Center(child: Text('暂无历史数据', style: TextStyle(color: G5Colors.textSecondary)));
+      return const Center(
+          child:
+              Text('暂无历史数据', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return Column(
@@ -259,10 +266,27 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
           ),
           child: const Row(
             children: [
-              SizedBox(width: 50, child: Text('时间/比分', style: TextStyle(color: G5Colors.textSecondary, fontSize: 10))),
-              Expanded(child: Text('主队水位', textAlign: TextAlign.center, style: TextStyle(color: G5Colors.textSecondary, fontSize: 10))),
-              SizedBox(width: 60, child: Text('盘口', textAlign: TextAlign.center, style: TextStyle(color: G5Colors.textSecondary, fontSize: 10))),
-              Expanded(child: Text('客队水位', textAlign: TextAlign.center, style: TextStyle(color: G5Colors.textSecondary, fontSize: 10))),
+              SizedBox(
+                  width: 50,
+                  child: Text('时间/比分',
+                      style: TextStyle(
+                          color: G5Colors.textSecondary, fontSize: 10))),
+              Expanded(
+                  child: Text('主队水位',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: G5Colors.textSecondary, fontSize: 10))),
+              SizedBox(
+                  width: 60,
+                  child: Text('盘口',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: G5Colors.textSecondary, fontSize: 10))),
+              Expanded(
+                  child: Text('客队水位',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: G5Colors.textSecondary, fontSize: 10))),
             ],
           ),
         ),
@@ -279,12 +303,15 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 decoration: BoxDecoration(
                   color: G5Colors.pitchCard,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: index == 0 ? G5Colors.accentBlue.withOpacity(0.5) : G5Colors.pitchBorder,
+                    color: index == 0
+                        ? G5Colors.accentBlue.withOpacity(0.5)
+                        : G5Colors.pitchBorder,
                   ),
                 ),
                 child: Row(
@@ -297,12 +324,16 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                         children: [
                           Text(
                             item.matchOffset ?? "初盘",
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             item.score ?? "0-0",
-                            style: const TextStyle(color: G5Colors.textSecondary, fontSize: 10),
+                            style: const TextStyle(
+                                color: G5Colors.textSecondary, fontSize: 10),
                           ),
                         ],
                       ),
@@ -315,7 +346,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                           Text(
                             item.home ?? '-',
                             style: TextStyle(
-                              color: isUp ? G5Colors.accentCrimson : Colors.white,
+                              color:
+                                  isUp ? G5Colors.accentCrimson : Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -323,7 +355,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                           if (isUp)
                             const Padding(
                               padding: EdgeInsets.only(left: 4),
-                              child: Icon(Icons.arrow_drop_up, color: G5Colors.accentCrimson, size: 14),
+                              child: Icon(Icons.arrow_drop_up,
+                                  color: G5Colors.accentCrimson, size: 14),
                             ),
                         ],
                       ),
@@ -340,7 +373,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                       ),
                       child: Text(
                         item.draw ?? '-',
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 10),
                         maxLines: 1,
                       ),
                     ),
@@ -352,7 +386,9 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                           Text(
                             item.away ?? '-',
                             style: TextStyle(
-                              color: isDown ? G5Colors.accentEmerald : Colors.white,
+                              color: isDown
+                                  ? G5Colors.accentEmerald
+                                  : Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -360,7 +396,8 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                           if (isDown)
                             const Padding(
                               padding: EdgeInsets.only(left: 4),
-                              child: Icon(Icons.arrow_drop_down, color: G5Colors.accentEmerald, size: 14),
+                              child: Icon(Icons.arrow_drop_down,
+                                  color: G5Colors.accentEmerald, size: 14),
                             ),
                         ],
                       ),

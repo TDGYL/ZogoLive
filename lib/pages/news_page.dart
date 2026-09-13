@@ -53,7 +53,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
     };
 
     final response = await G5NetworkManager().get(
-      '/api/v1/info/list',
+      '/api/livespeed/info/list',
       queryParameters: params,
     );
     print("请求成功---re${response.isSuccess}");

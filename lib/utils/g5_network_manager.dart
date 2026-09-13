@@ -23,16 +23,16 @@ class G5NetworkManager {
 
   G5NetworkManager._internal() {
     _dio = Dio(BaseOptions(
-      baseUrl: 'https://api.g5-live.com',
+      baseUrl: 'https://api.livespeeds.com',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       responseType: ResponseType.json,
       headers: {
         'Content-Type': 'application/json',
-        'Accept':'application/json',
-        'x-platform':'IOS',
-        'Accept-Language':'en-US',
-        'x-version':'6.0.0'
+        'Accept': 'application/json',
+        'x-platform': 'IOS',
+        'Accept-Language': 'en-US',
+        'x-version': '6.0.0'
       },
     ));
 
@@ -40,48 +40,44 @@ class G5NetworkManager {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         // 打印请求信息
-        debugPrint(
-            '\n==================== G5Network Request ====================');
-        debugPrint('Method: ${options.method}');
-        debugPrint('URL: ${options.baseUrl}${options.path}');
-        if (options.queryParameters.isNotEmpty) {
-          debugPrint('QueryParameters: ${options.queryParameters}');
+        if (kDebugMode) {
+          print('\n==================== G5Network Request ====================');
+          print('Method: ${options.method}');
+          print('URL: ${options.baseUrl}${options.path}');
+          if (options.queryParameters.isNotEmpty) {
+            print('QueryParameters: ${options.queryParameters}');
+          }
+          print('Headers: ${options.headers}');
+          if (options.data != null) {
+            print('Data: ${options.data}');
+          }
+          print('===========================================================\n');
         }
-        debugPrint('Headers: ${options.headers}');
-        if (options.data != null) {
-          debugPrint('Data: ${options.data}');
-        }
-        debugPrint(
-            '===========================================================\n');
-
         return handler.next(options);
       },
       onResponse: (response, handler) {
         // 打印响应信息
-        debugPrint(
-            '\n==================== G5Network Response ===================');
-        debugPrint(
-            'URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
-        debugPrint('StatusCode: ${response.statusCode}');
-        debugPrint('Data: ${response.data}');
-        debugPrint(
-            '===========================================================\n');
-
+        if (kDebugMode) {
+          print('\n==================== G5Network Response ===================');
+          print('URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
+          print('StatusCode: ${response.statusCode}');
+          print('Data: ${response.data}');
+          print('===========================================================\n');
+        }
         return handler.next(response);
       },
       onError: (DioException e, handler) {
         // 打印错误信息
-        debugPrint(
-            '\n==================== G5Network Error ======================');
-        debugPrint('URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
-        debugPrint('Error: ${e.message}');
-        if (e.response != null) {
-          debugPrint('StatusCode: ${e.response?.statusCode}');
-          debugPrint('Data: ${e.response?.data}');
+        if (kDebugMode) {
+          print('\n==================== G5Network Error ======================');
+          print('URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
+          print('Error: ${e.message}');
+          if (e.response != null) {
+            print('StatusCode: ${e.response?.statusCode}');
+            print('Data: ${e.response?.data}');
+          }
+          print('===========================================================\n');
         }
-        debugPrint(
-            '===========================================================\n');
-
         return handler.next(e);
       },
     ));

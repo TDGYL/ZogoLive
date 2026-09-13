@@ -100,7 +100,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
     };
 
     final response = await G5NetworkManager().post(
-      '/api/v1/football/matches',
+      '/api/livespeed/football/matches',
       data: params,
     );
 
@@ -466,234 +466,234 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
           ],
         ),
         child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: G5Colors.accentEmerald.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      match.competitionName ?? '',
-                      style: const TextStyle(
-                        color: G5Colors.accentEmerald,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: G5Colors.accentEmerald.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    _formatMatchTime(match.matchTime),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              if (isLive)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: G5Colors.accentCrimson.withOpacity(0.2),
-                    border: Border.all(
-                        color: G5Colors.accentCrimson.withOpacity(0.4)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: G5Colors.accentCrimson,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusDisplay,
+                      child: Text(
+                        match.competitionName ?? '',
                         style: const TextStyle(
-                          color: G5Colors.accentCrimson,
+                          color: G5Colors.accentEmerald,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                )
-              else
-                Text(
-                  statusDisplay,
-                  style: const TextStyle(
-                    color: G5Colors.accentGold,
-                    fontSize: 10,
-                  ),
-                ),
-            ],
-          ),
-          const Divider(color: G5Colors.pitchBorder, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                flex: 5,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.2)),
-                        color: G5Colors.pitchElevated,
-                      ),
-                      child: match.homeTeamLogo != null &&
-                              match.homeTeamLogo!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                match.homeTeamLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.shield,
-                                        color: G5Colors.textSecondary,
-                                        size: 20),
-                              ),
-                            )
-                          : const Icon(Icons.shield,
-                              color: G5Colors.textSecondary, size: 20),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        match.homeTeamName ?? '',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: 10),
+                    Text(
+                      _formatMatchTime(match.matchTime),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    if (match.statusId != 1) ...[
-                      // 假设 1 是未开赛
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${match.homeNormalScore ?? 0}',
-                            style: const TextStyle(
-                              color: G5Colors.accentEmerald,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
+                if (isLive)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: G5Colors.accentCrimson.withOpacity(0.2),
+                      border: Border.all(
+                          color: G5Colors.accentCrimson.withOpacity(0.4)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: G5Colors.accentCrimson,
+                            shape: BoxShape.circle,
                           ),
-                          const Text(
-                            ' - ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            '${match.awayNormalScore ?? 0}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (match.note != null && match.note!.isNotEmpty)
+                        ),
+                        const SizedBox(width: 4),
                         Text(
-                          match.note!,
+                          statusDisplay,
                           style: const TextStyle(
-                            color: G5Colors.accentGold,
-                            fontSize: 9,
+                            color: G5Colors.accentCrimson,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    statusDisplay,
+                    style: const TextStyle(
+                      color: G5Colors.accentGold,
+                      fontSize: 10,
+                    ),
+                  ),
+              ],
+            ),
+            const Divider(color: G5Colors.pitchBorder, height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.2)),
+                          color: G5Colors.pitchElevated,
+                        ),
+                        child: match.homeTeamLogo != null &&
+                                match.homeTeamLogo!.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  match.homeTeamLogo!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.shield,
+                                          color: G5Colors.textSecondary,
+                                          size: 20),
+                                ),
+                              )
+                            : const Icon(Icons.shield,
+                                color: G5Colors.textSecondary, size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          match.homeTeamName ?? '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                    ] else
-                      const Text(
-                        'VS',
-                        style: TextStyle(
-                          color: G5Colors.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 5,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        match.awayTeamName ?? '',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.right,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.2)),
-                        color: G5Colors.pitchElevated,
-                      ),
-                      child: match.awayTeamLogo != null &&
-                              match.awayTeamLogo!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                match.awayTeamLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.shield,
-                                        color: G5Colors.textSecondary,
-                                        size: 20),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    children: [
+                      if (match.statusId != 1) ...[
+                        // 假设 1 是未开赛
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${match.homeNormalScore ?? 0}',
+                              style: const TextStyle(
+                                color: G5Colors.accentEmerald,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
                               ),
-                            )
-                          : const Icon(Icons.shield,
-                              color: G5Colors.textSecondary, size: 20),
-                    ),
-                  ],
+                            ),
+                            const Text(
+                              ' - ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              '${match.awayNormalScore ?? 0}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (match.note != null && match.note!.isNotEmpty)
+                          Text(
+                            match.note!,
+                            style: const TextStyle(
+                              color: G5Colors.accentGold,
+                              fontSize: 9,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ] else
+                        const Text(
+                          'VS',
+                          style: TextStyle(
+                            color: G5Colors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                Expanded(
+                  flex: 5,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          match.awayTeamName ?? '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.right,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.2)),
+                          color: G5Colors.pitchElevated,
+                        ),
+                        child: match.awayTeamLogo != null &&
+                                match.awayTeamLogo!.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  match.awayTeamLogo!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.shield,
+                                          color: G5Colors.textSecondary,
+                                          size: 20),
+                                ),
+                              )
+                            : const Icon(Icons.shield,
+                                color: G5Colors.textSecondary, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

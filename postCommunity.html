@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZogoLive - 发布社区动态</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans SC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zogo: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#4f46e5',
+                            600: '#4338ca',
+                            700: '#3730a3',
+                            accent: '#2563eb',
+                            card: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Noto Sans SC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .sheet-enter {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .sheet-enter-active {
+            transform: translateY(0);
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .ios-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 flex justify-center items-center bg-slate-900 sm:py-6">
+
+    <!-- iPhone Device Frame Container -->
+    <div class="w-full max-w-md h-full sm:h-[844px] bg-slate-50 sm:rounded-[48px] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border-[8px] sm:border-slate-800">
+        
+        <!-- iOS Dynamic Island / Status Bar Area -->
+        <div class="w-full pt-3 px-7 flex justify-between items-center bg-white z-40 select-none">
+            <span class="text-xs font-semibold tracking-tight text-slate-900">9:41</span>
+            <!-- Dynamic Island Capsule -->
+            <div class="hidden sm:block w-24 h-5 bg-black rounded-full shadow-inner"></div>
+            <div class="flex items-center space-x-1.5 text-xs text-slate-900">
+                <i class="fa-solid font-bold fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full text-sm"></i>
+            </div>
+        </div>
+
+        <!-- App Top Navigation Bar -->
+        <header class="glass-header sticky top-0 z-30 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <button id="cancelBtn" onclick="handleCancel()" class="text-slate-600 active:text-slate-400 font-normal text-base px-2 py-1 rounded-lg transition-colors">
+                取消
+            </button>
+            <h1 class="font-semibold text-slate-900 text-base tracking-tight">发布帖子</h1>
+            <button id="publishBtn" onclick="handlePublish()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-medium text-sm px-4 py-1.5 rounded-full shadow-sm transition-all flex items-center gap-1">
+                <span>发布</span>
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+        </header>
+
+        <!-- Main Form Content Scrollable Area -->
+        <main class="flex-1 overflow-y-auto px-4 py-4 space-y-5 hide-scrollbar">
+            
+            <!-- User Info Bar -->
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" 
+                         alt="User Avatar" 
+                         class="w-10 h-10 rounded-full object-cover border-2 border-indigo-100 shadow-sm">
+                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-sm text-slate-900">林克Link</span>
+                        <span class="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-100">LV.6 资深球迷</span>
+                    </div>
+                    <p class="text-xs text-slate-400 flex items-center gap-1">
+                        <i class="fa-solid fa-earth-americas text-[10px]"></i>
+                        公开 · ZogoLive 社区
+                    </p>
+                </div>
+            </div>
+
+            <!-- Text Content Input Section -->
+            <div class="relative bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <textarea 
+                    id="postContent" 
+                    rows="5" 
+                    placeholder="分享你的看球感受、战术分析，或与同好一起讨论精彩赛事..." 
+                    class="w-full text-slate-800 placeholder-slate-400 text-base bg-transparent border-0 focus:outline-none focus:ring-0 resize-none leading-relaxed"
+                    oninput="updateCharCount(this)"></textarea>
+                
+                <div class="flex justify-between items-center pt-2 mt-2 border-t border-slate-50">
+                    <div class="flex gap-2">
+                        <button onclick="insertTag('#焦点天王山战')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-medium px-2.5 py-1 rounded-full transition-colors">
+                            # 焦点天王山战
+                        </button>
+                        <button onclick="insertTag('#战术复盘')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium px-2.5 py-1 rounded-full transition-colors">
+                            # 战术复盘
+                        </button>
+                    </div>
+                    <span id="charCount" class="text-xs text-slate-400 font-mono">0/500</span>
+                </div>
+            </div>
+
+            <!-- Team Selection Container (Replaces button with Card upon selection) -->
+            <div id="teamSection" class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-shield-halved text-indigo-500"></i>
+                        关联主队 / 比赛球队
+                    </label>
+                    <span class="text-xs text-slate-400">帮助精准推送给同队球迷</span>
+                </div>
+
+                <!-- State 1: Select Button (Default view) -->
+                <button 
+                    id="selectTeamBtn" 
+                    onclick="openTeamModal()" 
+                    class="w-full bg-white hover:bg-indigo-50/50 border-2 border-dashed border-indigo-200 hover:border-indigo-400 rounded-2xl p-4 flex items-center justify-between group transition-all duration-200 active:scale-[0.99]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-plus text-lg"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-semibold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">选择关联球队</div>
+                            <div class="text-xs text-slate-400">选择球队展示专属徽章与主队卡片</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-indigo-600 text-xs font-medium bg-indigo-50 px-3 py-1.5 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <span>去选择</span>
+                        <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                    </div>
+                </button>
+
+                <!-- State 2: Selected Team Card (Hidden by default) -->
+                <div id="teamCard" class="hidden relative group overflow-hidden bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-4 shadow-md border border-slate-700 transition-all">
+                    <!-- Background Decorative Glow -->
+                    <div id="cardGlow" class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full opacity-20 blur-2xl"></div>
+                    
+                    <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center space-x-3.5">
+                            <!-- Team Logo Container -->
+                            <div id="teamLogoContainer" class="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md p-2 flex items-center justify-center border border-white/20 shadow-inner">
+                                <span id="teamEmoji" class="text-2xl">⚽</span>
+                            </div>
+                            
+                            <!-- Team Details -->
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 id="cardTeamName" class="font-bold text-base text-white tracking-wide">阿森纳</h3>
+                                    <span id="cardLeagueBadge" class="text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full text-slate-200 border border-white/10">英超</span>
+                                </div>
+                                <p id="cardTeamMeta" class="text-xs text-slate-300 mt-0.5 flex items-center gap-2">
+                                    <span>主教练: 米克尔·阿尔特塔</span>
+                                    <span>•</span>
+                                    <span class="text-amber-400"><i class="fa-solid fa-fire text-[10px] mr-0.5"></i>热度 #2</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons on card -->
+                        <div class="flex items-center gap-1">
+                            <button onclick="openTeamModal()" class="text-xs text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors" title="更换球队">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                            <button onclick="removeSelectedTeam()" class="text-xs text-rose-300 hover:text-rose-100 bg-rose-500/20 hover:bg-rose-500/30 p-2 rounded-xl transition-colors" title="移除">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Tag Bar inside Card -->
+                    <div class="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300">
+                        <span id="teamMotto" class="italic opacity-90">"Victoria Concordia Crescit"</span>
+                        <span class="text-indigo-200 font-medium">已关联主队讨论区 <i class="fa-solid fa-circle-check text-emerald-400 ml-0.5"></i></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topics & Category Selector -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-hashtag text-indigo-500"></i>
+                        添加话题分类
+                    </span>
+                    <span class="text-xs text-slate-400">可多选</span>
+                </div>
+                <div class="flex flex-wrap gap-2" id="topicTagsContainer">
+                    <button onclick="toggleTag(this)" class="topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all">
+                        🔥 比赛热议
+                    </button>
+                    <button onclick="toggleTag(this)" class="topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all">
+                        📊 战术拆解
+                    </button>
+                    <button onclick="toggleTag(this)" class="topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all">
+                        📰 转会流言
+                    </button>
+                    <button onclick="toggleTag(this)" class="topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all">
+                        👟 装备评分
+                    </button>
+                    <button onclick="toggleTag(this)" class="topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all">
+                        🏆 夺冠前瞻
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Toggles -->
+            <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-1">
+                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-comments text-sm"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">允许球迷评论</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-location-dot text-sm"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">显示看球位置</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="locationToggle" onchange="toggleLocation(this)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+                <div id="locationBadge" class="hidden text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg flex items-center justify-between ml-11">
+                    <span>📍 伦敦 · 酋长球场 (Emirates Stadium)</span>
+                    <i class="fa-solid fa-check text-[10px]"></i>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom iOS Accessory Bar -->
+        <div class="bg-white border-t border-slate-100 px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-5 text-slate-500">
+                <button onclick="toggleEmojiPicker()" class="hover:text-indigo-600 active:scale-90 transition-transform p-1">
+                    <i class="fa-regular fa-face-smile text-xl"></i>
+                </button>
+                <button onclick="insertTag('#球星对决')" class="hover:text-indigo-600 active:scale-90 transition-transform p-1">
+                    <i class="fa-solid fa-hashtag text-lg"></i>
+                </button>
+                <button onclick="openTeamModal()" class="hover:text-indigo-600 active:scale-90 transition-transform p-1 flex items-center">
+                    <i class="fa-solid fa-shield text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="text-xs text-slate-400 flex items-center gap-1">
+                <i class="fa-solid fa-lock text-[10px]"></i>
+                <span>ZogoLive 社区公约保驾护航</span>
+            </div>
+        </div>
+
+        <!-- Emoji Quick Bar Sheet (Hidden by default) -->
+        <div id="emojiPicker" class="hidden bg-slate-50 border-t border-slate-200 p-3 grid grid-cols-8 gap-2 text-xl text-center">
+            <button onclick="addEmoji('⚽')" class="hover:bg-white p-1 rounded-lg">⚽</button>
+            <button onclick="addEmoji('🏀')" class="hover:bg-white p-1 rounded-lg">🏀</button>
+            <button onclick="addEmoji('🔥')" class="hover:bg-white p-1 rounded-lg">🔥</button>
+            <button onclick="addEmoji('🏆')" class="hover:bg-white p-1 rounded-lg">🏆</button>
+            <button onclick="addEmoji('💪')" class="hover:bg-white p-1 rounded-lg">💪</button>
+            <button onclick="addEmoji('👏')" class="hover:bg-white p-1 rounded-lg">👏</button>
+            <button onclick="addEmoji('🎯')" class="hover:bg-white p-1 rounded-lg">🎯</button>
+            <button onclick="addEmoji('⚡')" class="hover:bg-white p-1 rounded-lg">⚡</button>
+        </div>
+
+        <!-- iOS Team Selection Drawer Modal -->
+        <div id="teamModalOverlay" onclick="closeTeamModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 z-50"></div>
+        
+        <div id="teamModalSheet" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-[32px] shadow-2xl sheet-enter z-50 flex flex-col max-h-[85vh]">
+            
+            <!-- Modal Pull Handle & Header -->
+            <div class="p-4 border-b border-slate-100 text-center relative flex-shrink-0">
+                <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
+                <h2 class="font-bold text-slate-900 text-base">选择你的支持球队</h2>
+                <p class="text-xs text-slate-400 mt-0.5">帖子里将附带专属球队信息卡片</p>
+                
+                <button onclick="closeTeamModal()" class="absolute right-4 top-4 w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Search & League Filter Tabs -->
+            <div class="p-4 pb-2 space-y-3 flex-shrink-0">
+                <!-- Search Box -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input 
+                        type="text" 
+                        id="teamSearchInput" 
+                        oninput="filterTeams()" 
+                        placeholder="搜索球队名称（如：阿森纳, 湖人, 皇马...）" 
+                        class="w-full bg-slate-100 text-slate-800 text-xs pl-9 pr-4 py-2.5 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- League Category Tabs -->
+                <div class="flex space-x-2 overflow-x-auto hide-scrollbar py-1">
+                    <button onclick="filterLeague('all', this)" class="league-tab bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">
+                        全部球队
+                    </button>
+                    <button onclick="filterLeague('EPL', this)" class="league-tab bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                        ⚽ 英超
+                    </button>
+                    <button onclick="filterLeague('NBA', this)" class="league-tab bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                        🏀 NBA
+                    </button>
+                    <button onclick="filterLeague('LaLiga', this)" class="league-tab bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                        ⚽ 西甲
+                    </button>
+                    <button onclick="filterLeague('UCL', this)" class="league-tab bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                        🏆 欧冠
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Team List -->
+            <div id="teamList" class="flex-1 overflow-y-auto p-4 pt-1 space-y-2.5 hide-scrollbar">
+                <!-- Team items generated via JS -->
+            </div>
+        </div>
+
+        <!-- Toast Notification Message -->
+        <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl flex items-center space-x-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px] z-50 border border-slate-700">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toastMessage">发布成功！</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Preset Team Data Dictionary
+        const teamsData = [
+            {
+                id: 'arsenal',
+                name: '阿森纳 (Arsenal)',
+                shortName: '阿森纳',
+                league: 'EPL',
+                leagueName: '英超',
+                emoji: '🔴',
+                motto: '"Victoria Concordia Crescit"',
+                bgGradient: 'from-red-600 to-red-950',
+                glowColor: 'bg-red-500',
+                meta: '主教练: 米克尔·阿尔特塔 • 酋长球场'
+            },
+            {
+                id: 'lakers',
+                name: '洛杉矶湖人 (Lakers)',
+                shortName: '洛杉矶湖人',
+                league: 'NBA',
+                leagueName: 'NBA',
+                emoji: '🟣',
+                motto: '"Lake Show - Purple & Gold"',
+                bgGradient: 'from-purple-900 via-indigo-950 to-amber-900',
+                glowColor: 'bg-amber-400',
+                meta: '主场: 加密货币竞技场 • 17冠传奇'
+            },
+            {
+                id: 'realmadrid',
+                name: '皇家马德里 (Real Madrid)',
+                shortName: '皇家马德里',
+                league: 'LaLiga',
+                leagueName: '西甲',
+                emoji: '👑',
+                motto: '"¡Hala Madrid! y nada más"',
+                bgGradient: 'from-blue-900 via-slate-900 to-indigo-950',
+                glowColor: 'bg-blue-400',
+                meta: '主教练: 卡洛·安切洛蒂 • 伯纳乌'
+            },
+            {
+                id: 'warriors',
+                name: '金州勇士 (Warriors)',
+                shortName: '金州勇士',
+                league: 'NBA',
+                leagueName: 'NBA',
+                emoji: '⚡',
+                motto: '"Dub Nation - Strength in Numbers"',
+                bgGradient: 'from-blue-600 to-amber-700',
+                glowColor: 'bg-yellow-400',
+                meta: '主场: 大通中心 • 三分浪潮'
+            },
+            {
+                id: 'mancity',
+                name: '曼城 (Manchester City)',
+                shortName: '曼城',
+                league: 'EPL',
+                leagueName: '英超',
+                emoji: '🩵',
+                motto: '"Super City - Blue Moon"',
+                bgGradient: 'from-sky-500 to-blue-900',
+                glowColor: 'bg-sky-400',
+                meta: '主教练: 瓜迪奥拉 • 阿提哈德'
+            },
+            {
+                id: 'bayern',
+                name: '拜仁慕尼黑 (FC Bayern)',
+                shortName: '拜仁慕尼黑',
+                league: 'UCL',
+                leagueName: '德甲/欧冠',
+                emoji: '⚽',
+                motto: '"Mia San Mia"',
+                bgGradient: 'from-red-700 to-slate-900',
+                glowColor: 'bg-red-500',
+                meta: '主场: 安联球场 • 德甲霸主'
+            }
+        ];
+
+        let selectedTeamObj = null;
+        let currentLeagueFilter = 'all';
+
+        window.onload = function() {
+            renderTeamList(teamsData);
+        };
+
+        // Render Team List inside Modal
+        function renderTeamList(teams) {
+            const container = document.getElementById('teamList');
+            container.innerHTML = '';
+
+            if (teams.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs">
+                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 block text-slate-300"></i>
+                        未找到匹配球队，换个关键词试试
+                    </div>
+                `;
+                return;
+            }
+
+            teams.forEach(team => {
+                const isSelected = selectedTeamObj && selectedTeamObj.id === team.id;
+                const item = document.createElement('div');
+                item.className = `p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer active:scale-[0.98] ${
+                    isSelected ? 'bg-indigo-50/80 border-indigo-500 shadow-sm' : 'bg-slate-50 border-slate-100 hover:bg-slate-100/80'
+                }`;
+                item.onclick = () => selectTeam(team);
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl border border-slate-100">
+                            ${team.emoji}
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                ${team.name}
+                                <span class="text-[10px] font-semibold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">${team.leagueName}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-0.5">${team.meta}</div>
+                        </div>
+                    </div>
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center ${
+                        isSelected ? 'bg-indigo-600 text-white' : 'border border-slate-300 text-transparent'
+                    }">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function openTeamModal() {
+            const overlay = document.getElementById('teamModalOverlay');
+            const sheet = document.getElementById('teamModalSheet');
+            
+            overlay.classList.remove('pointer-events-none');
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            
+            sheet.classList.remove('sheet-enter');
+            sheet.classList.add('sheet-enter-active');
+        }
+
+        function closeTeamModal() {
+            const overlay = document.getElementById('teamModalOverlay');
+            const sheet = document.getElementById('teamModalSheet');
+            
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            overlay.classList.add('pointer-events-none');
+            
+            sheet.classList.remove('sheet-enter-active');
+            sheet.classList.add('sheet-enter');
+        }
+
+        function selectTeam(team) {
+            selectedTeamObj = team;
+            
+            // UI elements update
+            const selectBtn = document.getElementById('selectTeamBtn');
+            const teamCard = document.getElementById('teamCard');
+            
+            selectBtn.classList.add('hidden');
+            teamCard.classList.remove('hidden');
+
+            // Apply card details
+            document.getElementById('cardTeamName').textContent = team.shortName;
+            document.getElementById('cardLeagueBadge').textContent = team.leagueName;
+            document.getElementById('teamEmoji').textContent = team.emoji;
+            document.getElementById('cardTeamMeta').textContent = team.meta;
+            document.getElementById('teamMotto').textContent = team.motto;
+
+            // Reset background gradient & glow
+            teamCard.className = `relative group overflow-hidden bg-gradient-to-r ${team.bgGradient} text-white rounded-2xl p-4 shadow-md border border-slate-700 transition-all`;
+            document.getElementById('cardGlow').className = `absolute -right-6 -bottom-6 w-32 h-32 rounded-full opacity-20 blur-2xl ${team.glowColor}`;
+
+            closeTeamModal();
+            renderTeamList(getFilteredTeams());
+            showToast(`已成功绑定 ${team.shortName} 卡片`);
+        }
+
+        function removeSelectedTeam() {
+            selectedTeamObj = null;
+            document.getElementById('selectTeamBtn').classList.remove('hidden');
+            document.getElementById('teamCard').classList.add('hidden');
+            renderTeamList(getFilteredTeams());
+            showToast('已解绑球队', 'info');
+        }
+
+        // Filter Logic
+        function filterTeams() {
+            renderTeamList(getFilteredTeams());
+        }
+
+        function filterLeague(league, tabElem) {
+            currentLeagueFilter = league;
+            
+            // Update Active tab buttons UI
+            document.querySelectorAll('.league-tab').forEach(tab => {
+                tab.className = 'league-tab bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap';
+            });
+            tabElem.className = 'league-tab bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm';
+
+            renderTeamList(getFilteredTeams());
+        }
+
+        function getFilteredTeams() {
+            const search = document.getElementById('teamSearchInput').value.toLowerCase().trim();
+            return teamsData.filter(team => {
+                const matchesLeague = currentLeagueFilter === 'all' || team.league === currentLeagueFilter;
+                const matchesSearch = team.name.toLowerCase().includes(search) || team.leagueName.toLowerCase().includes(search);
+                return matchesLeague && matchesSearch;
+            });
+        }
+
+        function updateCharCount(textarea) {
+            const count = textarea.value.length;
+            document.getElementById('charCount').textContent = `${count}/500`;
+            if (count > 500) {
+                document.getElementById('charCount').classList.add('text-rose-500');
+            } else {
+                document.getElementById('charCount').classList.remove('text-rose-500');
+            }
+        }
+
+        function insertTag(tagText) {
+            const textarea = document.getElementById('postContent');
+            textarea.value += (textarea.value ? ' ' : '') + tagText + ' ';
+            textarea.focus();
+            updateCharCount(textarea);
+        }
+
+        function toggleTag(btn) {
+            if (btn.classList.contains('bg-indigo-600')) {
+                btn.className = 'topic-tag text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl border border-transparent font-medium transition-all';
+            } else {
+                btn.className = 'topic-tag text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-xl border border-indigo-600 font-medium transition-all shadow-sm';
+            }
+        }
+
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            picker.classList.toggle('hidden');
+        }
+
+        function addEmoji(emoji) {
+            const textarea = document.getElementById('postContent');
+            textarea.value += emoji;
+            textarea.focus();
+            updateCharCount(textarea);
+        }
+
+        function toggleLocation(checkbox) {
+            const badge = document.getElementById('locationBadge');
+            if (checkbox.checked) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function handleCancel() {
+            showToast('已取消编辑', 'info');
+            setTimeout(() => {
+                document.getElementById('postContent').value = '';
+                updateCharCount(document.getElementById('postContent'));
+                removeSelectedTeam();
+            }, 500);
+        }
+
+        function handlePublish() {
+            const content = document.getElementById('postContent').value.trim();
+            if (!content && !selectedTeamObj) {
+                showToast('请输入内容或选择球队后再发布', 'error');
+                return;
+            }
+
+            const publishBtn = document.getElementById('publishBtn');
+            publishBtn.disabled = true;
+            publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>发布中</span>`;
+
+            setTimeout(() => {
+                publishBtn.disabled = false;
+                publishBtn.innerHTML = `<span>发布</span> <i class="fa-solid fa-paper-plane text-xs"></i>`;
+                showToast('动态发布成功！社区同好正在围观');
+                document.getElementById('postContent').value = '';
+                updateCharCount(document.getElementById('postContent'));
+            }, 1000);
+        }
+
+        // Custom iOS Toast Notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400';
+            } else if (type === 'info') {
+                toastIcon.className = 'fa-solid fa-circle-info text-sky-400';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

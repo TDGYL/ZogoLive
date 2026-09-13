@@ -1,12 +1,17 @@
 
 
 
-1、图片上传
+1、图片上传  ❌（阉割）
+1、隐私协议
 2、登录网易易信
 3、个人中心
 4、首页搜索比赛个用户
 5、关注比赛和用户
 6、资讯webview。✅
 7、社区详情
+   社区发布
 8、将项目的本地的中文修改成英文
-9、/api/livespeed/ 记得替换 /api/v1
+9、/api/livespeed/ 记得替换 /api/v1.    api.livespeeds.com✅
+offical@livespeeds.com 默认验证码 1086✅
+
+

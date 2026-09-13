@@ -56,9 +56,9 @@ class G5StatItem {
         return 'Yellow Card';
       case 1:
         return '3分球进球数';
-      case 2: // 注意，足球里2是角球，篮球里2是2分球进球数。如果你这个接口专门对应篮球（/api/v1/basketball/match/process），可以将足球相关的覆盖或者按需调整。这里先补齐篮球枚举
+      case 2: // 注意，足球里2是角球，篮球里2是2分球进球数。如果你这个接口专门对应篮球（/api/livespeed/basketball/match/process），可以将足球相关的覆盖或者按需调整。这里先补齐篮球枚举
         return '2分球进球数';
-      case 3: 
+      case 3:
         return '罚球进球数';
       case 4:
         return '剩余暂停数';
@@ -135,20 +135,40 @@ class G5IncidentItem {
     return G5IncidentItem(
       type: json['type'] != null ? (json['type'] as num).toInt() : null,
       typeV2: json['type_v2'] != null ? (json['type_v2'] as num).toInt() : null,
-      position: json['position'] != null ? (json['position'] as num).toInt() : null,
+      position:
+          json['position'] != null ? (json['position'] as num).toInt() : null,
       time: json['time'] != null ? (json['time'] as num).toInt() : null,
       second: json['second'] != null ? (json['second'] as num).toInt() : null,
-      homeScore: json['home_score'] != null ? (json['home_score'] as num).toInt() : null,
-      awayScore: json['away_score'] != null ? (json['away_score'] as num).toInt() : null,
-      playerId: json['player_id'] != null ? (json['player_id'] as num).toInt() : null,
+      homeScore: json['home_score'] != null
+          ? (json['home_score'] as num).toInt()
+          : null,
+      awayScore: json['away_score'] != null
+          ? (json['away_score'] as num).toInt()
+          : null,
+      playerId:
+          json['player_id'] != null ? (json['player_id'] as num).toInt() : null,
       playerName: json['player_name'] as String?,
-      varReason: json['var_reason'] != null ? (json['var_reason'] as num).toInt() : null,
-      varResult: json['var_result'] != null ? (json['var_result'] as num).toInt() : null,
-      reasonType: json['reason_type'] != null ? (json['reason_type'] as num).toInt() : null,
-      assist1Id: json['assist1_id'] != null ? (json['assist1_id'] as num).toInt() : null,
-      assist2Id: json['assist2_id'] != null ? (json['assist2_id'] as num).toInt() : null,
-      inPlayerId: json['in_player_id'] != null ? (json['in_player_id'] as num).toInt() : null,
-      outPlayerId: json['out_player_id'] != null ? (json['out_player_id'] as num).toInt() : null,
+      varReason: json['var_reason'] != null
+          ? (json['var_reason'] as num).toInt()
+          : null,
+      varResult: json['var_result'] != null
+          ? (json['var_result'] as num).toInt()
+          : null,
+      reasonType: json['reason_type'] != null
+          ? (json['reason_type'] as num).toInt()
+          : null,
+      assist1Id: json['assist1_id'] != null
+          ? (json['assist1_id'] as num).toInt()
+          : null,
+      assist2Id: json['assist2_id'] != null
+          ? (json['assist2_id'] as num).toInt()
+          : null,
+      inPlayerId: json['in_player_id'] != null
+          ? (json['in_player_id'] as num).toInt()
+          : null,
+      outPlayerId: json['out_player_id'] != null
+          ? (json['out_player_id'] as num).toInt()
+          : null,
       assist1Name: json['assist1_name'] as String?,
       assist2Name: json['assist2_name'] as String?,
       inPlayerName: json['in_player_name'] as String?,
@@ -163,7 +183,9 @@ class G5IncidentItem {
     }
     // 助攻
     if (type == 18) {
-      return (assist1Name != null && assist1Name!.isNotEmpty) ? assist1Name! : (assist2Name ?? '');
+      return (assist1Name != null && assist1Name!.isNotEmpty)
+          ? assist1Name!
+          : (assist2Name ?? '');
     }
     return playerName ?? '';
   }
@@ -264,7 +286,7 @@ class G5IncidentItem {
         return Icons.info_outline;
     }
   }
-  
+
   Color get iconColor {
     switch (type) {
       case 4:

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_post_model.dart';
+import 'package:zogolive/pages/login_page.dart';
+import 'package:zogolive/pages/post_community_page.dart';
+import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -56,7 +59,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     };
 
     final response = await G5NetworkManager().get(
-      '/api/v1/community/list',
+      '/api/livespeed/community/list',
       queryParameters: params,
     );
     if (response.isSuccess) {
@@ -154,7 +157,23 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
         Padding(
           padding: const EdgeInsets.only(right: 16, top: 12, bottom: 12),
           child: ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              if (G5AuthManager().isLoggedIn) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const PostCommunityPage()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('请先登录')),
+                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: G5Colors.accentEmerald,
               foregroundColor: Colors.black,
@@ -216,11 +235,6 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   Widget _buildPostCard(G5PostItem post) {
     final author = post.author;
     final match = post.match;
-
-    // 图片列表，因为接口只返回一张图，用6张同样的图占位展示九宫格样式
-    final imageUrls = post.image != null && post.image!.isNotEmpty
-        ? List.generate(6, (index) => post.image!)
-        : [];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -313,21 +327,44 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
           ),
           if (post.image != null && post.image!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                post.image!,
-                width: double.infinity,
-                height: 200,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 200,
-                  color: G5Colors.pitchElevated,
-                  child: const Center(
-                    child: Icon(Icons.image, color: G5Colors.textSecondary),
-                  ),
-                ),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // 如果包含 com/ 则截取后面的字符串
+                String rawTags = post.image!;
+                if (rawTags.contains('com/')) {
+                  rawTags = rawTags.substring(rawTags.indexOf('com/') + 4);
+                }
+                
+                final tags = rawTags.split(',');
+                final maxTagWidth = constraints.maxWidth * 0.75;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: tags.where((t) => t.trim().isNotEmpty).map((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: G5Colors.accentBlue.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: G5Colors.accentBlue.withOpacity(0.3)),
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxTagWidth),
+                        child: Text(
+                          tag.trim(),
+                          style: const TextStyle(
+                            color: G5Colors.accentBlue,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ],
           const SizedBox(height: 12),

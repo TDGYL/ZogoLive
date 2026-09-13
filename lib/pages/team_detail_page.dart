@@ -60,7 +60,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
   Future<void> _fetchTeamData() async {
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/football/team/data',
+        '/api/livespeed/football/team/data',
         queryParameters: {'team_id': widget.teamId},
       );
 
@@ -102,7 +102,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     });
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/info/list',
+        '/api/livespeed/info/list',
         queryParameters: {
           'page': 1,
           'size': 5,
@@ -144,7 +144,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
       final timestamp = (tomorrow.millisecondsSinceEpoch / 1000).floor();
 
       final response = await G5NetworkManager().post(
-        '/api/v1/football/matches',
+        '/api/livespeed/football/matches',
         data: {
           'tab': 0,
           'page': 1,
@@ -184,7 +184,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     });
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/football/team/lineup',
+        '/api/livespeed/football/team/lineup',
         queryParameters: {'team_id': widget.teamId},
       );
       if (response.code == 0 && response.data != null) {
@@ -219,7 +219,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     });
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/football/team/rank',
+        '/api/livespeed/football/team/rank',
         queryParameters: {
           'competition_id': competitionId,
           'season_id': 2025,

@@ -33,7 +33,7 @@ class _NewsDetailPageState extends G5BaseViewState<NewsDetailPage> {
   Future<void> _fetchNewsDetail() async {
     try {
       final response = await G5NetworkManager().get(
-        '/api/v1/info/detail',
+        '/api/livespeed/info/detail',
         queryParameters: {'id': widget.newsId},
       );
 

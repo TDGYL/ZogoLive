@@ -79,6 +79,9 @@ class G5MatchItem {
   int? schemeCount;
   int? countdown;
   int? isWorldCup;
+  int? categoryId; // 运动分类 1为足球
+  int? homeTeamScore;
+  int? awayTeamScore;
 
   G5MatchItem({
     this.matchId,
@@ -91,9 +94,11 @@ class G5MatchItem {
     this.homeTeamId,
     this.homeTeamName,
     this.homeTeamLogo,
+    this.homeTeamScore,
     this.awayTeamId,
     this.awayTeamName,
     this.awayTeamLogo,
+    this.awayTeamScore,
     this.statusId,
     this.statusName,
     this.matchTime,
@@ -132,6 +137,7 @@ class G5MatchItem {
     this.schemeCount,
     this.countdown,
     this.isWorldCup,
+    this.categoryId,
   });
 
   factory G5MatchItem.fromJson(Map<String, dynamic> json) {
@@ -187,6 +193,7 @@ class G5MatchItem {
       schemeCount: json['scheme_count'] as int?,
       countdown: json['countdown'] as int?,
       isWorldCup: json['is_world_cup'] as int?,
+      categoryId: json['category'] != null ? (json['category'] as num).toInt() : null,
     );
   }
 }
