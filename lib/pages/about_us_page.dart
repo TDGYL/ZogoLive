@@ -15,7 +15,7 @@ class AboutUsPage extends G5BaseViewController {
 
 class _AboutUsPageState extends G5BaseViewState<AboutUsPage> {
   /// 应用版本号 - String类型，展示在Logo下方
-  static const String _appVersion = 'v2.8';
+  static const String _appVersion = 'v1.0.0';
 
   /// 用户协议URL - String类型，点击用户协议跳转WebView加载
   static const String _userAgreementUrl =
@@ -103,17 +103,26 @@ class _AboutUsPageState extends G5BaseViewState<AboutUsPage> {
         const SizedBox(height: 40),
         // 项目Logo
         Center(
-          child: Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: G5Colors.accentEmerald.withOpacity(0.15),
-              border:
-                  Border.all(color: G5Colors.accentEmerald.withOpacity(0.3)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/live_speed_icon.jpg',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (c, e, s) => Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: G5Colors.accentEmerald.withOpacity(0.15),
+                  border: Border.all(
+                      color: G5Colors.accentEmerald.withOpacity(0.3)),
+                ),
+                child: const Icon(Icons.sports_soccer,
+                    color: G5Colors.accentEmerald, size: 40),
+              ),
             ),
-            child: const Icon(Icons.sports_soccer,
-                color: G5Colors.accentEmerald, size: 40),
           ),
         ),
         const SizedBox(height: 12),

@@ -1,6 +1,15 @@
 
 
 
+
+
+
+
+
+
+将/Users/guyilin/Downloads/LiveSpeedIcon.jpg复制一份到项目设置为app的icon，然后用该图替换about_us_page顶部的logo图
+
+
 login_page界面的服务协议点击跳转webView，界面加载webUrl=https://www.livespeeds.com/user-agreement?platform=IOS
 
 login_page界面的隐私政策点击跳转webView，界面加载webUrl=https://www.livespeeds.com/privacy-agreement?platform=IOS
