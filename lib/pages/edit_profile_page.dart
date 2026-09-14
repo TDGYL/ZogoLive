@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_colors.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_colors.dart';
 
-/// 编辑资料页
-/// 展示头像、昵称输入框、性别选择和保存按钮
-/// 头像支持从相册选择，点击保存提示"资料已提交，等待审核！"
+/// Edit Profile页
+/// 展示头像、Nickname输入框、Gender选择和Save按钮
+/// 头像支持从相册选择，点击SaveNotice"Submitted for review!"
 class EditProfilePage extends G5BaseViewController {
   const EditProfilePage({Key? key}) : super(key: key);
 
@@ -16,7 +16,7 @@ class EditProfilePage extends G5BaseViewController {
 }
 
 class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
-  /// 昵称输入控制器 - TextEditingController类型，管理昵称输入框文本
+  /// Nickname输入控制器 - TextEditingController类型，管理Nickname输入框文本
   final TextEditingController _nicknameController = TextEditingController();
 
   /// 用户头像 - String?类型，当前展示的头像URL或本地路径
@@ -25,7 +25,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
   /// 是否选择了本地头像 - bool类型，true表示头像来自相册选择
   bool _isLocalAvatar = false;
 
-  /// 性别 - int?类型，1男 2女，null/0未知
+  /// Gender - int?类型，1Male 2Female，null/0未知
   int? _sex;
 
   @override
@@ -44,11 +44,11 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
     super.dispose();
   }
 
-  /// 保存资料
-  /// 点击保存直接提示：资料已提交，等待审核！
+  /// Save资料
+  /// 点击Save直接Notice：Submitted for review!
   void _saveProfile() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('资料已提交，等待审核！')),
+      const SnackBar(content: Text('Submitted for review!')),
     );
   }
 
@@ -66,8 +66,8 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
     }
   }
 
-  /// 显示性别选择弹窗
-  /// 提供男/女两个选项，选择后更新性别
+  /// 显示Gender选择弹窗
+  /// 提供Male/Female两个选项，选择后更新Gender
   void _showSexPicker() {
     showModalBottomSheet(
       context: context,
@@ -81,9 +81,9 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
-              _buildSexOption(sheetContext, 1, '男', Icons.male),
+              _buildSexOption(sheetContext, 1, 'Male', Icons.male),
               const Divider(height: 1, color: G5Colors.pitchBorder),
-              _buildSexOption(sheetContext, 2, '女', Icons.female),
+              _buildSexOption(sheetContext, 2, 'Female', Icons.female),
               const SizedBox(height: 8),
             ],
           ),
@@ -92,9 +92,9 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
     );
   }
 
-  /// 构建性别选项行
+  /// 构建Gender选项行
   /// 参数：sheetContext - BuildContext，弹窗上下文；
-  ///       value - int类型，性别值；label - String类型，选项文案；icon - IconData类型，图标
+  ///       value - int类型，Gender值；label - String类型，选项文案；icon - IconData类型，图标
   /// 返回：Widget，可点击的选项行
   Widget _buildSexOption(
       BuildContext sheetContext, int value, String label, IconData icon) {
@@ -134,16 +134,16 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
     );
   }
 
-  /// 性别文案
-  /// 返回：String，1男 2女 其他未知
+  /// Gender文案
+  /// 返回：String，1Male 2Female 其他未知
   String get _sexText {
     switch (_sex) {
       case 1:
-        return '男';
+        return 'Male';
       case 2:
-        return '女';
+        return 'Female';
       default:
-        return '未设置';
+        return 'Unset';
     }
   }
 
@@ -153,7 +153,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
       backgroundColor: G5Colors.pitch,
       elevation: 0,
       title: const Text(
-        '编辑资料',
+        'Edit Profile',
         style: TextStyle(
             fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
       ),
@@ -207,7 +207,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '点击更换头像',
+                  'Tap to change avatar',
                   style: TextStyle(
                       color: G5Colors.textSecondary, fontSize: 11),
                 ),
@@ -224,7 +224,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
             ),
             child: Column(
               children: [
-                // 昵称输入框
+                // Nickname输入框
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -233,7 +233,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                       const SizedBox(
                         width: 72,
                         child: Text(
-                          '昵称',
+                          'Nickname',
                           style: TextStyle(
                               color: G5Colors.textSecondary, fontSize: 12),
                         ),
@@ -245,7 +245,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                               color: G5Colors.textPrimary, fontSize: 14),
                           maxLength: 20,
                           decoration: const InputDecoration(
-                            hintText: '请输入昵称',
+                            hintText: 'Enter nickname',
                             hintStyle: TextStyle(
                                 color: G5Colors.textSecondary, fontSize: 13),
                             border: InputBorder.none,
@@ -257,7 +257,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                   ),
                 ),
                 const Divider(height: 1, color: G5Colors.pitchBorder),
-                // 性别选择
+                // Gender选择
                 InkWell(
                   onTap: _showSexPicker,
                   child: Padding(
@@ -267,7 +267,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                         const SizedBox(
                           width: 72,
                           child: Text(
-                            '性别',
+                            'Gender',
                             style: TextStyle(
                                 color: G5Colors.textSecondary, fontSize: 12),
                           ),
@@ -289,7 +289,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
             ),
           ),
           const SizedBox(height: 32),
-          // 保存按钮
+          // Save按钮
           SizedBox(
             width: double.infinity,
             height: 44,
@@ -302,7 +302,7 @@ class _EditProfilePageState extends G5BaseViewState<EditProfilePage> {
                     borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text(
-                '保存',
+                'Save',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),

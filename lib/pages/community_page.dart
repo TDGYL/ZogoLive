@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_post_model.dart';
-import 'package:zogolive/pages/login_page.dart';
-import 'package:zogolive/pages/community_detail_page.dart';
-import 'package:zogolive/pages/post_community_page.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_event_bus.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_post_model.dart';
+import 'package:livespeed/pages/login_page.dart';
+import 'package:livespeed/pages/community_detail_page.dart';
+import 'package:livespeed/pages/post_community_page.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_event_bus.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class CommunityPage extends G5BaseViewController {
   const CommunityPage({Key? key}) : super(key: key);
@@ -28,7 +28,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   int _page = 1;
   final int _size = 10;
 
-  /// 帖子删除事件订阅 - StreamSubscription?类型，监听详情页删除帖子通知
+  /// 帖子DeleteEvents订阅 - StreamSubscription?类型，监听详情页Delete帖子通知
   StreamSubscription? _postDeleteSubscription;
 
   bool _isFirstLoading = true;
@@ -39,7 +39,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   @override
   void initData() {
     super.initData();
-    // 监听帖子删除事件，同步从列表中移除被删除的帖子
+    // 监听帖子DeleteEvents，同步从列表中移除被Delete的帖子
     _postDeleteSubscription =
         G5EventBus().on<PostDeleteEvent>().listen((event) {
       if (mounted) {
@@ -49,7 +49,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshController.callRefresh();
+      if (mounted) _refreshController.callRefresh();
     });
   }
 
@@ -124,9 +124,9 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     final difference = now.difference(publishDate);
 
     if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}分钟前';
+      return '${difference.inMinutes} min ago';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}小时前';
+      return '${difference.inHours} h ago';
     } else {
       return '${publishDate.month}-${publishDate.day}';
     }
@@ -155,14 +155,14 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '极球·社区',
+                'LiveSpeed·Community',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
               ),
               Text(
-                '240,000+ 深度战术球迷研讨',
+                '240,000+ tactical fans',
                 style: TextStyle(fontSize: 10, color: G5Colors.textSecondary),
               ),
             ],
@@ -182,7 +182,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('请先登录')),
+                  const SnackBar(content: Text('Please log in first')),
                 );
                 Navigator.push(
                   context,
@@ -198,7 +198,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                   borderRadius: BorderRadius.circular(20)),
             ),
             icon: const Icon(Icons.edit, size: 12),
-            label: const Text('发帖',
+            label: const Text('Post',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ),
@@ -211,27 +211,27 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
-        dragText: '下拉刷新',
-        armedText: '释放刷新',
-        readyText: '正在刷新...',
-        processingText: '正在刷新...',
-        processedText: '刷新成功',
-        noMoreText: '没有更多',
-        failedText: '刷新失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull to refresh',
+        armedText: 'Release to refresh',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Refreshed',
+        noMoreText: 'No more',
+        failedText: 'Refresh failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
       ),
       footer: const ClassicFooter(
-        dragText: '上拉加载',
-        armedText: '释放加载',
-        readyText: '正在加载...',
-        processingText: '正在加载...',
-        processedText: '加载成功',
-        noMoreText: '没有更多数据了',
-        failedText: '加载失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull up to load',
+        armedText: 'Release to load',
+        readyText: 'Loading...',
+        processingText: 'Loading...',
+        processedText: 'Loaded',
+        noMoreText: 'No more data',
+        failedText: 'Load failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
@@ -248,31 +248,31 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     );
   }
 
-  /// 显示举报二次确认弹窗
-  /// 点击"取消"关闭弹窗，点击"举报"提示举报成功
+  /// 显示Report二次确认弹窗
+  /// 点击"Cancel"关闭弹窗，点击"Report"NoticeReported
   void _showReportConfirmDialog() {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: G5Colors.pitchCard,
-          title: const Text('提示', style: TextStyle(color: Colors.white)),
-          content: const Text('确定要举报该帖子吗？',
+          title: const Text('Notice', style: TextStyle(color: Colors.white)),
+          content: const Text('Report this post?',
               style: TextStyle(color: G5Colors.textSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('取消',
+              child: const Text('Cancel',
                   style: TextStyle(color: G5Colors.textSecondary)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(); // 关闭弹窗
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('举报成功')),
+                  const SnackBar(content: Text('Reported')),
                 );
               },
-              child: const Text('举报',
+              child: const Text('Report',
                   style: TextStyle(color: G5Colors.accentEmerald)),
             ),
           ],
@@ -344,7 +344,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                         ),
                       ),
                       Text(
-                        '${_formatPublishTime(post.createTime)} · 社区用户', // 假设没有 location，用默认文本
+                        '${_formatPublishTime(post.createTime)} · User', // 假设没有 location，用默认文本
                         style: const TextStyle(
                           color: G5Colors.textSecondary,
                           fontSize: 10,
@@ -354,7 +354,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                   ),
                 ],
               ),
-              // 作者本人时隐藏举报按钮
+              // 作者本人时隐藏Report按钮
               if (!(author != null &&
                   G5AuthManager().isLoggedIn &&
                   author.id == G5AuthManager().currentUser?.id))
@@ -369,7 +369,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
-                      '举报',
+                      'Report',
                       style: TextStyle(
                         color: G5Colors.textSecondary,
                         fontSize: 11,
@@ -447,7 +447,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '关联比赛：${match.homeTeamName} ${match.homeScore} - ${match.awayScore} ${match.awayTeamName}',
+                      'Match: ${match.homeTeamName} ${match.homeScore} - ${match.awayScore} ${match.awayTeamName}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

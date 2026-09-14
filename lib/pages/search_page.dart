@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/models/g5_search_result_model.dart';
-import 'package:zogolive/pages/football_detail_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
-import 'package:zogolive/utils/g5_search_history_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/models/g5_search_result_model.dart';
+import 'package:livespeed/pages/football_detail_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
+import 'package:livespeed/utils/g5_search_history_manager.dart';
 
-/// 搜索页分类枚举
-/// 说明：搜索结果的分类标签，all=全部，match=比赛，user=用户
+/// Search页分类枚举
+/// 说明：Search结果的分类标签，all=All，match=Matches，user=Users
 enum G5SearchTab { all, match, user }
 
-/// 搜索页面
+/// Search页面
 /// 严格还原 home_search.html 设计稿
-/// 顶部搜索框 + 分类菜单（全部/比赛/用户）+ 结果列表
-/// 键盘弹起（搜索框获得焦点）展示历史搜索界面，键盘收起展示搜索结果界面
+/// 顶部Search框 + 分类菜单（All/Matches/Users）+ 结果列表
+/// 键盘弹起（Search框获得焦点）展示历史Search界面，键盘收起展示Search结果界面
 class SearchPage extends G5BaseViewController {
   const SearchPage({Key? key}) : super(key: key);
 
@@ -23,34 +23,34 @@ class SearchPage extends G5BaseViewController {
 }
 
 class _SearchPageState extends G5BaseViewState<SearchPage> {
-  /// 搜索输入控制器 - TextEditingController类型，监听搜索框内容变化
+  /// Search输入控制器 - TextEditingController类型，监听Search框内容变化
   final TextEditingController _searchController = TextEditingController();
 
-  /// 搜索框焦点节点 - FocusNode类型，监听焦点切换历史界面/结果界面
+  /// Search框焦点节点 - FocusNode类型，监听焦点切换历史界面/结果界面
   final FocusNode _searchFocusNode = FocusNode();
 
-  /// 当前选中的分类 - G5SearchTab类型，切换时刷新列表数据
+  /// 当前选中的分类 - G5SearchTab类型，切换时刷新列表Stats
   G5SearchTab _currentTab = G5SearchTab.all;
 
-  /// 搜索关键词 - String类型，当前生效的搜索词（点击搜索后更新）
+  /// Search关键词 - String类型，当前生效的Search词（点击Search后更新）
   String _keyword = '';
 
-  /// 搜索历史列表 - List<String>类型，最多8条，最新的在最前
+  /// History列表 - List<String>类型，最多8条，最新的在最前
   List<String> _historyList = [];
 
-  /// 是否展示搜索历史界面 - bool类型，true=历史+热门界面，false=搜索结果界面
+  /// 是否展示History界面 - bool类型，true=历史+Trending界面，false=Search结果界面
   bool _showHistory = true;
 
-  /// 热门比赛列表 - List<G5MatchItem>类型，接口/api/livespeed/index/search/match/hot返回的热门比赛
+  /// TrendingMatches列表 - List<G5MatchItem>类型，接口/api/livespeed/index/search/match/hot返回的TrendingMatches
   List<G5MatchItem> _hotMatches = [];
 
-  /// 热门列表是否加载中 - bool类型，true表示热门接口请求进行中
+  /// Trending列表是否加载中 - bool类型，true表示Trending接口请求进行中
   bool _isHotLoading = true;
 
-  /// 搜索结果模型 - G5SearchResultModel?类型，包含matches比赛列表和users用户列表
+  /// Search结果模型 - G5SearchResultModel?类型，包含matchesMatches列表和usersUsers列表
   G5SearchResultModel? _searchResult;
 
-  /// 搜索结果是否加载中 - bool类型，true表示搜索接口请求进行中
+  /// Search结果是否加载中 - bool类型，true表示Search接口请求进行中
   bool _isSearchLoading = false;
 
   @override
@@ -73,18 +73,18 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
   }
 
   /// 焦点变化回调
-  /// 获得焦点（键盘弹起）时切回历史搜索界面；失去焦点（键盘收起）时展示搜索结果界面
+  /// 获得焦点（键盘弹起）时切回历史Search界面；失去焦点（键盘收起）时展示Search结果界面
   void _onFocusChanged() {
     if (!mounted) return;
     if (_searchFocusNode.hasFocus) {
-      // 键盘弹起：展示历史搜索界面
+      // 键盘弹起：展示历史Search界面
       if (!_showHistory) {
         setState(() {
           _showHistory = true;
         });
       }
     } else {
-      // 键盘收起：已有关键词时展示搜索结果界面
+      // 键盘收起：已有关键词时展示Search结果界面
       if (_showHistory && _keyword.isNotEmpty) {
         setState(() {
           _showHistory = false;
@@ -93,7 +93,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
   }
 
-  /// 加载本地搜索历史
+  /// 加载本地History
   Future<void> _loadHistory() async {
     final list = await G5SearchHistoryManager.instance.getHistoryList();
     if (mounted) {
@@ -103,14 +103,14 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
   }
 
-  /// 执行搜索
-  /// 收起键盘后进入搜索结果界面，并保存搜索历史
-  /// 参数：keyword - String类型，搜索关键词
+  /// 执行Search
+  /// 收起键盘后进入Search结果界面，并SaveHistory
+  /// 参数：keyword - String类型，Search关键词
   void _doSearch(String keyword) {
     final String trimmed = keyword.trim();
     if (trimmed.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入搜索内容')),
+        const SnackBar(content: Text('Search matches & users')),
       );
       return;
     }
@@ -123,7 +123,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     // 收起键盘
     FocusScope.of(context).unfocus();
 
-    // 保存搜索历史
+    // SaveHistory
     G5SearchHistoryManager.instance.addHistory(trimmed).then((list) {
       if (mounted) {
         setState(() {
@@ -135,10 +135,10 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     _fetchSearchResults();
   }
 
-  /// 请求搜索结果数据
+  /// 请求Search结果Stats
   /// 接口：GET /api/livespeed/index/search
-  /// 参数：text - String类型，搜索关键词
-  /// 返回matches比赛列表和users用户列表
+  /// 参数：text - String类型，Search关键词
+  /// 返回matchesMatches列表和usersUsers列表
   Future<void> _fetchSearchResults() async {
     if (_keyword.isEmpty) return;
 
@@ -186,13 +186,13 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     setState(() {
       _currentTab = tab;
     });
-    // 切换分类时刷新列表数据
+    // 切换分类时刷新列表Stats
     if (_keyword.isNotEmpty) {
       _fetchSearchResults();
     }
   }
 
-  /// 清空全部搜索历史
+  /// ClearAllHistory
   Future<void> _clearHistory() async {
     await G5SearchHistoryManager.instance.clearHistory();
     if (mounted) {
@@ -202,7 +202,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
   }
 
-  /// 取消搜索，清空输入并回到历史界面
+  /// CancelSearch，Clear输入并回到历史界面
   void _cancelSearch() {
     setState(() {
       _searchController.clear();
@@ -212,9 +212,9 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     });
   }
 
-  /// 请求热门比赛列表
+  /// 请求TrendingMatches列表
   /// 接口：GET /api/livespeed/index/search/match/hot
-  /// 参照post_match_search_page的逻辑解析数据，只保留足球类目（categoryId==1）
+  /// 参照post_match_search_page的逻辑解析Stats，只保留足球类目（categoryId==1）
   Future<void> _fetchHotMatches() async {
     setState(() {
       _isHotLoading = true;
@@ -261,10 +261,10 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
   }
 
-  /// 解析搜索比赛JSON为G5MatchItem模型
+  /// 解析SearchMatchesJSON为G5MatchItem模型
   /// 字段映射与post_match_search_page的_parseSearchMatch保持一致
-  /// 参数：json - Map<String, dynamic>类型，接口返回的单条比赛数据
-  /// 返回：G5MatchItem，比赛列表模型
+  /// 参数：json - Map<String, dynamic>类型，接口返回的单条MatchesStats
+  /// 返回：G5MatchItem，Matches列表模型
   G5MatchItem _parseSearchMatch(Map<String, dynamic> json) {
     return G5MatchItem(
       matchId:
@@ -294,8 +294,8 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 点击热门比赛条目跳转比赛详情
-  /// 参数：match - G5MatchItem类型，热门比赛数据
+  /// 点击TrendingMatches条目跳转Matches详情
+  /// 参数：match - G5MatchItem类型，TrendingMatchesStats
   void _pushToMatchDetail(G5MatchItem match) {
     // 收起键盘
     FocusScope.of(context).unfocus();
@@ -306,7 +306,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
 
   @override
   PreferredSizeWidget? buildAppBar(BuildContext context) {
-    return null; // 使用自定义搜索头部
+    return null; // 使用自定义Search头部
   }
 
   @override
@@ -328,7 +328,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建顶部搜索框区域（返回按钮 + 搜索框 + 取消按钮）
+  /// 构建顶部Search框区域（返回按钮 + Search框 + Cancel按钮）
   Widget _buildSearchHeader() {
     return Container(
       padding: EdgeInsets.only(
@@ -363,7 +363,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // 搜索输入框
+          // Search输入框
           Expanded(
             child: Container(
               height: 38,
@@ -389,18 +389,18 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         isDense: true,
-                        hintText: '搜索比赛、球队、主播/用户',
+                        hintText: 'Search matches, teams, users',
                         hintStyle: TextStyle(
                             color: Color(0xFF64748B), fontSize: 13),
                       ),
                     ),
                   ),
-                  // 清空输入按钮
+                  // Clear输入按钮
                   if (_searchController.text.isNotEmpty)
                     GestureDetector(
                       onTap: () {
                         _cancelSearch();
-                        // 清空后重新聚焦方便继续输入
+                        // Clear后重新聚焦方便继续输入
                         _searchFocusNode.requestFocus();
                       },
                       child: Container(
@@ -419,13 +419,13 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // 取消按钮
+          // Cancel按钮
           GestureDetector(
             onTap: _cancelSearch,
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 6, horizontal: 2),
               child: Text(
-                '取消',
+                'Cancel',
                 style: TextStyle(
                   color: Color(0xFF818CF8),
                   fontSize: 14,
@@ -439,9 +439,9 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  // ==================== 历史搜索界面（默认视图） ====================
+  // ==================== 历史Search界面（默认视图） ====================
 
-  /// 构建默认视图：搜索历史 + 热门实时搜索
+  /// 构建默认视图：History + Trending Searches
   Widget _buildDefaultView() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -453,12 +453,12 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建搜索历史区块（胶囊标签流式布局）
+  /// 构建History区块（胶囊标签流式布局）
   Widget _buildHistorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 标题行 + 清空按钮
+        // 标题行 + Clear按钮
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -468,7 +468,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                     color: Color(0xFF818CF8), size: 14),
                 SizedBox(width: 6),
                 Text(
-                  '搜索历史',
+                  'History',
                   style: TextStyle(
                     color: G5Colors.textSecondary,
                     fontSize: 12,
@@ -487,7 +487,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                         color: Color(0xFF64748B), size: 13),
                     SizedBox(width: 2),
                     Text(
-                      '清空',
+                      'Clear',
                       style:
                           TextStyle(color: Color(0xFF64748B), fontSize: 11),
                     ),
@@ -501,7 +501,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              '暂无搜索历史记录',
+              'No search history',
               style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
             ),
           )
@@ -518,8 +518,8 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建单个历史搜索胶囊标签
-  /// 点击胶囊发起搜索；点击右侧x删除单条历史
+  /// 构建单个历史Search胶囊标签
+  /// 点击胶囊发起Search；点击右侧x删除单条历史
   /// 参数：keyword - String类型，历史关键词
   Widget _buildHistoryChip(String keyword) {
     return GestureDetector(
@@ -557,7 +557,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 删除单条搜索历史
+  /// 删除单条History
   /// 参数：keyword - String类型，要删除的关键词
   Future<void> _removeHistoryItem(String keyword) async {
     final newList = await G5SearchHistoryManager.instance.removeHistory(keyword);
@@ -568,7 +568,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
   }
 
-  /// 构建热门实时搜索榜区块
+  /// 构建Trending Searches榜区块
   Widget _buildHotSearchSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +582,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                     color: Color(0xFFF59E0B), size: 14),
                 SizedBox(width: 6),
                 Text(
-                  '热门实时搜索',
+                  'Trending Searches',
                   style: TextStyle(
                     color: G5Colors.textSecondary,
                     fontSize: 12,
@@ -593,7 +593,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
               ],
             ),
             const Text(
-              '每15分钟更新',
+              'Updated every 15 min',
               style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
             ),
           ],
@@ -613,11 +613,11 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Center(
-              child: Text('暂无热门数据',
+              child: Text('No trending data',
                   style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
             ),
           )
-        // 热门比赛列表
+        // TrendingMatches列表
         else
           Container(
             padding: const EdgeInsets.all(10),
@@ -640,9 +640,9 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建单个热门比赛条目
-  /// 保留榜单排名徽章样式（1红 2金 3蓝 其余灰），展示主客队队徽+队名+比分
-  /// 参数：match - G5MatchItem类型，热门比赛数据；rank - int类型，榜单排名（从1开始）
+  /// 构建单个TrendingMatches条目
+  /// 保留榜单排名徽章样式（1红 2金 3蓝 其余灰），展示主Away队徽+队名+比分
+  /// 参数：match - G5MatchItem类型，TrendingMatchesStats；rank - int类型，榜单排名（从1开始）
   Widget _buildHotItem(G5MatchItem match, int rank) {
     // 排名徽章颜色：1红 2金 3蓝 其余灰
     Color rankBg;
@@ -666,7 +666,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     }
 
     return InkWell(
-      // 点击跳转比赛详情
+      // 点击跳转Matches详情
       onTap: () => _pushToMatchDetail(match),
       borderRadius: BorderRadius.circular(12),
       child: Padding(
@@ -692,7 +692,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
               ),
             ),
             const SizedBox(width: 12),
-            // 主队（队名 + 队徽）
+            // Home（队名 + 队徽）
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -743,7 +743,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                               fontWeight: FontWeight.bold)),
                     ),
             ),
-            // 客队（队徽 + 队名）
+            // Away（队徽 + 队名）
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -774,9 +774,9 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  // ==================== 搜索结果界面 ====================
+  // ==================== Search结果界面 ====================
 
-  /// 构建搜索结果视图：分类Tab + 结果列表
+  /// 构建Search结果视图：分类Tab + 结果列表
   Widget _buildSearchResultsView() {
     return Column(
       children: [
@@ -786,12 +786,12 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建分类菜单（全部/比赛/用户），Tab样式：选中indigo下划线，元素之间间隔10像素
+  /// 构建分类菜单（All/Matches/Users），Tab样式：选中indigo下划线，元素之间间隔10像素
   Widget _buildTabMenu() {
     final tabMap = const {
-      G5SearchTab.all: '全部',
-      G5SearchTab.match: '比赛',
-      G5SearchTab.user: '用户',
+      G5SearchTab.all: 'All',
+      G5SearchTab.match: 'Matches',
+      G5SearchTab.user: 'Users',
     };
 
     return Container(
@@ -849,8 +849,8 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
   }
 
   /// 构建结果列表主体
-  /// "全部"分两段展示：第一段比赛、第二段用户（段落无数据则隐藏）
-  /// "比赛"/"用户"分类只展示对应段落
+  /// "All"分两段展示：第一段Matches、第二段Users（段落无Stats则隐藏）
+  /// "Matches"/"Users"分类只展示对应段落
   Widget _buildResultBody() {
     // 加载中
     if (_isSearchLoading) {
@@ -869,7 +869,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     final bool showUserSection =
         users.isNotEmpty && _currentTab != G5SearchTab.match;
 
-    // 两段都无数据：展示空态
+    // 两段都无Stats：展示空态
     if (!showMatchSection && !showUserSection) {
       return Center(
         child: Column(
@@ -888,7 +888,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
             ),
             const SizedBox(height: 12),
             const Text(
-              '未找到相关结果',
+              'No results found',
               style: TextStyle(
                   color: G5Colors.textSecondary,
                   fontSize: 13,
@@ -896,7 +896,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '试试搜索 "曼城"、"NBA" 或 "主播"',
+              'Try "Man City", "NBA" or "streamer"',
               style:
                   const TextStyle(color: Color(0xFF64748B), fontSize: 11),
             ),
@@ -908,16 +908,16 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // 第一段：比赛（无数据隐藏）
+        // 第一段：Matches（无Stats隐藏）
         if (showMatchSection) ...[
-          _buildSectionTitle('比赛', matches.length),
+          _buildSectionTitle('Matches', matches.length),
           const SizedBox(height: 10),
           ...matches.map((match) => _buildMatchCard(match)),
         ],
-        // 第二段：用户（无数据隐藏，与比赛段之间留20像素间距）
+        // 第二段：Users（无Stats隐藏，与Matches段之间留20像素间距）
         if (showUserSection) ...[
           if (showMatchSection) const SizedBox(height: 20),
-          _buildSectionTitle('用户', users.length),
+          _buildSectionTitle('Users', users.length),
           const SizedBox(height: 10),
           ...users.map((user) => _buildUserCard(user)),
         ],
@@ -926,7 +926,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
   }
 
   /// 构建段落标题（标题 + 数量徽标）
-  /// 参数：title - String类型，段落标题；count - int类型，该段数据条数
+  /// 参数：title - String类型，段落标题；count - int类型，该段Stats条数
   Widget _buildSectionTitle(String title, int count) {
     return Row(
       children: [
@@ -956,12 +956,12 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 构建单个比赛结果卡片
-  /// 展示主客队队徽、队名、比分/VS，点击跳转比赛详情
-  /// 参数：match - G5MatchItem类型，比赛数据
+  /// 构建单个Matches结果卡片
+  /// 展示主Away队徽、队名、比分/VS，点击跳转Matches详情
+  /// 参数：match - G5MatchItem类型，MatchesStats
   Widget _buildMatchCard(G5MatchItem match) {
     return GestureDetector(
-      // 点击跳转比赛详情
+      // 点击跳转Matches详情
       onTap: () => _pushToMatchDetail(match),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -997,10 +997,10 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
               ],
             ),
             const SizedBox(height: 10),
-            // 主客队 + 比分
+            // 主Away + 比分
             Row(
               children: [
-                // 主队（队名 + 队徽）
+                // Home（队名 + 队徽）
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -1049,7 +1049,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold)),
                 ),
-                // 客队（队徽 + 队名）
+                // Away（队徽 + 队名）
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -1082,7 +1082,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 格式化比赛时间为展示文案
+  /// 格式化Matches时间为展示文案
   /// 参数：timestamp - int类型，秒级时间戳
   /// 返回：String，格式 MM-dd HH:mm
   String _formatMatchTime(int timestamp) {
@@ -1095,9 +1095,9 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     return '$month-$day $hour:$minute';
   }
 
-  /// 构建单个用户结果卡片
-  /// 展示头像（直播中带LIVE角标）、昵称（专家带认证标）、关注按钮（follow_type状态）
-  /// 参数：user - G5SearchUser类型，用户数据
+  /// 构建单个Users结果卡片
+  /// 展示头像（LIVE带LIVE角标）、昵称（Expert带认证标）、Follow按钮（follow_type状态）
+  /// 参数：user - G5SearchUser类型，UsersStats
   Widget _buildUserCard(G5SearchUser user) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1109,7 +1109,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
       ),
       child: Row(
         children: [
-          // 头像（直播中带LIVE角标）
+          // 头像（LIVE带LIVE角标）
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -1132,7 +1132,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                         child: const Icon(Icons.person,
                             color: G5Colors.textSecondary, size: 22)),
               ),
-              // 直播中角标
+              // LIVE角标
               if (user.isLiving == 1)
                 Positioned(
                   bottom: -2,
@@ -1156,7 +1156,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
             ],
           ),
           const SizedBox(width: 12),
-          // 昵称 + 专家认证标
+          // 昵称 + Expert认证标
           Expanded(
             child: Row(
               children: [
@@ -1179,7 +1179,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
               ],
             ),
           ),
-          // 关注按钮：follow_type=0/2未关注（可点击关注），follow_type=1/3已关注
+          // Follow按钮：follow_type=0/2未Follow（可点击Follow），follow_type=1/3Following
           GestureDetector(
             onTap: () => _toggleFollow(user),
             child: Container(
@@ -1197,7 +1197,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
                 ),
               ),
               child: Text(
-                user.isFollowed ? '已关注' : '+ 关注',
+                user.isFollowed ? 'Following' : '+ Follow',
                 style: TextStyle(
                   color: user.isFollowed
                       ? G5Colors.textSecondary
@@ -1213,20 +1213,20 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 切换用户关注状态
+  /// 切换UsersFollow状态
   /// 接口：POST /api/livespeed/imchat/subscribe
-  /// 参数：target_id-用户id（int），type-1关注/2取消关注（当前未关注传1，已关注传2）
-  /// 请求完毕toast提示，成功后本地更新关注状态
-  /// 参数：user - G5SearchUser类型，目标用户
+  /// 参数：target_id-Usersid（int），type-1Follow/2CancelFollow（当前未Follow传1，Following传2）
+  /// 请求完毕toastNotice，成功后本地更新Follow状态
+  /// 参数：user - G5SearchUser类型，目标Users
   Future<void> _toggleFollow(G5SearchUser user) async {
-    // 已关注（follow_type=1/3）时传2取消关注，未关注（follow_type=0/2）时传1关注
+    // Following（follow_type=1/3）时传2CancelFollow，未Follow（follow_type=0/2）时传1Follow
     final int type = user.isFollowed ? 2 : 1;
 
     try {
       final response = await G5NetworkManager().post(
         '/api/livespeed/imchat/subscribe',
         data: {
-          // 关注用户取uuid字段
+          // FollowUsers取uuid字段
           'target_id': user.id,
           'type': type,
         },
@@ -1235,15 +1235,15 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
       if (!mounted) return;
 
       if (response.isSuccess) {
-        // 成功提示
+        // 成功Notice
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(type == 1 ? '关注成功' : '已取消关注'),
+            content: Text(type == 1 ? 'Followed' : 'Unfollowed'),
             duration: const Duration(seconds: 1),
           ),
         );
 
-        // 本地更新关注状态
+        // 本地更新Follow状态
         setState(() {
           final index =
               _searchResult?.users.indexWhere((u) => u.id == user.id) ?? -1;
@@ -1257,16 +1257,16 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
               isLiving: users[index].isLiving,
               isExpert: users[index].isExpert,
               isVip: users[index].isVip,
-              // 关注成功follow_type置1，取消关注置0
+              // Followedfollow_type置1，CancelFollow置0
               followType: type == 1 ? 1 : 0,
             );
           }
         });
       } else {
-        // 失败提示
+        // 失败Notice
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message ?? '操作失败，请稍后重试'),
+            content: Text(response.message ?? 'Failed, try later'),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -1275,7 +1275,7 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('网络异常，请稍后重试'),
+            content: Text('Network error, try later'),
             duration: Duration(seconds: 1),
           ),
         );

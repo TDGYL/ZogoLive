@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/pages/main_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_sp_manager.dart';
+import 'package:livespeed/pages/main_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_sp_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TactiGoal',
+      title: 'LiveSpeed',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: G5Colors.pitch,

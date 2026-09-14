@@ -9,7 +9,7 @@ class G5SpManager {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  /// 保存字符串
+  /// Save字符串
   static Future<bool> setString(String key, String value) async {
     if (_prefs == null) await init();
     return _prefs!.setString(key, value);
@@ -20,7 +20,7 @@ class G5SpManager {
     return _prefs?.getString(key);
   }
 
-  /// 清除数据
+  /// 清除Stats
   static Future<bool> remove(String key) async {
     if (_prefs == null) await init();
     return _prefs!.remove(key);

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/models/g5_odds_model.dart';
-import 'package:zogolive/models/g5_process_model.dart';
-import 'package:zogolive/pages/login_page.dart';
-import 'package:zogolive/pages/odds_history_page.dart';
-import 'package:zogolive/pages/team_detail_page.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/models/g5_odds_model.dart';
+import 'package:livespeed/models/g5_process_model.dart';
+import 'package:livespeed/pages/login_page.dart';
+import 'package:livespeed/pages/odds_history_page.dart';
+import 'package:livespeed/pages/team_detail_page.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_match_status_util.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class FootballDetailPage extends G5BaseViewController {
   final G5MatchItem match;
@@ -23,12 +24,12 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<String> _tabs = ['事件', '数据', '指数', '历史对战'];
+  final List<String> _tabs = ['Events', 'Stats', 'Odds', 'H2H'];
 
   G5ProcessData? _processData;
   bool _isLoading = true;
 
-  /// 比赛详情数据 - G5MatchItem?类型，接口返回的完整比赛数据（含球队ID），懒加载兜底widget.match
+  /// Match DetailStats - G5MatchItem?类型，接口返回的完整比赛Stats（含TeamID），懒加载兜底widget.match
   G5MatchItem? _matchDetail;
 
   List<G5MatchItem>? _historyTotal;
@@ -39,7 +40,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   G5OddsData? _oddsData;
   bool _isOddsLoading = true;
 
-  /// 是否已关注比赛 - bool类型，true表示已关注，初始值取自比赛详情接口的subscribed字段
+  /// 是否Following比赛 - bool类型，true表示Following，Open值取自Match Detail接口的subscribed字段
   bool _isSubscribed = false;
 
   @override
@@ -53,13 +54,13 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     _fetchOddsData();
   }
 
-  /// 当前展示的比赛数据 - 优先使用详情接口返回数据，兜底页面传参
+  /// 当前展示的比赛Stats - 优先使用详情接口返回Stats，兜底页面传参
   G5MatchItem get match => _matchDetail ?? widget.match;
 
-  /// 请求比赛详情
+  /// 请求Match Detail
   /// 接口：GET /api/livespeed/football/match/detail
   /// 参数：match_id - int类型，比赛ID
-  /// 成功后用返回数据替换当前比赛数据（保证任意入口进入都能获取球队ID跳转球队详情）
+  /// 成功后用返回Stats替换当前比赛Stats（保证任意入口进入都能获取TeamID跳转Team详情）
   Future<void> _fetchMatchDetail() async {
     try {
       final response = await G5NetworkManager().get(
@@ -72,13 +73,13 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           setState(() {
             _matchDetail =
                 G5MatchItem.fromJson(response.data as Map<String, dynamic>);
-            // 根据详情接口的关注状态同步按钮状态
+            // 根据详情接口的Follow状态同步按钮状态
             _isSubscribed = _matchDetail?.subscribed == true;
           });
         }
       }
     } catch (e) {
-      // 请求失败时保持使用传入的比赛数据
+      // Request failed时保持使用传入的比赛Stats
     }
   }
 
@@ -89,7 +90,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
       action();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先登录')),
+        const SnackBar(content: Text('Please log in first')),
       );
       Navigator.push(
         context,
@@ -98,16 +99,16 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     }
   }
 
-  /// 切换比赛关注状态
-  /// 已关注调用取消关注接口 POST /api/livespeed/football/match/unsubscribe
-  /// 未关注调用关注接口 POST /api/livespeed/football/match/subscribe
-  /// 需要用户登录，成功后同步关注按钮状态
+  /// 切换比赛Follow状态
+  /// Following调用CancelFollow接口 POST /api/livespeed/football/match/unsubscribe
+  /// 未Follow调用Follow接口 POST /api/livespeed/football/match/subscribe
+  /// 需要用户登录，成功后同步Follow按钮状态
   void _toggleSubscribe() {
     _checkLoginAndDo(() async {
       final matchId = match.matchId ?? 0;
       if (matchId == 0) return;
 
-      // 目标状态：当前已关注则取消关注，未关注则关注
+      // 目标状态：当前Following则CancelFollow，未Follow则Follow
       final willSubscribe = !_isSubscribed;
       final url = willSubscribe
           ? '/api/livespeed/football/match/subscribe'
@@ -125,20 +126,20 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           setState(() {
             _isSubscribed = willSubscribe;
           });
-          // 同步到详情数据模型
+          // 同步到详情Stats模型
           if (_matchDetail != null) {
             _matchDetail!.subscribed = willSubscribe;
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(willSubscribe ? '关注成功' : '已取消关注'),
+              content: Text(willSubscribe ? 'Followed' : 'Unfollowed'),
               duration: const Duration(seconds: 1),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message ?? '操作失败，请稍后重试'),
+              content: Text(response.message ?? 'Failed, try later'),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -147,7 +148,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('网络异常，请稍后重试'),
+              content: Text('Network error, try later'),
               duration: Duration(seconds: 1),
             ),
           );
@@ -315,7 +316,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
-          match.competitionName ?? '联赛',
+          match.competitionName ?? 'League',
           style: const TextStyle(
             color: G5Colors.accentEmerald,
             fontSize: 12,
@@ -325,7 +326,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
       ),
       centerTitle: true,
       actions: [
-        // 关注比赛按钮：已关注实心金星，未关注空心灰星
+        // Follow比赛按钮：Following实心金星，未Follow空心灰星
         IconButton(
           icon: Icon(
             _isSubscribed ? Icons.star : Icons.star_border,
@@ -347,12 +348,12 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
 
   Widget _buildMatchCard() {
     final match = this.match;
-    bool isLive =
-        match.statusId == 2 || match.statusId == 3 || match.statusId == 4;
+    bool isLive = G5MatchStatusUtil.isLive(match.statusId);
 
-    String statusDisplay = match.statusName ?? '';
+    String statusDisplay =
+        G5MatchStatusUtil.abbreviate(match.statusName, statusId: match.statusId);
     if (isLive && match.minutes != null && match.minutes!.isNotEmpty) {
-      statusDisplay = "${match.minutes}' LIVE";
+      statusDisplay = "${match.minutes}'";
     }
 
     return Container(
@@ -419,7 +420,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 主队
+              // Home
               Expanded(
                 child: GestureDetector(
                   onTap: () {
@@ -519,7 +520,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                         ),
                       ),
               ),
-              // 客队
+              // Away
               Expanded(
                 child: GestureDetector(
                   onTap: () {
@@ -576,7 +577,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
               ),
             ],
           ),
-          // 注意：去掉了哈兰德和贝林厄姆的比赛事件部分
+          // 注意：去掉了哈兰德和贝林厄姆的比League件部分
         ],
       ),
     );
@@ -621,13 +622,13 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildOddsSection('让球让分', _oddsData?.asia, ['主队', '盘口', '客队'], 'asia'),
+        _buildOddsSection('Handicap', _oddsData?.asia, ['Home', 'Line', 'Away'], 'asia'),
         const SizedBox(height: 20),
-        _buildOddsSection('胜平负', _oddsData?.eu, ['主胜', '平局', '客胜'], 'eu'),
+        _buildOddsSection('WDL', _oddsData?.eu, ['Home', 'Draw', 'Away'], 'eu'),
         const SizedBox(height: 20),
-        _buildOddsSection('进球数', _oddsData?.bs, ['大', '盘口', '小'], 'bs'),
+        _buildOddsSection('Goals', _oddsData?.bs, ['Over', 'Line', 'Under'], 'bs'),
         const SizedBox(height: 20),
-        _buildOddsSection('角球', _oddsData?.cr, ['大', '盘口', '小'], 'cr'),
+        _buildOddsSection('Corners', _oddsData?.cr, ['Over', 'Line', 'Under'], 'cr'),
       ],
     );
   }
@@ -667,7 +668,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
               children: [
                 const SizedBox(
                     width: 80,
-                    child: Text('公司',
+                    child: Text('Bookmaker',
                         style: TextStyle(
                             color: G5Colors.textSecondary, fontSize: 12))),
                 const SizedBox(
@@ -727,7 +728,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           child: Row(
             children: [
-              // 公司名称
+              // Bookmaker名称
               SizedBox(
                 width: 80,
                 child: Text(
@@ -740,35 +741,35 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // 初始/赛前/即时 标签
+              // Open/Pre/Live 标签
               SizedBox(
                 width: 40,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('初盘',
+                    const Text('Open',
                         style: TextStyle(
                             color: G5Colors.textSecondary, fontSize: 12)),
                     if (hasPre) ...[
                       const SizedBox(height: 8),
-                      const Text('赛前',
+                      const Text('Pre',
                           style: TextStyle(
                               color: G5Colors.accentBlue, fontSize: 12)),
                     ],
                     if (hasSpot) ...[
                       const SizedBox(height: 8),
-                      const Text('即时',
+                      const Text('Live',
                           style: TextStyle(
                               color: G5Colors.accentEmerald, fontSize: 12)),
                     ]
                   ],
                 ),
               ),
-              // 数据展示区
+              // Stats展示区
               Expanded(
                 child: Column(
                   children: [
-                    // 初盘数据
+                    // OpenStats
                     Row(
                       children: [
                         Expanded(
@@ -791,7 +792,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                                     fontSize: 13))),
                       ],
                     ),
-                    // 赛前数据
+                    // PreStats
                     if (hasPre) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -808,7 +809,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                         ],
                       ),
                     ],
-                    // 即时数据
+                    // LiveStats
                     if (hasSpot) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -862,26 +863,26 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         _buildStatsCard(),
         const SizedBox(height: 20),
         _buildHistoryMatchesCard(
-            '历史交锋', _historyTotal, match.homeTeamId),
+            'H2H', _historyTotal, match.homeTeamId),
         const SizedBox(height: 20),
-        _buildHistoryMatchesCard('近期战绩 - ${match.homeTeamName ?? '主队'}',
+        _buildHistoryMatchesCard('Form - ${match.homeTeamName ?? 'Home'}',
             _homeTotal, match.homeTeamId),
         const SizedBox(height: 20),
-        _buildHistoryMatchesCard('近期战绩 - ${match.awayTeamName ?? '客队'}',
+        _buildHistoryMatchesCard('Form - ${match.awayTeamName ?? 'Away'}',
             _awayTotal, match.awayTeamId),
       ],
     );
   }
 
   Widget _buildStatsCard() {
-    // 计算历史交锋的胜平负（以主队视角）
+    // 计算H2H的WDL（以Home视角）
     int homeWin = 0;
     int draw = 0;
     int awayWin = 0;
     if (_historyTotal != null) {
       for (var m in _historyTotal!) {
         if (m.homeNormalScore != null && m.awayNormalScore != null) {
-          // 如果当前页面的主队是历史交锋里的主队
+          // 如果当前页面的Home是H2H里的Home
           if (m.homeTeamId == match.homeTeamId) {
             if (m.homeNormalScore! > m.awayNormalScore!)
               homeWin++;
@@ -890,7 +891,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
             else
               draw++;
           } else {
-            // 如果当前页面的主队是历史交锋里的客队
+            // 如果当前页面的Home是H2H里的Away
             if (m.awayNormalScore! > m.homeNormalScore!)
               homeWin++;
             else if (m.awayNormalScore! < m.homeNormalScore!)
@@ -913,7 +914,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '近6次交锋统计',
+            'Last 6 H2H',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -924,18 +925,18 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatItem('$homeWin胜', match.homeTeamName ?? '',
+              _buildStatItem('$homeWin', match.homeTeamName ?? '',
                   G5Colors.accentEmerald),
-              _buildStatItem('$draw平', '平局', Colors.white),
-              _buildStatItem('$awayWin胜', match.awayTeamName ?? '',
+              _buildStatItem('$draw', 'Draw', Colors.white),
+              _buildStatItem('$awayWin', match.awayTeamName ?? '',
                   G5Colors.accentBlue),
             ],
           ),
           const SizedBox(height: 24),
-          _buildRecentFormRow('${match.homeTeamName ?? '主队'}近况:',
+          _buildRecentFormRow('${match.homeTeamName ?? 'Home'} form:',
               _homeTotal, match.homeTeamId),
           const SizedBox(height: 12),
-          _buildRecentFormRow('${match.awayTeamName ?? '客队'}近况:',
+          _buildRecentFormRow('${match.awayTeamName ?? 'Away'} form:',
               _awayTotal, match.awayTeamId),
         ],
       ),
@@ -975,22 +976,22 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         if (m.homeNormalScore != null && m.awayNormalScore != null) {
           bool isHome = m.homeTeamId == targetTeamId;
           if (m.homeNormalScore! == m.awayNormalScore!) {
-            result = '平';
+            result = 'D';
             bgColor = G5Colors.pitchBorder;
           } else if ((isHome && m.homeNormalScore! > m.awayNormalScore!) ||
               (!isHome && m.awayNormalScore! > m.homeNormalScore!)) {
-            result = '胜';
+            result = 'W';
             bgColor = G5Colors.accentEmerald.withOpacity(0.2);
           } else {
-            result = '负';
+            result = 'L';
             bgColor = G5Colors.accentCrimson.withOpacity(0.2);
           }
         }
 
         Color textColor = Colors.white;
-        if (result == '胜') textColor = G5Colors.accentEmerald;
-        if (result == '负') textColor = G5Colors.accentCrimson;
-        if (result == '平') textColor = G5Colors.textSecondary;
+        if (result == 'W') textColor = G5Colors.accentEmerald;
+        if (result == 'L') textColor = G5Colors.accentCrimson;
+        if (result == 'D') textColor = G5Colors.textSecondary;
 
         formBadges.add(Container(
           margin: const EdgeInsets.only(left: 6),
@@ -1056,7 +1057,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           ),
           const SizedBox(height: 16),
           if (matches == null || matches.isEmpty)
-            const Text('暂无数据', style: TextStyle(color: G5Colors.textSecondary))
+            const Text('No data', style: TextStyle(color: G5Colors.textSecondary))
           else
             ...matches
                 .map((m) => _buildHistoryMatchRow(m, targetTeamId))
@@ -1070,15 +1071,15 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     bool homeIsCurrentHome = m.homeTeamId == targetTeamId;
     bool awayIsCurrentHome = m.awayTeamId == targetTeamId;
 
-    String resultText = '平局';
+    String resultText = 'D';
     Color resultColor = G5Colors.textSecondary;
     if (m.homeNormalScore != null && m.awayNormalScore != null) {
       if (m.homeNormalScore! > m.awayNormalScore!) {
-        resultText = '${m.homeTeamName}胜';
+        resultText = '${m.homeTeamName} W';
         resultColor =
             homeIsCurrentHome ? G5Colors.accentEmerald : G5Colors.accentBlue;
       } else if (m.homeNormalScore! < m.awayNormalScore!) {
-        resultText = '${m.awayTeamName}胜';
+        resultText = '${m.awayTeamName} W';
         resultColor =
             awayIsCurrentHome ? G5Colors.accentEmerald : G5Colors.accentBlue;
       }
@@ -1100,7 +1101,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
         ),
         child: Row(
           children: [
-            // 左侧：时间和赛事
+            // 左侧：时间和League
             SizedBox(
               width: 80,
               child: Column(
@@ -1122,7 +1123,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                 ],
               ),
             ),
-            // 中间：主客队比分
+            // 中间：主Away比分
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1203,7 +1204,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     if (_processData?.incidents == null || _processData!.incidents!.isEmpty) {
       return const Center(
           child:
-              Text('暂无事件数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No event data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     final incidents = _processData!.incidents!;
@@ -1220,7 +1221,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 主队区域
+              // Home区域
               Expanded(
                 child: isHome
                     ? _buildIncidentContent(incident, true)
@@ -1258,7 +1259,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
                   ],
                 ),
               ),
-              // 客队区域
+              // Away区域
               Expanded(
                 child: !isHome && incident.position == 2
                     ? _buildIncidentContent(incident, false)
@@ -1318,7 +1319,7 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
     if (_processData?.stats == null || _processData!.stats!.isEmpty) {
       return const Center(
           child:
-              Text('暂无统计数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No stats data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     final stats = _processData!.stats!;

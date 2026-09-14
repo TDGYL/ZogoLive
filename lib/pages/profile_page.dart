@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_user_model.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/pages/login_page.dart';
-import 'package:zogolive/pages/my_matches_page.dart';
-import 'package:zogolive/pages/edit_profile_page.dart';
-import 'package:zogolive/pages/customer_service_page.dart';
-import 'package:zogolive/pages/about_us_page.dart';
-import 'package:zogolive/pages/settings_page.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_event_bus.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_user_model.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/pages/login_page.dart';
+import 'package:livespeed/pages/my_matches_page.dart';
+import 'package:livespeed/pages/edit_profile_page.dart';
+import 'package:livespeed/pages/customer_service_page.dart';
+import 'package:livespeed/pages/about_us_page.dart';
+import 'package:livespeed/pages/settings_page.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_event_bus.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class ProfilePage extends G5BaseViewController {
   const ProfilePage({Key? key}) : super(key: key);
@@ -23,10 +23,10 @@ class ProfilePage extends G5BaseViewController {
 class _ProfilePageState extends G5BaseViewState<ProfilePage> {
   StreamSubscription? _authSubscription;
 
-  /// 用户信息刷新事件订阅 - StreamSubscription?类型，监听关注/粉丝数变化通知
+  /// 用户信息刷新Events订阅 - StreamSubscription?类型，监听关注/Fans数变化通知
   StreamSubscription? _userInfoSubscription;
 
-  /// 主页Tab切换事件订阅 - StreamSubscription?类型，监听切到"我的"Tab
+  /// 主页Tab切换Events订阅 - StreamSubscription?类型，监听切到"我的"Tab
   StreamSubscription? _tabSwitchSubscription;
 
   @override
@@ -42,14 +42,14 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
         _fetchUserInfo();
       }
     });
-    // 监听用户信息刷新事件（关注/粉丝数变化）
+    // 监听用户信息刷新Events（关注/Fans数变化）
     _userInfoSubscription =
         G5EventBus().on<UserInfoRefreshEvent>().listen((event) {
       if (mounted) {
         setState(() {}); // 收到通知后刷新界面
       }
     });
-    // 监听主页Tab切换事件：切到"我的"Tab时拉取个人信息刷新关注数和粉丝数
+    // 监听主页Tab切换Events：切到"我的"Tab时拉取个人信息刷新关注数和Fans数
     _tabSwitchSubscription =
         G5EventBus().on<MainTabSwitchEvent>().listen((event) {
       if (mounted && event.index == 3) {
@@ -62,7 +62,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
 
   /// 请求个人信息接口
   /// 接口：GET /api/livespeed/member
-  /// 成功后更新我关注的和粉丝数
+  /// 成功后更新Following和Fans数
   Future<void> _fetchUserInfo() async {
     if (!G5AuthManager().isLoggedIn) return;
 
@@ -179,7 +179,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (isLoggedIn && user?.nickname != null) ? user!.nickname! : '未登录用户',
+                    (isLoggedIn && user?.nickname != null) ? user!.nickname! : 'Not logged in',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -221,7 +221,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                       ),
                       const SizedBox(height: 2),
                       const Text(
-                        '粉丝',
+                        'Fans',
                         style: TextStyle(
                             color: G5Colors.textSecondary, fontSize: 10),
                       ),
@@ -245,7 +245,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                       ),
                       const SizedBox(height: 2),
                       const Text(
-                        '我关注的',
+                        'Following',
                         style: TextStyle(
                             color: G5Colors.textSecondary, fontSize: 10),
                       ),
@@ -276,10 +276,10 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
               _buildMenuItem(
                 Icons.edit,
                 G5Colors.accentEmerald,
-                '编辑资料',
+                'Edit Profile',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
-                  // 未登录跳转登录页，已登录跳转编辑资料
+                  // 未登录跳转登录页，已登录跳转Edit Profile
                   if (!G5AuthManager().isLoggedIn) {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
                   } else {
@@ -291,10 +291,10 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
               _buildMenuItem(
                 Icons.sports_soccer,
                 G5Colors.accentEmerald,
-                '我关注的比赛',
+                'My Matches',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
-                  // 未登录跳转登录页，已登录跳转我关注的比赛列表
+                  // 未登录跳转登录页，已登录跳转My Matches列表
                   if (!G5AuthManager().isLoggedIn) {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
                   } else {
@@ -306,7 +306,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
               _buildMenuItem(
                 Icons.headset_mic,
                 G5Colors.accentGold,
-                '在线客服',
+                'Support',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CustomerServicePage()));
@@ -316,7 +316,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
               _buildMenuItem(
                 Icons.info,
                 G5Colors.accentBlue,
-                '关于我们',
+                'About',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AboutUsPage()));
@@ -326,10 +326,10 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
               _buildMenuItem(
                 Icons.settings,
                 G5Colors.textSecondary,
-                '设置',
+                'Settings',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
-                  // 未登录跳转登录页，已登录跳转设置页
+                  // 未登录跳转登录页，已登录跳转Settings页
                   if (!G5AuthManager().isLoggedIn) {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
                   } else {
@@ -352,7 +352,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
             child: _buildMenuItem(
               Icons.logout,
               Colors.redAccent,
-              '退出登录',
+              'Log Out',
               onTap: () => _showLogoutConfirmDialog(),
             ),
           ),
@@ -367,19 +367,19 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: G5Colors.pitchCard,
-          title: const Text('提示', style: TextStyle(color: Colors.white)),
-          content: const Text('确定要退出当前账号吗？', style: TextStyle(color: G5Colors.textSecondary)),
+          title: const Text('Notice', style: TextStyle(color: Colors.white)),
+          content: const Text('Log out of this account?', style: TextStyle(color: G5Colors.textSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消', style: TextStyle(color: G5Colors.textSecondary)),
+              child: const Text('Cancel', style: TextStyle(color: G5Colors.textSecondary)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 关闭弹窗
                 _performLogout();
               },
-              child: const Text('确定', style: TextStyle(color: Colors.redAccent)),
+              child: const Text('Confirm', style: TextStyle(color: Colors.redAccent)),
             ),
           ],
         );
@@ -392,7 +392,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
     if (mounted) {
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('退出成功')),
+        const SnackBar(content: Text('Logged out')),
       );
     }
   }

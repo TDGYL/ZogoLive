@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_news_model.dart';
-import 'package:zogolive/pages/news_detail_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_news_model.dart';
+import 'package:livespeed/pages/news_detail_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class NewsPage extends G5BaseViewController {
   const NewsPage({Key? key}) : super(key: key);
@@ -105,9 +105,9 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
     final difference = now.difference(publishDate);
 
     if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}分钟前';
+      return '${difference.inMinutes} min ago';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}小时前';
+      return '${difference.inHours} h ago';
     } else {
       return '${publishDate.month}-${publishDate.day}';
     }
@@ -136,14 +136,14 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '极球·深度资讯',
+                'LiveSpeed·News',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
               ),
               Text(
-                '权威体育记者 24 小时实时快讯',
+                '24/7 breaking sports news',
                 style: TextStyle(fontSize: 10, color: G5Colors.textSecondary),
               ),
             ],
@@ -166,27 +166,27 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
-        dragText: '下拉刷新',
-        armedText: '释放刷新',
-        readyText: '正在刷新...',
-        processingText: '正在刷新...',
-        processedText: '刷新成功',
-        noMoreText: '没有更多',
-        failedText: '刷新失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull to refresh',
+        armedText: 'Release to refresh',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Refreshed',
+        noMoreText: 'No more',
+        failedText: 'Refresh failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
       ),
       footer: const ClassicFooter(
-        dragText: '上拉加载',
-        armedText: '释放加载',
-        readyText: '正在加载...',
-        processingText: '正在加载...',
-        processedText: '加载成功',
-        noMoreText: '没有更多数据了',
-        failedText: '加载失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull up to load',
+        armedText: 'Release to load',
+        readyText: 'Loading...',
+        processingText: 'Loading...',
+        processedText: 'Loaded',
+        noMoreText: 'No more data',
+        failedText: 'Load failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
@@ -280,7 +280,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                           color: G5Colors.textSecondary, size: 12),
                       const SizedBox(width: 4),
                       Text(
-                        '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
+                        '${news.contentCounts ?? 0} views · ${_formatPublishTime(news.createdAt)}',
                         style: const TextStyle(
                           color: G5Colors.textSecondary,
                           fontSize: 10,
@@ -363,7 +363,7 @@ class _NewsPageState extends G5BaseViewState<NewsPage> {
                           color: G5Colors.textSecondary, size: 10),
                       const SizedBox(width: 4),
                       Text(
-                        '${news.contentCounts ?? 0} 阅读量 · ${_formatPublishTime(news.createdAt)}',
+                        '${news.contentCounts ?? 0} views · ${_formatPublishTime(news.createdAt)}',
                         style: const TextStyle(
                           color: G5Colors.textSecondary,
                           fontSize: 10,

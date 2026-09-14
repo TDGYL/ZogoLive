@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/utils/g5_colors.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/utils/g5_colors.dart';
 
 /// 通用WebView页
 /// 用于加载用户协议、隐私协议等H5页面

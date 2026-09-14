@@ -1,14 +1,15 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/pages/football_detail_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/pages/football_detail_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_match_status_util.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
-/// 我关注的比赛列表页
-/// 数据来源：POST /api/livespeed/football/matches（tab固定=4）
-/// 支持下拉刷新和上拉加载
+/// My Matches列表页
+/// Stats来源：POST /api/livespeed/football/matches（tab固定=4）
+/// 支持Pull to refresh和Pull up to load
 class MyMatchesPage extends G5BaseViewController {
   const MyMatchesPage({Key? key}) : super(key: key);
 
@@ -17,16 +18,16 @@ class MyMatchesPage extends G5BaseViewController {
 }
 
 class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
-  /// 刷新控制器 - EasyRefreshController类型，控制下拉刷新/上拉加载
+  /// 刷新控制器 - EasyRefreshController类型，控制Pull to refresh/Pull up to load
   final EasyRefreshController _refreshController = EasyRefreshController(
     controlFinishRefresh: true,
     controlFinishLoad: true,
   );
 
-  /// 比赛列表数据 - List<G5MatchItem>类型，关注比赛列表
+  /// 比赛列表Stats - List<G5MatchItem>类型，关注比赛列表
   List<G5MatchItem> matches = [];
 
-  /// 当前页码 - int类型，下拉刷新重置为1，上拉加载递增
+  /// 当前页码 - int类型，Pull to refresh重置为1，Pull up to load递增
   int _page = 1;
 
   /// 每页条数 - int类型，固定10条
@@ -35,9 +36,9 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
   @override
   void initState() {
     super.initState();
-    // 使用 WidgetsBinding 确保在第一帧渲染完成后再触发下拉刷新
+    // 使用 WidgetsBinding 确保在第一帧渲染完成后再触发Pull to refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshController.callRefresh();
+      if (mounted) _refreshController.callRefresh();
     });
   }
 
@@ -47,10 +48,10 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
     super.dispose();
   }
 
-  /// 请求关注比赛列表数据
+  /// 请求关注比赛列表Stats
   /// 接口：POST /api/livespeed/football/matches
   /// 参数：tab固定=4，page页码，size=10，timestamp当天时间戳，competition_ids空数组
-  /// 参数：isRefresh - bool类型，true下拉刷新（page=1），false上拉加载（page+1）
+  /// 参数：isRefresh - bool类型，truePull to refresh（page=1），falsePull up to load（page+1）
   Future<void> _fetchData({required bool isRefresh}) async {
     if (isRefresh) {
       _page = 1;
@@ -108,7 +109,7 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message ?? '加载失败，请稍后重试'),
+              content: Text(response.message ?? 'Load failed, try later'),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -129,7 +130,7 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
       backgroundColor: G5Colors.pitch,
       elevation: 0,
       title: const Text(
-        '我关注的比赛',
+        'My Matches',
         style: TextStyle(
             fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
       ),
@@ -142,27 +143,27 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
-        dragText: '下拉刷新',
-        armedText: '释放刷新',
-        readyText: '正在刷新...',
-        processingText: '正在刷新...',
-        processedText: '刷新成功',
-        noMoreText: '没有更多',
-        failedText: '刷新失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull to refresh',
+        armedText: 'Release to refresh',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Refreshed',
+        noMoreText: 'No more',
+        failedText: 'Refresh failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
       ),
       footer: const ClassicFooter(
-        dragText: '上拉加载',
-        armedText: '释放加载',
-        readyText: '正在加载...',
-        processingText: '正在加载...',
-        processedText: '加载成功',
-        noMoreText: '没有更多数据了',
-        failedText: '加载失败',
-        messageText: '最后更新于 %T',
+        dragText: 'Pull up to load',
+        armedText: 'Release to load',
+        readyText: 'Loading...',
+        processingText: 'Loading...',
+        processedText: 'Loaded',
+        noMoreText: 'No more data',
+        failedText: 'Load failed',
+        messageText: 'Last updated %T',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
         messageStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 10),
@@ -178,7 +179,7 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
                 SizedBox(height: 12),
                 Center(
                   child: Text(
-                    '暂无关注的比赛',
+                    'No followed matches yet',
                     style:
                         TextStyle(color: G5Colors.textSecondary, fontSize: 13),
                   ),
@@ -196,8 +197,8 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
   }
 
   /// 构建单个比赛卡片
-  /// 展示赛事名、开赛时间、主客队队徽队名和比分，点击跳转比赛详情
-  /// 参数：match - G5MatchItem类型，比赛数据
+  /// 展示赛事名、开赛时间、主Away队徽队名和比分，点击跳转比赛详情
+  /// 参数：match - G5MatchItem类型，比赛Stats
   Widget _buildMatchCard(G5MatchItem match) {
     return GestureDetector(
       onTap: () {
@@ -242,7 +243,8 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      match.statusName ?? '',
+                      G5MatchStatusUtil.abbreviate(match.statusName,
+                          statusId: match.statusId),
                       style: const TextStyle(
                         color: G5Colors.accentEmerald,
                         fontSize: 10,
@@ -253,10 +255,10 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
               ],
             ),
             const SizedBox(height: 12),
-            // 主客队 + 比分
+            // 主Away + 比分
             Row(
               children: [
-                // 主队（队名 + 队徽）
+                // Home（队名 + 队徽）
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -314,7 +316,7 @@ class _MyMatchesPageState extends G5BaseViewState<MyMatchesPage> {
                           ),
                         ),
                 ),
-                // 客队（队徽 + 队名）
+                // Away（队徽 + 队名）
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,

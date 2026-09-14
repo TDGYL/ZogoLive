@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/pages/matches_page.dart';
-import 'package:zogolive/pages/community_page.dart';
-import 'package:zogolive/pages/news_page.dart';
-import 'package:zogolive/pages/profile_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_event_bus.dart';
+import 'package:livespeed/pages/matches_page.dart';
+import 'package:livespeed/pages/community_page.dart';
+import 'package:livespeed/pages/news_page.dart';
+import 'package:livespeed/pages/profile_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_event_bus.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -26,7 +26,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    // 监听切Tab事件，通知对应页面刷新
+    // 监听切TabEvents，通知对应页面刷新
     G5EventBus().on<MainTabSwitchEvent>().listen((event) {
       if (event.index == _currentIndex && mounted) {
         setState(() {});
@@ -56,7 +56,7 @@ class _MainPageState extends State<MainPage> {
             setState(() {
               _currentIndex = index;
             });
-            // 通知切到"我的"Tab，触发个人信息刷新
+            // 通知切到"Me"Tab，触发个人信息刷新
             if (index == 3) {
               G5EventBus().fire(MainTabSwitchEvent(index));
             }
@@ -70,19 +70,19 @@ class _MainPageState extends State<MainPage> {
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.sports_soccer),
-              label: '比赛',
+              label: 'Matches',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people),
-              label: '社区',
+              label: 'Community',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.article),
-              label: '资讯',
+              label: 'News',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
-              label: '我的',
+              label: 'Me',
             ),
           ],
         ),

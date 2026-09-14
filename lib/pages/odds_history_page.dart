@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/models/g5_odds_model.dart';
-import 'package:zogolive/models/g5_odds_history_model.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/models/g5_odds_model.dart';
+import 'package:livespeed/models/g5_odds_history_model.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class OddsHistoryPage extends G5BaseViewController {
   final G5MatchItem match;
@@ -106,7 +106,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: const Text(
-        '指数动态变化',
+        'Odds movement',
         style: TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -119,10 +119,10 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
 
   Widget _buildTabs() {
     final tabs = [
-      {'label': '让球让分', 'value': 'asia'},
-      {'label': '胜平负', 'value': 'eu'},
-      {'label': '进球数', 'value': 'bs'},
-      {'label': '角球', 'value': 'cr'},
+      {'label': 'Handicap', 'value': 'asia'},
+      {'label': '1X2', 'value': 'eu'},
+      {'label': 'Goals', 'value': 'bs'},
+      {'label': 'Corners', 'value': 'cr'},
     ];
 
     return Container(
@@ -252,7 +252,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
     if (currentList == null || currentList.isEmpty) {
       return const Center(
           child:
-              Text('暂无历史数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No history data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return Column(
@@ -268,22 +268,22 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
             children: [
               SizedBox(
                   width: 50,
-                  child: Text('时间/比分',
+                  child: Text('Time/Score',
                       style: TextStyle(
                           color: G5Colors.textSecondary, fontSize: 10))),
               Expanded(
-                  child: Text('主队水位',
+                  child: Text('Home',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: G5Colors.textSecondary, fontSize: 10))),
               SizedBox(
                   width: 60,
-                  child: Text('盘口',
+                  child: Text('Line',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: G5Colors.textSecondary, fontSize: 10))),
               Expanded(
-                  child: Text('客队水位',
+                  child: Text('Away',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: G5Colors.textSecondary, fontSize: 10))),
@@ -297,7 +297,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
             itemCount: currentList.length,
             itemBuilder: (context, index) {
               final item = currentList![index];
-              // 简单模拟涨跌，实际应该和上一个数据比
+              // 简单模拟涨跌，实际应该和上一个Stats比
               bool isUp = index % 2 == 0;
               bool isDown = !isUp && index % 3 == 0;
 
@@ -323,7 +323,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.matchOffset ?? "初盘",
+                            item.matchOffset ?? "Open",
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -338,7 +338,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                         ],
                       ),
                     ),
-                    // 主队水位
+                    // Home
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -361,7 +361,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                         ],
                       ),
                     ),
-                    // 盘口
+                    // Line
                     Container(
                       width: 60,
                       alignment: Alignment.center,
@@ -378,7 +378,7 @@ class _OddsHistoryPageState extends G5BaseViewState<OddsHistoryPage> {
                         maxLines: 1,
                       ),
                     ),
-                    // 客队水位
+                    // Away
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

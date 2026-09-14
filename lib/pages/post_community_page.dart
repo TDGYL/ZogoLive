@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/pages/post_match_search_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/pages/post_match_search_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
 
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class PostCommunityPage extends G5BaseViewController {
   const PostCommunityPage({Key? key}) : super(key: key);
@@ -17,17 +17,17 @@ class PostCommunityPage extends G5BaseViewController {
 class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
   final TextEditingController _contentController = TextEditingController();
 
-  // 战术标签 (多选)
-  final List<String> _strategyTags = ['焦点天王山战', '战术复盘'];
+  // 战术标签 (Multi)
+  final List<String> _strategyTags = ['Top Clash', 'Tactical Review'];
   final List<String> _selectedStrategyTags = [];
 
-  // 话题分类 (多选)
+  // 话题分类 (Multi)
   final List<String> _topics = [
-    '🔥 比赛热议',
-    '📊 战术拆解',
-    '📰 转会流言',
-    '👟 装备评分',
-    '🏆 夺冠前瞻'
+    '🔥 Match Talk',
+    '📊 Tactics',
+    '📰 Transfers',
+    '👟 Gear',
+    '🏆 Title Race'
   ];
   final List<String> _selectedTopics = [];
 
@@ -44,12 +44,12 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
     final textContent = _contentController.text.trim();
     if (textContent.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('输入的话题要超过10个字')),
+        const SnackBar(content: Text('Topic must be over 10 characters')),
       );
       return;
     }
 
-    // 拼接选中的战术复盘标签
+    // 拼接选中的Tactical Review标签
     String finalContent = textContent;
     if (_selectedStrategyTags.isNotEmpty) {
       final tagsString = _selectedStrategyTags.map((tag) => '#$tag').join(' ');
@@ -69,7 +69,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
       "images": images,
     };
 
-    // 若有关联比赛则追加比赛参数
+    // 若有Match则追加比赛参数
     if (_selectedMatch != null && _selectedMatch!.matchId != null) {
       params["match_type"] = 1;
       params["match_id"] = _selectedMatch!.matchId;
@@ -85,21 +85,21 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
       if (response.isSuccess) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('发布成功！')),
+            const SnackBar(content: Text('Published！')),
           );
           Navigator.of(context).pop();
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.message ?? '发布失败')),
+            SnackBar(content: Text(response.message ?? 'Publish failed')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('发布失败，请检查网络')),
+          const SnackBar(content: Text('Publish failed, check network')),
         );
       }
     }
@@ -112,12 +112,12 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
       elevation: 0,
       leading: TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('取消',
+        child: const Text('Cancel',
             style: TextStyle(color: G5Colors.textSecondary, fontSize: 16)),
       ),
       leadingWidth: 80,
       title: const Text(
-        '发布帖子',
+        'New Post',
         style: TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -138,7 +138,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                   borderRadius: BorderRadius.circular(20)),
             ),
             icon: const Icon(Icons.send, size: 12),
-            label: const Text('发布',
+            label: const Text('Publish',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ),
@@ -149,7 +149,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
   @override
   Widget buildBody(BuildContext context) {
     final user = G5AuthManager().currentUser;
-    final userName = user?.nickname ?? '球迷';
+    final userName = user?.nickname ?? 'Fan';
     final userAvatar = user?.avatar ?? '';
 
     return SingleChildScrollView(
@@ -198,7 +198,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                           border: Border.all(
                               color: G5Colors.accentBlue.withOpacity(0.2)),
                         ),
-                        child: const Text('LV.6 资深球迷',
+                        child: const Text('LV.6 Senior Fan',
                             style: TextStyle(
                                 color: G5Colors.accentBlue,
                                 fontSize: 10,
@@ -212,7 +212,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                       Icon(Icons.public,
                           color: G5Colors.textSecondary, size: 10),
                       SizedBox(width: 4),
-                      Text('公开 · ZogoLive 社区',
+                      Text('Public · LiveSpeed Community',
                           style: TextStyle(
                               color: G5Colors.textSecondary, fontSize: 12)),
                     ],
@@ -240,7 +240,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                   maxLength: 500,
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                   decoration: const InputDecoration(
-                    hintText: '分享你的看球感受、战术分析，或与同好一起讨论精彩赛事...',
+                    hintText: 'Share your thoughts, tactical analysis, or discuss matches with fans...',
                     hintStyle:
                         TextStyle(color: G5Colors.textSecondary, fontSize: 16),
                     border: InputBorder.none,
@@ -249,7 +249,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                   ),
                 ),
                 const Divider(color: G5Colors.pitchBorder, height: 24),
-                // 战术标签多选
+                // 战术标签Multi
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -297,7 +297,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
           ),
           const SizedBox(height: 20),
 
-          // 关联比赛
+          // Match
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -305,14 +305,14 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                 children: [
                   Icon(Icons.shield, color: G5Colors.accentBlue, size: 14),
                   SizedBox(width: 4),
-                  Text('关联比赛球队',
+                  Text('Match Teams',
                       style: TextStyle(
                           color: G5Colors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold)),
                 ],
               ),
-              Text('帮助精准推送给同队球迷',
+              Text('Help recommend to same-team fans',
                   style: TextStyle(
                       color: G5Colors.textSecondary.withOpacity(0.6),
                       fontSize: 12)),
@@ -361,13 +361,13 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                         const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('选择关联比赛',
+                            Text('Select Match',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold)),
                             SizedBox(height: 2),
-                            Text('选择比赛展示专属卡片',
+                            Text('Link a match to show a match card',
                                 style: TextStyle(
                                     color: G5Colors.textSecondary,
                                     fontSize: 12)),
@@ -384,7 +384,7 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                       ),
                       child: const Row(
                         children: [
-                          Text('去选择',
+                          Text('Select',
                               style: TextStyle(
                                   color: G5Colors.accentBlue,
                                   fontSize: 12,
@@ -421,14 +421,14 @@ class _PostCommunityPageState extends G5BaseViewState<PostCommunityPage> {
                       children: [
                         Icon(Icons.tag, color: G5Colors.accentBlue, size: 14),
                         SizedBox(width: 4),
-                        Text('添加话题分类',
+                        Text('Add Topics',
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    Text('多选',
+                    Text('Multi',
                         style: TextStyle(
                             color: G5Colors.textSecondary, fontSize: 12)),
                   ],

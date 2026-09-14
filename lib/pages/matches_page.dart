@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
-import 'package:zogolive/pages/football_detail_page.dart';
-import 'package:zogolive/pages/search_page.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_match_status_util.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
+import 'package:livespeed/pages/football_detail_page.dart';
+import 'package:livespeed/pages/search_page.dart';
 
 class MatchesPage extends G5BaseViewController {
   const MatchesPage({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
   List<String> dates = [];
   List<String> days = [];
   List<int> timestamps = [];
-  int selectedDateIndex = 2; // 默认选中今天 (索引2)
+  int selectedDateIndex = 2; // 默认选中Today (索引2)
 
   List<G5MatchItem> matches = [];
   int _page = 1;
@@ -36,9 +37,9 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
   void initData() {
     super.initData();
     _generateDateData();
-    // 使用 WidgetsBinding 确保在第一帧渲染完成后再触发下拉刷新动画
+    // 使用 WidgetsBinding 确保在第一帧渲染完成后再触发Pull to refresh动画
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshController.callRefresh();
+      if (mounted) _refreshController.callRefresh();
     });
   }
 
@@ -63,20 +64,20 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
 
       // 生成星期
       if (i == 0) {
-        days.add('今天');
+        days.add('Today');
       } else if (i == 1) {
-        days.add('明天');
+        days.add('Tmr');
       } else if (i == -1) {
-        days.add('昨天');
+        days.add('Yst');
       } else {
         const weekdayMap = {
-          1: '周一',
-          2: '周二',
-          3: '周三',
-          4: '周四',
-          5: '周五',
-          6: '周六',
-          7: '周日'
+          1: 'Mon',
+          2: 'Tue',
+          3: 'Wed',
+          4: 'Thu',
+          5: 'Fri',
+          6: 'Sat',
+          7: 'Sun'
         };
         days.add(weekdayMap[targetDate.weekday] ?? '');
       }
@@ -134,7 +135,7 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
       } else {
         _refreshController.finishLoad(IndicatorResult.fail);
       }
-      // 可以添加错误提示 Toast
+      // 可以添加错误Notice Toast
     }
   }
 
@@ -162,14 +163,14 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '极球·赛事',
+                'LiveSpeed·Matches',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
               ),
               Text(
-                '焦点战术对决',
+                'Live scores & tactics',
                 style: TextStyle(fontSize: 10, color: G5Colors.textSecondary),
               ),
             ],
@@ -209,28 +210,28 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
           child: EasyRefresh(
             controller: _refreshController,
             header: const ClassicHeader(
-              dragText: '下拉刷新',
-              armedText: '释放刷新',
-              readyText: '正在刷新...',
-              processingText: '正在刷新...',
-              processedText: '刷新成功',
-              noMoreText: '没有更多',
-              failedText: '刷新失败',
-              messageText: '最后更新于 %T',
+              dragText: 'Pull to refresh',
+              armedText: 'Release to refresh',
+              readyText: 'Refreshing...',
+              processingText: 'Refreshing...',
+              processedText: 'Refreshed',
+              noMoreText: 'No more',
+              failedText: 'Refresh failed',
+              messageText: 'Last updated %T',
               iconTheme: IconThemeData(color: G5Colors.accentEmerald),
               textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
               messageStyle:
                   TextStyle(color: G5Colors.textSecondary, fontSize: 10),
             ),
             footer: const ClassicFooter(
-              dragText: '上拉加载',
-              armedText: '释放加载',
-              readyText: '正在加载...',
-              processingText: '正在加载...',
-              processedText: '加载成功',
-              noMoreText: '没有更多数据了',
-              failedText: '加载失败',
-              messageText: '最后更新于 %T',
+              dragText: 'Pull up to load',
+              armedText: 'Release to load',
+              readyText: 'Loading...',
+              processingText: 'Loading...',
+              processedText: 'Loaded',
+              noMoreText: 'No more data',
+              failedText: 'Load failed',
+              messageText: 'Last updated %T',
               iconTheme: IconThemeData(color: G5Colors.accentEmerald),
               textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
               messageStyle:
@@ -413,20 +414,20 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
 
       // 生成星期
       if (targetDateStr == todayStr) {
-        days.add('今天');
+        days.add('Today');
       } else if (targetDateStr == tomorrowStr) {
-        days.add('明天');
+        days.add('Tmr');
       } else if (targetDateStr == yesterdayStr) {
-        days.add('昨天');
+        days.add('Yst');
       } else {
         const weekdayMap = {
-          1: '周一',
-          2: '周二',
-          3: '周三',
-          4: '周四',
-          5: '周五',
-          6: '周六',
-          7: '周日'
+          1: 'Mon',
+          2: 'Tue',
+          3: 'Wed',
+          4: 'Thu',
+          5: 'Fri',
+          6: 'Sat',
+          7: 'Sun'
         };
         days.add(weekdayMap[targetDate.weekday] ?? '');
       }
@@ -442,13 +443,12 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
   }
 
   Widget _buildMatchCard(G5MatchItem match) {
-    bool isLive = match.statusId == 2 ||
-        match.statusId == 3 ||
-        match.statusId == 4; // 假设2,3,4为进行中，具体视接口而定
+    bool isLive = G5MatchStatusUtil.isLive(match.statusId);
 
-    String statusDisplay = match.statusName ?? '';
+    String statusDisplay =
+        G5MatchStatusUtil.abbreviate(match.statusName, statusId: match.statusId);
     if (isLive && match.minutes != null && match.minutes!.isNotEmpty) {
-      statusDisplay = "${match.minutes}' LIVE";
+      statusDisplay = "${match.minutes}'";
     }
 
     return GestureDetector(

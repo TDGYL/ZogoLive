@@ -43,7 +43,7 @@ class G5SearchUser {
   bool get isFollowed => followType == 1 || followType == 3;
 
   /// JSON转模型
-  /// 参数：json - Map<String, dynamic>类型，接口返回的用户数据
+  /// 参数：json - Map<String, dynamic>类型，接口返回的用户Stats
   /// 返回：G5SearchUser，用户模型
   factory G5SearchUser.fromJson(Map<String, dynamic> json) {
     return G5SearchUser(
@@ -93,8 +93,8 @@ class G5SearchResultModel {
     );
   }
 
-  /// 解析单条比赛数据为G5MatchItem模型
-  /// 参数：json - Map<String, dynamic>类型，接口返回的单条比赛数据
+  /// 解析单条比赛Stats为G5MatchItem模型
+  /// 参数：json - Map<String, dynamic>类型，接口返回的单条比赛Stats
   /// 返回：G5MatchItem，比赛列表模型
   static G5MatchItem _parseMatch(Map<String, dynamic> json) {
     return G5MatchItem(

@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 class G5OddsData {
-  List<G5OddsCompany>? asia; // 让球让分
-  List<G5OddsCompany>? eu; // 胜平负
-  List<G5OddsCompany>? bs; // 进球数
-  List<G5OddsCompany>? cr; // 角球
+  List<G5OddsCompany>? asia; // Handicap
+  List<G5OddsCompany>? eu; // 1X2
+  List<G5OddsCompany>? bs; // Goals
+  List<G5OddsCompany>? cr; // Corners
 
   G5OddsData({this.asia, this.eu, this.bs, this.cr});
 
@@ -26,8 +26,8 @@ class G5OddsData {
 class G5OddsCompany {
   String? name;
   String? companyId;
-  G5OddsDetail? ini; // 初盘
-  G5OddsDetail? pre; // 赛前
+  G5OddsDetail? ini; // Open
+  G5OddsDetail? pre; // Pre
   G5OddsDetail? spot; // 即时
 
   G5OddsCompany({this.name, this.companyId, this.ini, this.pre, this.spot});

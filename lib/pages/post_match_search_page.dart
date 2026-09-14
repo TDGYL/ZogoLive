@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class PostMatchSearchPage extends G5BaseViewController {
   const PostMatchSearchPage({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
   void initData() {
     super.initData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchHotData();
+      if (mounted) _fetchHotData();
     });
   }
 
@@ -151,7 +151,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: const Text(
-        '选择关联比赛',
+        'Select Match',
         style: TextStyle(
             color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
       ),
@@ -179,7 +179,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
               },
               decoration: const InputDecoration(
                 isCollapsed: true,
-                hintText: '搜索球队名称...',
+                hintText: 'Search team name...',
                 hintStyle:
                     TextStyle(color: G5Colors.textSecondary, fontSize: 12),
                 prefixIcon:
@@ -299,12 +299,12 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
     return EasyRefresh(
       controller: _refreshController,
       header: const ClassicHeader(
-        dragText: '下拉刷新',
-        armedText: '释放刷新',
-        readyText: '正在刷新...',
-        processingText: '正在刷新...',
-        processedText: '刷新成功',
-        failedText: '刷新失败',
+        dragText: 'Pull to refresh',
+        armedText: 'Release to refresh',
+        readyText: 'Refreshing...',
+        processingText: 'Refreshing...',
+        processedText: 'Refreshed',
+        failedText: 'Refresh failed',
         iconTheme: IconThemeData(color: G5Colors.accentEmerald),
         textStyle: TextStyle(color: G5Colors.textSecondary, fontSize: 12),
       ),
@@ -321,7 +321,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
           if (_searchKeyword.isNotEmpty)
             SliverPersistentHeader(
               pinned: true,
-              delegate: _SectionHeaderDelegate('全部 (搜索结果)'),
+              delegate: _SectionHeaderDelegate('All (Results)'),
             ),
           if (_searchKeyword.isNotEmpty && _isSearchLoading)
             const SliverToBoxAdapter(
@@ -340,7 +340,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
               child: Padding(
                 padding: EdgeInsets.all(20.0),
                 child: Center(
-                  child: Text('暂无搜索数据',
+                  child: Text('No search data',
                       style: TextStyle(color: G5Colors.textSecondary)),
                 ),
               ),
@@ -355,10 +355,10 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
               ),
             ),
 
-          // ================= 第二段：热门 =================
+          // ================= 第二段：Trending =================
           SliverPersistentHeader(
             pinned: true,
-            delegate: _SectionHeaderDelegate('热门'),
+            delegate: _SectionHeaderDelegate('Trending'),
           ),
           if (_isHotLoading)
             const SliverToBoxAdapter(
@@ -375,7 +375,7 @@ class _PostMatchSearchPageState extends G5BaseViewState<PostMatchSearchPage> {
               child: Padding(
                 padding: EdgeInsets.all(20.0),
                 child: Center(
-                  child: Text('暂无热门数据',
+                  child: Text('No trending data',
                       style: TextStyle(color: G5Colors.textSecondary)),
                 ),
               ),

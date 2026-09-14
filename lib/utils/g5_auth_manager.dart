@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:zogolive/models/g5_user_model.dart';
-import 'package:zogolive/utils/g5_sp_manager.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/models/g5_user_model.dart';
+import 'package:livespeed/utils/g5_sp_manager.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class G5AuthManager {
   static final G5AuthManager _instance = G5AuthManager._internal();
@@ -24,7 +24,7 @@ class G5AuthManager {
   /// 是否已登录
   bool get isLoggedIn => _token != null && _token!.isNotEmpty && _currentUser != null;
 
-  /// 初始化，从缓存中读取数据
+  /// 初始化，从缓存中读取Stats
   Future<void> init() async {
     _token = G5SpManager.getString(_kTokenKey);
     final userInfoJson = G5SpManager.getString(_kUserInfoKey);
@@ -43,21 +43,21 @@ class G5AuthManager {
     }
   }
 
-  /// 保存登录 Token
+  /// Save登录 Token
   Future<void> saveToken(String token) async {
     _token = token;
     await G5SpManager.setString(_kTokenKey, token);
     G5NetworkManager().setAuthorizationHeader(token);
   }
 
-  /// 保存用户信息
+  /// Save用户信息
   Future<void> saveUserInfo(G5UserModel user) async {
     _currentUser = user;
     final jsonString = jsonEncode(user.toJson());
     await G5SpManager.setString(_kUserInfoKey, jsonString);
   }
 
-  /// 退出登录，清除数据
+  /// 退出登录，清除Stats
   Future<void> logout() async {
     _token = null;
     _currentUser = null;

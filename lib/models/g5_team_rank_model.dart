@@ -1,4 +1,4 @@
-/// 球队排名分组模型
+/// Team排名分组模型
 class G5TeamRankGroup {
   /// 晋级/降级名称
   final String? promotionName;
@@ -30,15 +30,15 @@ class G5TeamRankGroup {
   }
 }
 
-/// 球队排名项模型
+/// Team排名项模型
 class G5TeamRankItem {
-  /// 球队ID
+  /// TeamID
   final int? teamId;
 
-  /// 球队名称
+  /// Team名称
   final String? teamName;
 
-  /// 球队Logo
+  /// TeamLogo
   final String? logo;
 
   /// 晋级ID

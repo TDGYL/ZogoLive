@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/utils/g5_colors.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/utils/g5_colors.dart';
 
-/// 在线客服页
-/// 展示客服邮箱列表，支持一键复制邮箱地址
+/// Support页
+/// 展示客服邮箱列表，支持一键Copy邮箱地址
 class CustomerServicePage extends G5BaseViewController {
   const CustomerServicePage({Key? key}) : super(key: key);
 
@@ -16,13 +16,13 @@ class _CustomerServicePageState extends G5BaseViewState<CustomerServicePage> {
   /// 客服邮箱 - String类型，对外展示的客服联系方式
   static const String _serviceEmail = 'LiveSpeedService@outlook.com';
 
-  /// 复制邮箱到剪贴板
-  /// 复制成功后toast提示
+  /// Copy邮箱到剪贴板
+  /// Copied后toastNotice
   void _copyEmail() async {
     await Clipboard.setData(const ClipboardData(text: _serviceEmail));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('复制成功')),
+        const SnackBar(content: Text('Copied')),
       );
     }
   }
@@ -33,7 +33,7 @@ class _CustomerServicePageState extends G5BaseViewState<CustomerServicePage> {
       backgroundColor: G5Colors.pitch,
       elevation: 0,
       title: const Text(
-        '在线客服',
+        'Support',
         style: TextStyle(
             fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
       ),
@@ -84,7 +84,7 @@ class _CustomerServicePageState extends G5BaseViewState<CustomerServicePage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 复制按钮
+                // Copy按钮
                 GestureDetector(
                   onTap: _copyEmail,
                   child: Container(
@@ -103,7 +103,7 @@ class _CustomerServicePageState extends G5BaseViewState<CustomerServicePage> {
                             color: G5Colors.accentEmerald, size: 12),
                         SizedBox(width: 4),
                         Text(
-                          '复制',
+                          'Copy',
                           style: TextStyle(
                             color: G5Colors.accentEmerald,
                             fontSize: 11,

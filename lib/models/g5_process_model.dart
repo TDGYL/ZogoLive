@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_colors.dart';
 
 class G5ProcessData {
   List<G5StatItem>? stats;
@@ -55,19 +55,19 @@ class G5StatItem {
       case 3:
         return 'Yellow Card';
       case 1:
-        return '3分球进球数';
-      case 2: // 注意，足球里2是角球，篮球里2是2分球进球数。如果你这个接口专门对应篮球（/api/livespeed/basketball/match/process），可以将足球相关的覆盖或者按需调整。这里先补齐篮球枚举
-        return '2分球进球数';
+        return '3PT Goals';
+      case 2: // 注意，足球里2是Corner，篮球里2是2PT Goals。如果你这个接口专门对应篮球（/api/livespeed/basketball/match/process），可以将足球相关的覆盖或者按需调整。这里先补齐篮球枚举
+        return '2PT Goals';
       case 3:
-        return '罚球进球数';
+        return 'FT Goals';
       case 4:
-        return '剩余暂停数';
+        return 'Timeouts Left';
       case 5:
-        return '犯规数';
+        return 'Fouls';
       case 6:
-        return '罚球命中率';
+        return 'FT%';
       case 7:
-        return '总暂停数';
+        return 'Timeouts';
       default:
         return 'Unknown Stat';
     }
@@ -89,7 +89,7 @@ class G5StatItem {
 class G5IncidentItem {
   int? type;
   int? typeV2;
-  int? position; // 0-中立、1-主队、2-客队
+  int? position; // 0-中立、1-Home、2-Away
   int? time; // 分钟
   int? second;
   int? homeScore;
@@ -177,7 +177,7 @@ class G5IncidentItem {
   }
 
   String get custPlayerName {
-    // 换人
+    // Sub
     if (type == 9) {
       return outPlayerName ?? '';
     }

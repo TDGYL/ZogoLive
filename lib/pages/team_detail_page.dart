@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/models/g5_news_model.dart';
-import 'package:zogolive/models/g5_team_lineup_model.dart';
-import 'package:zogolive/models/g5_team_model.dart';
-import 'package:zogolive/models/g5_team_rank_model.dart';
-import 'package:zogolive/pages/football_detail_page.dart';
-import 'package:zogolive/pages/news_detail_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/models/g5_news_model.dart';
+import 'package:livespeed/models/g5_team_lineup_model.dart';
+import 'package:livespeed/models/g5_team_model.dart';
+import 'package:livespeed/models/g5_team_rank_model.dart';
+import 'package:livespeed/pages/football_detail_page.dart';
+import 'package:livespeed/pages/news_detail_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class TeamDetailPage extends G5BaseViewController {
   final int teamId;
@@ -24,7 +24,7 @@ class TeamDetailPage extends G5BaseViewController {
 class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _tabs = ['概览', '赛程', '阵容', '积分榜'];
+  final List<String> _tabs = ['Overview', 'Fixtures', 'Lineup', 'Standings'];
 
   bool _isLoading = true;
   G5TeamData? _teamData;
@@ -46,7 +46,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
 
-    // 如果外部传入了 competitionId，则立即发起赛程和新闻的请求，不必等 teamData 返回
+    // 如果外部传入了 competitionId，则立即发起Fixtures和新闻的请求，不必等 teamData 返回
     if (widget.competitionId != null) {
       _fetchTeamNews(widget.competitionId!);
       _fetchTeamMatches(widget.competitionId!);
@@ -139,7 +139,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     });
     try {
       final now = DateTime.now();
-      // 获取明天的时间戳
+      // 获取Tmr的时间戳
       final tomorrow = DateTime(now.year, now.month, now.day + 1);
       final timestamp = (tomorrow.millisecondsSinceEpoch / 1000).floor();
 
@@ -267,7 +267,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     if (_teamData == null) {
       return const Center(
           child:
-              Text('暂无球队数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No team data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return Column(
@@ -291,7 +291,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
-        _teamData?.name ?? '球队详情',
+        _teamData?.name ?? 'Team',
         style: const TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -310,9 +310,9 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     if (team.marketValue != null) {
       if (team.marketValue! >= 100000000) {
         marketValueStr =
-            '€${(team.marketValue! / 100000000).toStringAsFixed(1)}亿';
+            '€${(team.marketValue! / 100000000).toStringAsFixed(1)}00M';
       } else if (team.marketValue! >= 10000) {
-        marketValueStr = '€${(team.marketValue! / 10000).toStringAsFixed(0)}万';
+        marketValueStr = '€${(team.marketValue! / 10000).toStringAsFixed(0)}K';
       } else {
         marketValueStr = '€${team.marketValue}';
       }
@@ -410,7 +410,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                               const Icon(Icons.shield,
                                   color: G5Colors.accentGold, size: 10),
                               const SizedBox(width: 4),
-                              Text('成立 ${team.foundationTime ?? "-"}',
+                              Text('Founded ${team.foundationTime ?? "-"}',
                                   style: const TextStyle(
                                       color: Colors.white, fontSize: 10)),
                             ],
@@ -452,7 +452,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
             ],
           ),
           const SizedBox(height: 20),
-          // 底部数据网格
+          // 底部Stats网格
           Container(
             padding: const EdgeInsets.only(top: 16),
             decoration: const BoxDecoration(
@@ -460,12 +460,12 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
             ),
             child: Row(
               children: [
-                _buildQuickMetric('总身价', marketValueStr, Colors.white),
+                _buildQuickMetric('Value', marketValueStr, Colors.white),
                 _buildQuickMetric(
-                    '国家', team.countryName ?? '-', G5Colors.accentGold),
-                _buildQuickMetric('主教练', team.managerName ?? '-', Colors.white),
+                    'Country', team.countryName ?? '-', G5Colors.accentGold),
+                _buildQuickMetric('Coach', team.managerName ?? '-', Colors.white),
                 _buildQuickMetric(
-                    '容量',
+                    'Capacity',
                     team.venueCapacity != null ? '${team.venueCapacity}' : '-',
                     Colors.white),
               ],
@@ -535,17 +535,17 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     return TabBarView(
       controller: _tabController,
       children: _tabs.map((tabName) {
-        if (tabName == '概览') {
+        if (tabName == 'Overview') {
           return _buildOverviewTab();
-        } else if (tabName == '赛程') {
+        } else if (tabName == 'Fixtures') {
           return _buildFixturesTab();
-        } else if (tabName == '阵容') {
+        } else if (tabName == 'Lineup') {
           return _buildLineupTab();
-        } else if (tabName == '积分榜') {
+        } else if (tabName == 'Standings') {
           return _buildStandingsTab();
         }
         return Center(
-            child: Text('$tabName (待开发)',
+            child: Text('$tabName (Coming soon)',
                 style: const TextStyle(color: G5Colors.textSecondary)));
       }).toList(),
     );
@@ -560,7 +560,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     if (_matchesList.isEmpty) {
       return const Center(
           child:
-              Text('暂无赛程数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No fixture data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return ListView.builder(
@@ -568,7 +568,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
       itemCount: _matchesList.length,
       itemBuilder: (context, index) {
         final match = _matchesList[index];
-        bool isFinished = match.statusId == 8; // 8代表完赛
+        bool isFinished = match.statusId == 8; // 8代表完P
         bool isLive = match.statusId != null &&
             match.statusId! > 1 &&
             match.statusId! < 8; // 进行中
@@ -600,7 +600,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
             ),
             child: Row(
               children: [
-                // 左侧时间和赛事
+                // 左侧时间和P事
                 SizedBox(
                   width: 60,
                   child: Column(
@@ -629,12 +629,12 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                   ),
                 ),
 
-                // 中间主客队和比分
+                // 中间主Away和比分
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 主队
+                      // Home
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -692,7 +692,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                         ),
                       ),
 
-                      // 客队
+                      // Away
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
@@ -750,7 +750,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                         ),
                       ),
                       child: Text(
-                        match.statusName ?? '未开赛',
+                        match.statusName ?? 'NS',
                         style: TextStyle(
                           color: isLive
                               ? G5Colors.accentEmerald
@@ -796,7 +796,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     if (validGroups.isEmpty) {
       return const Center(
           child:
-              Text('暂无阵容数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No lineup data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return ListView.builder(
@@ -836,14 +836,14 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                           fontWeight: FontWeight.bold),
                     ),
                     const Text(
-                      '进球 / 出场',
+                      'Goals / Apps',
                       style: TextStyle(
                           color: G5Colors.textSecondary, fontSize: 12),
                     )
                   ],
                 ),
               ),
-              // 球员列表
+              // Players列表
               ...group.personList!
                   .map((player) => _buildPlayerRow(player))
                   .toList(),
@@ -862,7 +862,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
       ),
       child: Row(
         children: [
-          // 号码
+          // No.
           SizedBox(
             width: 30,
             child: Text(
@@ -904,7 +904,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // 数据
+          // Stats
           SizedBox(
             width: 60,
             child: Text(
@@ -939,7 +939,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                 children: [
                   Icon(Icons.newspaper, color: G5Colors.accentBlue, size: 16),
                   SizedBox(width: 8),
-                  Text('球队最新动态',
+                  Text('Team News',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -952,7 +952,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                     child: CircularProgressIndicator(
                         color: G5Colors.accentEmerald))
               else if (_newsList.isEmpty)
-                const Text('暂无最新新闻数据',
+                const Text('No news yet',
                     style:
                         TextStyle(color: G5Colors.textSecondary, fontSize: 12))
               else
@@ -1036,9 +1036,9 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     final diff = now.difference(date);
 
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}分钟前';
+      return '${diff.inMinutes} min ago';
     } else if (diff.inHours < 24) {
-      return '${diff.inHours}小时前';
+      return '${diff.inHours} h ago';
     } else {
       return '${date.month}-${date.day}';
     }
@@ -1052,7 +1052,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
     if (_rankList.isEmpty) {
       return const Center(
           child:
-              Text('暂无积分榜数据', style: TextStyle(color: G5Colors.textSecondary)));
+              Text('No standings data', style: TextStyle(color: G5Colors.textSecondary)));
     }
 
     return ListView.builder(
@@ -1098,20 +1098,20 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                   children: [
                     SizedBox(
                         width: 32,
-                        child: Text('排名',
+                        child: Text('Rank',
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold))),
                     Expanded(
-                        child: Text('球队',
+                        child: Text('Team',
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold))),
                     SizedBox(
                         width: 32,
-                        child: Text('赛',
+                        child: Text('P',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
@@ -1119,7 +1119,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                                 fontWeight: FontWeight.bold))),
                     SizedBox(
                         width: 48,
-                        child: Text('胜/平/负',
+                        child: Text('W/D/L',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
@@ -1127,7 +1127,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                                 fontWeight: FontWeight.bold))),
                     SizedBox(
                         width: 32,
-                        child: Text('积分',
+                        child: Text('Pts',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: G5Colors.textSecondary,
@@ -1162,7 +1162,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
       ),
       child: Row(
         children: [
-          // 排名
+          // Rank
           SizedBox(
             width: 32,
             child: Text(
@@ -1178,7 +1178,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
               ),
             ),
           ),
-          // 球队
+          // Team
           Expanded(
             child: Row(
               children: [
@@ -1208,7 +1208,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
               ],
             ),
           ),
-          // 赛
+          // P
           SizedBox(
             width: 32,
             child: Text(
@@ -1218,7 +1218,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                   const TextStyle(color: G5Colors.textSecondary, fontSize: 12),
             ),
           ),
-          // 胜平负
+          // WDL
           SizedBox(
             width: 48,
             child: Text(
@@ -1228,7 +1228,7 @@ class _TeamDetailPageState extends G5BaseViewState<TeamDetailPage>
                   const TextStyle(color: G5Colors.textSecondary, fontSize: 10),
             ),
           ),
-          // 积分
+          // Pts
           SizedBox(
             width: 32,
             child: Text(

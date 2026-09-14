@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_news_model.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_news_model.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
 class NewsDetailPage extends G5BaseViewController {
   /// 资讯ID
@@ -66,7 +66,7 @@ class _NewsDetailPageState extends G5BaseViewState<NewsDetailPage> {
     if (_newsDetail == null) return;
 
     final title = _newsDetail!.title ?? '';
-    final author = _newsDetail!.author ?? '官方发布';
+    final author = _newsDetail!.author ?? 'Official';
     final time = _formatTime(_newsDetail!.createdAt);
     final content = _newsDetail!.content ?? '';
 
@@ -158,7 +158,7 @@ class _NewsDetailPageState extends G5BaseViewState<NewsDetailPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: const Text(
-        '资讯详情',
+        'News',
         style: TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -178,7 +178,7 @@ class _NewsDetailPageState extends G5BaseViewState<NewsDetailPage> {
 
     if (_newsDetail == null) {
       return const Center(
-        child: Text('暂无资讯详情', style: TextStyle(color: G5Colors.textSecondary)),
+        child: Text('No news yet', style: TextStyle(color: G5Colors.textSecondary)),
       );
     }
 

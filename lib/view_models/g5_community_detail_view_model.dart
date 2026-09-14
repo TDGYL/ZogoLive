@@ -1,30 +1,30 @@
-import 'package:zogolive/base/g5_base_view_model.dart';
-import 'package:zogolive/models/g5_comment_model.dart';
-import 'package:zogolive/models/g5_post_model.dart';
-import 'package:zogolive/utils/g5_network_manager.dart';
+import 'package:livespeed/base/g5_base_view_model.dart';
+import 'package:livespeed/models/g5_comment_model.dart';
+import 'package:livespeed/models/g5_post_model.dart';
+import 'package:livespeed/utils/g5_network_manager.dart';
 
-/// 社区详情页 ViewModel - 负责帖子详情、评论列表的数据请求与状态管理
+/// 社区详情页 ViewModel - 负责帖子详情、评论列表的Stats请求与状态管理
 /// 遵循MVVM架构，隔离业务逻辑与视图层
 class G5CommunityDetailViewModel extends G5BaseViewModel {
-  /// 评论列表数据 - List<G5CommentItem>类型，存储一级评论
+  /// 评论列表Stats - List<G5CommentItem>类型，存储一级评论
   List<G5CommentItem> _comments = [];
 
   /// 评论总数 - int类型，服务端返回的评论总条数
   int _total = 0;
 
-  /// 帖子详情数据 - G5PostItem?类型，请求成功后存储帖子详情
+  /// 帖子详情Stats - G5PostItem?类型，请求成功后存储帖子详情
   G5PostItem? _postDetail;
 
-  /// 请求错误信息 - String?类型，请求失败时的错误描述，成功时为null
+  /// 请求错误信息 - String?类型，Request failed时的错误描述，成功时为null
   String? _errorMessage;
 
-  /// 获取评论列表数据
+  /// 获取评论列表Stats
   List<G5CommentItem> get comments => _comments;
 
   /// 获取评论总数
   int get total => _total;
 
-  /// 获取帖子详情数据
+  /// 获取帖子详情Stats
   G5PostItem? get postDetail => _postDetail;
 
   /// 获取错误信息
@@ -49,7 +49,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
       notifyListeners();
       return true;
     } else {
-      _errorMessage = response.message ?? '请求失败';
+      _errorMessage = response.message ?? 'Request failed';
       notifyListeners();
       return false;
     }
@@ -79,7 +79,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
       notifyListeners();
       return true;
     } else {
-      _errorMessage = response.message ?? '请求失败';
+      _errorMessage = response.message ?? 'Request failed';
       notifyListeners();
       return false;
     }
@@ -123,7 +123,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
       notifyListeners();
       return true;
     } else {
-      _errorMessage = response.message ?? '评论失败';
+      _errorMessage = response.message ?? 'Comment failed';
       notifyListeners();
       return false;
     }
@@ -132,7 +132,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
   /// 插入新评论到列表
   /// 直接评论帖子时插入到一级评论列表头部并总数+1；
   /// 回复一级评论时插入到对应一级评论的子评论列表尾部
-  /// 参数：comment - G5CommentItem，服务端返回的新评论数据；
+  /// 参数：comment - G5CommentItem，服务端返回的新评论Stats；
   ///       commentId - int?，回复时的一级评论ID
   void _insertComment(G5CommentItem comment, {int? commentId}) {
     if (commentId == null) {
@@ -151,9 +151,9 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
     }
   }
 
-  /// 评论点赞/取消点赞
+  /// 评论点赞/Cancel点赞
   /// 接口：POST /api/livespeed/support
-  /// 参数：objectId - int类型，评论ID；isSupport - bool类型，true点赞/false取消
+  /// 参数：objectId - int类型，评论ID；isSupport - bool类型，true点赞/falseCancel
   /// object_type固定为3（评论类型）
   /// 返回：Future<bool>，true表示成功，false表示失败
   Future<bool> supportComment({
@@ -174,15 +174,15 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
     if (response.isSuccess) {
       return true;
     } else {
-      _errorMessage = response.message ?? '点赞失败';
+      _errorMessage = response.message ?? 'Like failed';
       notifyListeners();
       return false;
     }
   }
 
-  /// 帖子点赞/取消点赞
+  /// 帖子点赞/Cancel点赞
   /// 接口：POST /api/livespeed/community/like
-  /// 参数：postId - int类型，帖子ID；type - int类型，1表示点赞，2表示取消点赞
+  /// 参数：postId - int类型，帖子ID；type - int类型，1表示点赞，2表示Cancel点赞
   /// 返回：Future<bool>，true表示成功，false表示失败
   Future<bool> likePost({required int postId, required int type}) async {
     _errorMessage = null;
@@ -198,7 +198,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
     if (response.isSuccess) {
       return true;
     } else {
-      _errorMessage = response.message ?? '点赞失败';
+      _errorMessage = response.message ?? 'Like failed';
       notifyListeners();
       return false;
     }
@@ -221,15 +221,15 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
     if (response.isSuccess) {
       return true;
     } else {
-      _errorMessage = response.message ?? '删除失败';
+      _errorMessage = response.message ?? 'Delete failed';
       notifyListeners();
       return false;
     }
   }
 
-  /// 关注/取消关注帖子作者
+  /// 关注/Cancel关注帖子作者
   /// 接口：POST /api/livespeed/imchat/subscribe
-  /// 参数：targetId - int类型，作者用户ID；type - int类型，1关注，2取消关注
+  /// 参数：targetId - int类型，作者用户ID；type - int类型，1关注，2Cancel关注
   /// 返回：Future<bool>，true表示成功，false表示失败
   Future<bool> toggleFollowAuthor({
     required int targetId,
@@ -248,7 +248,7 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
     if (response.isSuccess) {
       return true;
     } else {
-      _errorMessage = response.message ?? '操作失败';
+      _errorMessage = response.message ?? 'Operation failed';
       notifyListeners();
       return false;
     }

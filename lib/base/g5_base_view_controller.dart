@@ -20,7 +20,7 @@ abstract class G5BaseViewState<T extends G5BaseViewController>
     initData();
   }
 
-  /// 初始化数据，子类可重写
+  /// 初始化Stats，子类可重写
   void initData() {
     // 默认空实现
   }

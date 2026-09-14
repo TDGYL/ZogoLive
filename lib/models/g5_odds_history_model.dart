@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:zogolive/models/g5_odds_model.dart';
+import 'package:livespeed/models/g5_odds_model.dart';
 
 class G5OddsHistoryData {
   List<G5OddsHistoryItem>? asia;

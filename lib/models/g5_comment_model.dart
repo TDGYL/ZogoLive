@@ -1,18 +1,18 @@
-/// 社区评论列表数据模型 - 包含评论列表及总数
+/// 社区评论列表Stats模型 - 包含评论列表及总数
 /// 字段说明：
 /// - total: int? 评论总数
-/// - results: List<G5CommentItem>? 评论数据数组
+/// - results: List<G5CommentItem>? 评论Stats数组
 class G5CommentData {
   /// 评论总数 - int类型，表示评论的总数量
   int? total;
 
-  /// 评论数据数组 - List<G5CommentItem>类型，包含所有评论项
+  /// 评论Stats数组 - List<G5CommentItem>类型，包含所有评论项
   List<G5CommentItem>? results;
 
   G5CommentData({this.total, this.results});
 
   /// 从JSON映射创建G5CommentData
-  /// 参数：json - Map<String, dynamic> 服务端返回的JSON数据
+  /// 参数：json - Map<String, dynamic> 服务端返回的JSONStats
   /// 返回：G5CommentData 实例
   factory G5CommentData.fromJson(Map<String, dynamic> json) {
     var list = json['results'] as List?;
@@ -26,7 +26,7 @@ class G5CommentData {
   }
 }
 
-/// 社区评论项模型 - 单条评论/回复的数据结构
+/// 社区评论项模型 - 单条评论/回复的Stats结构
 /// 评论和回复共用同一结构，通过 parent_id 和 is_reply_child 区分层级
 class G5CommentItem {
   /// 评论ID - int类型，唯一标识该条评论
@@ -105,7 +105,7 @@ class G5CommentItem {
   });
 
   /// 从JSON映射创建G5CommentItem
-  /// 参数：json - Map<String, dynamic> 单条评论的JSON数据
+  /// 参数：json - Map<String, dynamic> 单条评论的JSONStats
   /// 返回：G5CommentItem 实例
   factory G5CommentItem.fromJson(Map<String, dynamic> json) {
     var childList = json['show_child_comments'] as List?;

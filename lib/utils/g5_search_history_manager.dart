@@ -7,7 +7,7 @@ class G5SearchHistoryManager {
   /// SharedPreferences存储key - String类型，搜索历史列表的持久化键名
   static const String _storageKey = 'g5_search_history_list';
 
-  /// 最大历史记录条数 - int类型，超过后自动删除最早的记录
+  /// 最Over历史记录条数 - int类型，超过后自动删除最早的记录
   static const int _maxCount = 8;
 
   /// 单例实例 - G5SearchHistoryManager?类型，懒加载初始化
@@ -38,7 +38,7 @@ class G5SearchHistoryManager {
   }
 
   /// 添加一条搜索历史
-  /// 去重处理：已存在时先移除再插入到最前面；超过最大条数时移除最早的
+  /// 去重处理：已存在时先移除再插入到最前面；超过最Over条数时移除最早的
   /// 参数：keyword - String类型，搜索关键词
   /// 返回：Future<List<String>>，添加后的最新历史列表
   Future<List<String>> addHistory(String keyword) async {
@@ -51,7 +51,7 @@ class G5SearchHistoryManager {
     list.remove(trimmed);
     // 插入到最前面
     list.insert(0, trimmed);
-    // 超出最大条数时删除最早的
+    // 超出最Over条数时删除最早的
     if (list.length > _maxCount) {
       list.removeRange(_maxCount, list.length);
     }
@@ -78,7 +78,7 @@ class G5SearchHistoryManager {
   }
 
   /// 持久化历史列表到本地
-  /// 参数：list - List<String>，待保存的历史记录数组
+  /// 参数：list - List<String>，待Save的历史记录数组
   /// 返回：Future<void>
   Future<void> _save(List<String> list) async {
     final prefs = await SharedPreferences.getInstance();

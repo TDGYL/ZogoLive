@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:zogolive/base/g5_base_view_controller.dart';
-import 'package:zogolive/models/g5_post_model.dart';
-import 'package:zogolive/models/g5_comment_model.dart';
-import 'package:zogolive/models/g5_match_model.dart';
-import 'package:zogolive/pages/football_detail_page.dart';
-import 'package:zogolive/pages/team_detail_page.dart';
-import 'package:zogolive/utils/g5_colors.dart';
-import 'package:zogolive/utils/g5_auth_manager.dart';
-import 'package:zogolive/utils/g5_event_bus.dart';
-import 'package:zogolive/view_models/g5_community_detail_view_model.dart';
-import 'package:zogolive/pages/login_page.dart';
+import 'package:livespeed/base/g5_base_view_controller.dart';
+import 'package:livespeed/models/g5_post_model.dart';
+import 'package:livespeed/models/g5_comment_model.dart';
+import 'package:livespeed/models/g5_match_model.dart';
+import 'package:livespeed/pages/football_detail_page.dart';
+import 'package:livespeed/pages/team_detail_page.dart';
+import 'package:livespeed/utils/g5_colors.dart';
+import 'package:livespeed/utils/g5_auth_manager.dart';
+import 'package:livespeed/utils/g5_event_bus.dart';
+import 'package:livespeed/view_models/g5_community_detail_view_model.dart';
+import 'package:livespeed/pages/login_page.dart';
 
 class CommunityDetailPage extends G5BaseViewController {
-  /// 帖子数据 - G5PostItem类型，从上一页面传入
+  /// 帖子Stats - G5PostItem类型，从上一页面传入
   final G5PostItem post;
 
   const CommunityDetailPage({Key? key, required this.post}) : super(key: key);
@@ -22,7 +22,7 @@ class CommunityDetailPage extends G5BaseViewController {
 }
 
 class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
-  /// 评论输入控制器 - TextEditingController类型，管理评论输入框文本
+  /// Comments输入控制器 - TextEditingController类型，管理评论输入框文本
   final TextEditingController _commentController = TextEditingController();
 
   /// 点赞状态 - bool类型，当前用户是否已点赞
@@ -31,13 +31,13 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
   /// 点赞数量 - int类型，帖子点赞总数
   int _likeCount = 0;
 
-  /// 评论数量 - int类型，帖子评论总数，评论/回复成功后自动+1
+  /// Comments数量 - int类型，帖子评论总数，评论/Reply成功后自动+1
   int _commentCount = 0;
 
-  /// 是否正在输入 - bool类型，控制发送按钮显示
+  /// 是否正在输入 - bool类型，控制Send按钮显示
   bool _isTyping = false;
 
-  /// 当前回复的一级评论 - G5CommentItem?类型，null表示直接评论帖子，非null表示回复该评论
+  /// 当前Reply的一级评论 - G5CommentItem?类型，null表示直接评论帖子，非null表示Reply该评论
   G5CommentItem? _replyTargetComment;
 
   /// 是否展示删除按钮（作者本人） - bool类型，帖子作者id与登录用户id一致时为true
@@ -69,7 +69,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     _fetchComments();
   }
 
-  /// 当前展示的帖子数据 - 优先使用接口返回的详情，兜底使用传参数据
+  /// 当前展示的帖子Stats - 优先使用接口返回的详情，兜底使用传参Stats
   G5PostItem get post => viewModel.postDetail ?? widget.post;
 
   /// 请求帖子详情
@@ -92,7 +92,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     }
   }
 
-  /// 请求评论列表数据
+  /// 请求评论列表Stats
   /// 通过ViewModel发起GET请求，参数为当前帖子的ID
   void _fetchComments() async {
     final objectId = widget.post.id?.toString() ?? '';
@@ -114,7 +114,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
       action();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先登录')),
+        const SnackBar(content: Text('Please log in first')),
       );
       Navigator.push(
         context,
@@ -124,14 +124,14 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
   }
 
   /// 切换帖子点赞状态
-  /// 调用帖子点赞接口：未点赞时type=1点赞，已点赞时type=2取消点赞
+  /// 调用帖子点赞接口：未点赞时type=1点赞，已点赞时type=2Cancel点赞
   /// 成功后同步更新点赞状态和点赞数
   void _toggleLike() {
     _checkLoginAndDo(() async {
       final postId = post.id ?? 0;
       if (postId == 0) return;
 
-      // 目标状态：当前未点赞则点赞(type=1)，已点赞则取消(type=2)
+      // 目标状态：当前未点赞则点赞(type=1)，已点赞则Cancel(type=2)
       final willLike = !_isLiked;
       final success = await viewModel.likePost(
         postId: postId,
@@ -150,7 +150,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(viewModel.errorMessage ?? '点赞失败，请重试')),
+              content: Text(viewModel.errorMessage ?? 'Failed, try again')),
         );
       }
     });
@@ -158,13 +158,13 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 切换评论点赞状态
   /// 调用评论点赞接口，成功后同步更新该评论的点赞状态和数量
-  /// 参数：comment - G5CommentItem，要点赞的评论数据
+  /// 参数：comment - G5CommentItem，要点赞的评论Stats
   void _toggleCommentSupport(G5CommentItem comment) {
     _checkLoginAndDo(() async {
       final commentId = comment.id ?? 0;
       if (commentId == 0) return;
 
-      // 目标状态：当前未点赞则点赞，已点赞则取消
+      // 目标状态：当前未点赞则点赞，已点赞则Cancel
       final targetSupport = !(comment.isSupport == true);
       final success = await viewModel.supportComment(
         objectId: commentId,
@@ -179,7 +179,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(viewModel.errorMessage ?? '点赞失败，请重试')),
+              content: Text(viewModel.errorMessage ?? 'Failed, try again')),
         );
       }
     });
@@ -187,7 +187,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 切换关注帖子作者状态
   /// 接口：POST /api/livespeed/imchat/subscribe
-  /// 已关注(isSubscribe==true)时type=2取消关注，未关注时type=1添加关注
+  /// Following(isSubscribe==true)时type=2Cancel关注，未关注时type=1添加关注
   /// 成功后同步更新作者的isSubscribe状态并刷新按钮
   void _toggleFollowAuthor() {
     _checkLoginAndDo(() async {
@@ -195,7 +195,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
       final targetId = author?.id ?? 0;
       if (targetId == 0) return;
 
-      // 目标操作：当前已关注则取消(type=2)，未关注则关注(type=1)
+      // 目标操作：当前Following则Cancel(type=2)，未关注则关注(type=1)
       final isSubscribed = author?.isSubscribe == true;
       final success = await viewModel.toggleFollowAuthor(
         targetId: targetId,
@@ -209,33 +209,33 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
           }
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isSubscribed ? '已取消关注' : '关注成功')),
+          SnackBar(content: Text(isSubscribed ? 'Unfollowed' : 'Followed')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(viewModel.errorMessage ?? '操作失败，请重试')),
+              content: Text(viewModel.errorMessage ?? 'Failed, try again')),
         );
       }
     });
   }
 
   /// 显示删除帖子二次确认弹窗
-  /// 点击"取消"关闭弹窗，点击"删除"调用删除接口，
-  /// 成功后发送PostDeleteEvent通知社区列表同步删除该帖子，toast提示并返回上一页
+  /// 点击"Cancel"关闭弹窗，点击"删除"调用删除接口，
+  /// 成功后SendPostDeleteEvent通知社区列表同步删除该帖子，toastNotice并返回上一页
   void _showDeleteConfirmDialog() {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: G5Colors.pitchCard,
-          title: const Text('提示', style: TextStyle(color: Colors.white)),
-          content: const Text('是否删除该帖子？',
+          title: const Text('Notice', style: TextStyle(color: Colors.white)),
+          content: const Text('Delete this post?',
               style: TextStyle(color: G5Colors.textSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('取消',
+              child: const Text('Cancel',
                   style: TextStyle(color: G5Colors.textSecondary)),
             ),
             TextButton(
@@ -247,20 +247,20 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                 final success = await viewModel.deletePost(postId: postId);
                 if (!mounted) return;
                 if (success) {
-                  // 发送帖子删除事件，社区列表同步删除该帖子
+                  // Send帖子删除Events，社区列表同步删除该帖子
                   G5EventBus().fire(PostDeleteEvent(postId));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('删除成功')),
+                    const SnackBar(content: Text('Deleted')),
                   );
                   Navigator.of(context).pop(); // 返回上一页
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(viewModel.errorMessage ?? '删除失败，请重试')),
+                        content: Text(viewModel.errorMessage ?? 'Delete failed, try again')),
                   );
                 }
               },
-              child: const Text('删除',
+              child: const Text('Delete',
                   style: TextStyle(color: G5Colors.accentCrimson)),
             ),
           ],
@@ -269,9 +269,9 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     );
   }
 
-  /// 提交评论/回复
-  /// 根据是否有回复目标决定参数：直接评论帖子只传object_id和words，
-  /// 回复一级评论额外传comment_id；成功后插入返回数据并刷新列表
+  /// 提交评论/Reply
+  /// 根据是否有Reply目标决定参数：直接评论帖子只传object_id和words，
+  /// Reply一级评论额外传comment_id；成功后插入返回Stats并刷新列表
   void _submitComment() {
     final words = _commentController.text.trim();
     if (words.isEmpty) return;
@@ -293,20 +293,20 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
         setState(() {
           _isTyping = false;
           _replyTargetComment = null;
-          // 评论或回复成功后，评论数+1
+          // Comments或Reply成功后，评论数+1
           _commentCount += 1;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(viewModel.errorMessage ?? '评论失败，请重试')),
+              content: Text(viewModel.errorMessage ?? 'Failed, try again')),
         );
       }
     });
   }
 
-  /// 开始回复指定的一级评论
-  /// 参数：comment - G5CommentItem，要回复的一级评论
+  /// 开始Reply指定的一级评论
+  /// 参数：comment - G5CommentItem，要Reply的一级评论
   void _startReply(G5CommentItem comment) {
     _checkLoginAndDo(() {
       setState(() {
@@ -317,7 +317,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     });
   }
 
-  /// 取消回复，切回直接评论帖子模式
+  /// CancelReply，切回直接评论帖子模式
   void _cancelReply() {
     setState(() {
       _replyTargetComment = null;
@@ -329,7 +329,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 点击比赛卡片跳转比赛详情
   /// 如果键盘弹出则先收起键盘，再将G5PostMatch转换为G5MatchItem后push
-  /// 参数：postMatch - G5PostMatch，帖子关联的比赛数据
+  /// 参数：postMatch - G5PostMatch，帖子关联的比赛Stats
   void _pushToMatchDetail(G5PostMatch postMatch) {
     // 收起键盘
     FocusScope.of(context).unfocus();
@@ -339,8 +339,8 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     ));
   }
 
-  /// 点击球队头像跳转球队详情
-  /// 参数：teamId - int，球队ID；competitionId - int?，所属赛事ID
+  /// 点击Team头像跳转Team详情
+  /// 参数：teamId - int，TeamID；competitionId - int?，所属赛事ID
   void _pushToTeamDetail({required int teamId, int? competitionId}) {
     FocusScope.of(context).unfocus();
     Navigator.of(context).push(MaterialPageRoute(
@@ -353,7 +353,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 将帖子关联比赛模型转换为比赛列表模型
   /// 字段一一对应映射，缺失字段为null
-  /// 参数：postMatch - G5PostMatch，帖子关联的比赛数据
+  /// 参数：postMatch - G5PostMatch，帖子关联的比赛Stats
   /// 返回：G5MatchItem，比赛列表页使用的比赛模型
   G5MatchItem _convertToMatchItem(G5PostMatch postMatch) {
     return G5MatchItem(
@@ -376,16 +376,16 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 格式化时间戳为相对时间描述
   /// 参数：timestamp - int?，Unix时间戳（秒级）
-  /// 返回：String，如"3天前"、"2小时前"、"刚刚"
+  /// 返回：String，如"3 d ago"、"2 h ago"、"Just now"
   String _formatTime(int? timestamp) {
-    if (timestamp == null) return '刚刚';
+    if (timestamp == null) return 'Just now';
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     final now = DateTime.now();
     final diff = now.difference(date);
-    if (diff.inDays > 0) return '${diff.inDays}天前';
-    if (diff.inHours > 0) return '${diff.inHours}小时前';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}分钟前';
-    return '刚刚';
+    if (diff.inDays > 0) return '${diff.inDays} d ago';
+    if (diff.inHours > 0) return '${diff.inHours} h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} min ago';
+    return 'Just now';
   }
 
   @override
@@ -414,7 +414,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              post.author?.name ?? '球迷',
+              post.author?.name ?? 'Fan',
               style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -423,7 +423,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // 作者本人：展示删除按钮；他人帖子：展示关注/已关注按钮
+          // 作者本人：展示删除按钮；他人帖子：展示关注/Following按钮
           if (_isMyPost)
             IconButton(
               onPressed: _showDeleteConfirmDialog,
@@ -446,7 +446,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                 ),
               ),
               child: Text(
-                post.author?.isSubscribe == true ? '已关注' : '+ 关注',
+                post.author?.isSubscribe == true ? 'Following' : '+ Follow',
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -499,7 +499,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                               Row(
                                 children: [
                                   Text(
-                                    post.author?.name ?? '球迷',
+                                    post.author?.name ?? 'Fan',
                                     style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
@@ -513,7 +513,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                                       color: G5Colors.accentBlue.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: const Text('创作者',
+                                    child: const Text('Creator',
                                         style: TextStyle(
                                             color: G5Colors.accentBlue,
                                             fontSize: 10,
@@ -523,7 +523,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${_formatTime(post.createTime)} · IP属地未知',
+                                '${_formatTime(post.createTime)} · IP unknown',
                                 style: const TextStyle(
                                     color: G5Colors.textSecondary,
                                     fontSize: 12),
@@ -570,11 +570,11 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                     // Stats
                     Row(
                       children: [
-                        Text('$_commentCount 评论',
+                        Text('$_commentCount Comments',
                             style: const TextStyle(
                                 color: G5Colors.textSecondary, fontSize: 12)),
                         const SizedBox(width: 16),
-                        Text('$_likeCount 赞',
+                        Text('$_likeCount Likes',
                             style: const TextStyle(
                                 color: G5Colors.textSecondary, fontSize: 12)),
                       ],
@@ -589,7 +589,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    const Text('全部评论',
+                    const Text('Comments',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -626,7 +626,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 回复模式提示Banner
+                // Reply模式NoticeBanner
                 if (_replyTargetComment != null)
                   Container(
                     width: double.infinity,
@@ -644,7 +644,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            '回复 ${_replyTargetComment?.userName ?? ''}：',
+                            'Reply ${_replyTargetComment?.userName ?? ''}：',
                             style: const TextStyle(
                                 color: G5Colors.accentBlue, fontSize: 12),
                             maxLines: 1,
@@ -680,8 +680,8 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                                 color: Colors.white, fontSize: 14),
                             decoration: InputDecoration(
                               hintText: _replyTargetComment != null
-                                  ? '回复 ${_replyTargetComment?.userName ?? ''}...'
-                                  : '说点什么吧...',
+                                  ? 'Reply ${_replyTargetComment?.userName ?? ''}...'
+                                  : 'Say something...',
                               hintStyle: const TextStyle(
                                   color: G5Colors.textSecondary, fontSize: 14),
                               border: InputBorder.none,
@@ -712,7 +712,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('发送',
+                        child: const Text('Send',
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -741,7 +741,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
   }
 
   /// 构建评论列表Sliver
-  /// 根据ViewModel的加载状态和数据返回不同内容
+  /// 根据ViewModel的加载状态和Stats返回不同内容
   /// 返回：Widget，评论列表或加载/空状态
   Widget _buildCommentSliverList() {
     if (viewModel.isLoading) {
@@ -762,7 +762,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Center(
-            child: Text('暂无评论',
+            child: Text('No comments yet',
                 style: TextStyle(color: G5Colors.textSecondary, fontSize: 14)),
           ),
         ),
@@ -902,7 +902,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
   }
 
   /// 构建单个评论项（一级评论）
-  /// 参数：comment - G5CommentItem，评论数据模型
+  /// 参数：comment - G5CommentItem，评论Stats模型
   /// 返回：Widget，包含评论内容及其子评论列表
   Widget _buildCommentItem(G5CommentItem comment) {
     return Padding(
@@ -948,7 +948,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                           color: G5Colors.pitchElevated,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text('回复',
+                        child: const Text('Reply',
                             style: TextStyle(
                                 color: G5Colors.textSecondary, fontSize: 12)),
                       ),
@@ -977,7 +977,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                 ),
               ),
             ),
-          // 剩余子评论数量提示
+          // 剩余子评论数量Notice
           if (comment.remainChildCommentCount != null &&
               comment.remainChildCommentCount! > 0)
             Padding(
@@ -987,7 +987,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                   // TODO: 展开更多子评论
                 },
                 child: Text(
-                  '查看剩余${comment.remainChildCommentCount}条回复',
+                  'View ${comment.remainChildCommentCount} more replies',
                   style: const TextStyle(
                       color: G5Colors.accentBlue, fontSize: 12),
                 ),
@@ -998,9 +998,9 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
     );
   }
 
-  /// 构建子评论项（二级回复）
-  /// 参数：comment - G5CommentItem，子评论数据模型
-  /// 返回：Widget，包含回复用户名、目标用户名和回复内容
+  /// 构建子评论项（二级Reply）
+  /// 参数：comment - G5CommentItem，子评论Stats模型
+  /// 返回：Widget，包含Reply用户名、目标用户名和Reply内容
   Widget _buildChildComment(G5CommentItem comment) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1030,7 +1030,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
                             if (comment.replyToUserName != null &&
                                 comment.replyToUserName!.isNotEmpty)
                               TextSpan(
-                                text: ' 回复 ${comment.replyToUserName}',
+                                text: ' Reply ${comment.replyToUserName}',
                                 style: const TextStyle(
                                     color: G5Colors.textSecondary,
                                     fontSize: 12),
@@ -1072,7 +1072,7 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
   }
 
   /// 构建点赞按钮
-  /// 参数：comment - G5CommentItem，评论数据；iconSize - double，图标大小
+  /// 参数：comment - G5CommentItem，评论Stats；iconSize - double，图标OverUnder
   /// 返回：Widget，可点击的点赞按钮及数量
   Widget _buildSupportButton(G5CommentItem comment, {double iconSize = 14}) {
     final isSupported = comment.isSupport == true;

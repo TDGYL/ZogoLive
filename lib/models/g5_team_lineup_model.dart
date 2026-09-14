@@ -25,15 +25,15 @@ class G5TeamLineupGroup {
   String get positionName {
     switch (position) {
       case 'Coach':
-        return '教练';
+        return 'Coach';
       case 'F':
-        return '前锋';
+        return 'FWD';
       case 'M':
-        return '中场';
+        return 'MID';
       case 'D':
-        return '后卫';
+        return 'DEF';
       case 'G':
-        return '守门员';
+        return 'GK';
       default:
         return position ?? '';
     }
