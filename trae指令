@@ -1,6 +1,20 @@
 
 
 
+login_page点击获取验证码时候，有倒计时功能，然后调起网易易盾的 Flutter 人机验证插件captcha_plugin_flutter，插件的VerifyCode= 69d5b2ee3fec46658e01c0b45fc381af，当成功时候代理回调一个validate，然后执行一个网络请求：
+url=/api/livespeed/auth/send-verify，请求方式为POST请求，请求参数为：
+{
+"validate":"validate",string类型，
+"account":"100121312@qq.com",string类型，
+"channel":"email",string类型，
+"scene":"sms-login",string类型，
+}
+参数说明：validate是人机验证captcha_plugin_flutter返回的validate，account是邮件账号，channel固定= email，scene固定=sms-login
+
+登录：/api/livespeed/auth/login
+
+
+
 
 优化下，现在进入比赛详情community_detail_page文件，请求比赛详情接口url=/api/livespeed/football/match/detail，请求方式为get请求，
 参数为：

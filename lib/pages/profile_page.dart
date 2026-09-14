@@ -86,17 +86,18 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Icon(Icons.settings,
-                  color: G5Colors.textSecondary, size: 20),
-            ],
-          ),
           const SizedBox(height: 16),
           Row(
             children: [
-              Container(
+              // 未登录时点击头像跳转登录页
+              GestureDetector(
+                onTap: () {
+                  if (!isLoggedIn) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const LoginPage()));
+                  }
+                },
+                child: Container(
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
@@ -115,6 +116,7 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                             const Icon(Icons.person, color: G5Colors.textSecondary, size: 30),
                       )
                     : const Icon(Icons.person, color: G5Colors.textSecondary, size: 30),
+                ),
               ),
               const SizedBox(width: 14),
               Column(
