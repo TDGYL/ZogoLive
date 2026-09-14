@@ -1213,27 +1213,73 @@ class _SearchPageState extends G5BaseViewState<SearchPage> {
     );
   }
 
-  /// 切换用户关注状态（本地更新）
-  /// TODO: 对接关注/取关接口后替换为真实请求
+  /// 切换用户关注状态
+  /// 接口：POST /api/livespeed/imchat/subscribe
+  /// 参数：target_id-用户id（int），type-1关注/2取消关注（当前未关注传1，已关注传2）
+  /// 请求完毕toast提示，成功后本地更新关注状态
   /// 参数：user - G5SearchUser类型，目标用户
-  void _toggleFollow(G5SearchUser user) {
-    setState(() {
-      final index =
-          _searchResult?.users.indexWhere((u) => u.id == user.id) ?? -1;
-      if (index >= 0 && _searchResult != null) {
-        final users = _searchResult!.users;
-        users[index] = G5SearchUser(
-          id: users[index].id,
-          uuid: users[index].uuid,
-          avatar: users[index].avatar,
-          nickname: users[index].nickname,
-          isLiving: users[index].isLiving,
-          isExpert: users[index].isExpert,
-          isVip: users[index].isVip,
-          // 关注状态取反：0/2 -> 1，1/3 -> 0
-          followType: users[index].isFollowed ? 0 : 1,
+  Future<void> _toggleFollow(G5SearchUser user) async {
+    // 已关注（follow_type=1/3）时传2取消关注，未关注（follow_type=0/2）时传1关注
+    final int type = user.isFollowed ? 2 : 1;
+
+    try {
+      final response = await G5NetworkManager().post(
+        '/api/livespeed/imchat/subscribe',
+        data: {
+          // 关注用户取uuid字段
+          'target_id': user.id,
+          'type': type,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (response.isSuccess) {
+        // 成功提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(type == 1 ? '关注成功' : '已取消关注'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+
+        // 本地更新关注状态
+        setState(() {
+          final index =
+              _searchResult?.users.indexWhere((u) => u.id == user.id) ?? -1;
+          if (index >= 0 && _searchResult != null) {
+            final users = _searchResult!.users;
+            users[index] = G5SearchUser(
+              id: users[index].id,
+              uuid: users[index].uuid,
+              avatar: users[index].avatar,
+              nickname: users[index].nickname,
+              isLiving: users[index].isLiving,
+              isExpert: users[index].isExpert,
+              isVip: users[index].isVip,
+              // 关注成功follow_type置1，取消关注置0
+              followType: type == 1 ? 1 : 0,
+            );
+          }
+        });
+      } else {
+        // 失败提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? '操作失败，请稍后重试'),
+            duration: const Duration(seconds: 1),
+          ),
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('网络异常，请稍后重试'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    }
   }
 }

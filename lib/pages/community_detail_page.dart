@@ -7,6 +7,7 @@ import 'package:zogolive/pages/football_detail_page.dart';
 import 'package:zogolive/pages/team_detail_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
+import 'package:zogolive/utils/g5_event_bus.dart';
 import 'package:zogolive/view_models/g5_community_detail_view_model.dart';
 import 'package:zogolive/pages/login_page.dart';
 
@@ -38,6 +39,12 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
 
   /// 当前回复的一级评论 - G5CommentItem?类型，null表示直接评论帖子，非null表示回复该评论
   G5CommentItem? _replyTargetComment;
+
+  /// 是否展示删除按钮（作者本人） - bool类型，帖子作者id与登录用户id一致时为true
+  bool get _isMyPost =>
+      G5AuthManager().isLoggedIn &&
+      post.author?.id != null &&
+      post.author!.id == G5AuthManager().currentUser?.id;
 
   /// 社区详情ViewModel - G5CommunityDetailViewModel类型，懒加载
   G5CommunityDetailViewModel? _viewModel;
@@ -176,6 +183,90 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
         );
       }
     });
+  }
+
+  /// 切换关注帖子作者状态
+  /// 接口：POST /api/livespeed/imchat/subscribe
+  /// 已关注(isSubscribe==true)时type=2取消关注，未关注时type=1添加关注
+  /// 成功后同步更新作者的isSubscribe状态并刷新按钮
+  void _toggleFollowAuthor() {
+    _checkLoginAndDo(() async {
+      final author = post.author;
+      final targetId = author?.id ?? 0;
+      if (targetId == 0) return;
+
+      // 目标操作：当前已关注则取消(type=2)，未关注则关注(type=1)
+      final isSubscribed = author?.isSubscribe == true;
+      final success = await viewModel.toggleFollowAuthor(
+        targetId: targetId,
+        type: isSubscribed ? 2 : 1,
+      );
+      if (!mounted) return;
+      if (success) {
+        setState(() {
+          if (author != null) {
+            author.isSubscribe = !isSubscribed;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isSubscribed ? '已取消关注' : '关注成功')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(viewModel.errorMessage ?? '操作失败，请重试')),
+        );
+      }
+    });
+  }
+
+  /// 显示删除帖子二次确认弹窗
+  /// 点击"取消"关闭弹窗，点击"删除"调用删除接口，
+  /// 成功后发送PostDeleteEvent通知社区列表同步删除该帖子，toast提示并返回上一页
+  void _showDeleteConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: G5Colors.pitchCard,
+          title: const Text('提示', style: TextStyle(color: Colors.white)),
+          content: const Text('是否删除该帖子？',
+              style: TextStyle(color: G5Colors.textSecondary)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消',
+                  style: TextStyle(color: G5Colors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // 关闭弹窗
+                final postId = post.id ?? 0;
+                if (postId == 0) return;
+
+                final success = await viewModel.deletePost(postId: postId);
+                if (!mounted) return;
+                if (success) {
+                  // 发送帖子删除事件，社区列表同步删除该帖子
+                  G5EventBus().fire(PostDeleteEvent(postId));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('删除成功')),
+                  );
+                  Navigator.of(context).pop(); // 返回上一页
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(viewModel.errorMessage ?? '删除失败，请重试')),
+                  );
+                }
+              },
+              child: const Text('删除',
+                  style: TextStyle(color: G5Colors.accentCrimson)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// 提交评论/回复
@@ -332,28 +423,36 @@ class _CommunityDetailPageState extends G5BaseViewState<CommunityDetailPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              _checkLoginAndDo(() {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已关注')),
-                );
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: G5Colors.accentBlue,
-              minimumSize: const Size(60, 26),
+          // 作者本人：展示删除按钮；他人帖子：展示关注/已关注按钮
+          if (_isMyPost)
+            IconButton(
+              onPressed: _showDeleteConfirmDialog,
+              icon: const Icon(Icons.delete_outline,
+                  color: G5Colors.textSecondary, size: 22),
               padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 26),
+            )
+          else
+            ElevatedButton(
+              onPressed: _toggleFollowAuthor,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: post.author?.isSubscribe == true
+                    ? G5Colors.pitchElevated
+                    : G5Colors.accentBlue,
+                minimumSize: const Size(60, 26),
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
               ),
-            ),
-            child: const Text('+ 关注',
-                style: TextStyle(
+              child: Text(
+                post.author?.isSubscribe == true ? '已关注' : '+ 关注',
+                style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
-                    fontWeight: FontWeight.bold)),
-          ),
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
         ],
       ),
     );

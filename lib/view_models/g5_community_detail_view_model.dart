@@ -203,4 +203,54 @@ class G5CommunityDetailViewModel extends G5BaseViewModel {
       return false;
     }
   }
+
+  /// 删除帖子
+  /// 接口：POST /api/livespeed/community/delete
+  /// 参数：postId - int类型，帖子ID
+  /// 返回：Future<bool>，true表示删除成功，false表示失败
+  Future<bool> deletePost({required int postId}) async {
+    _errorMessage = null;
+
+    final response = await G5NetworkManager().post(
+      '/api/livespeed/community/delete',
+      data: {
+        'id': postId,
+      },
+    );
+
+    if (response.isSuccess) {
+      return true;
+    } else {
+      _errorMessage = response.message ?? '删除失败';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// 关注/取消关注帖子作者
+  /// 接口：POST /api/livespeed/imchat/subscribe
+  /// 参数：targetId - int类型，作者用户ID；type - int类型，1关注，2取消关注
+  /// 返回：Future<bool>，true表示成功，false表示失败
+  Future<bool> toggleFollowAuthor({
+    required int targetId,
+    required int type,
+  }) async {
+    _errorMessage = null;
+
+    final response = await G5NetworkManager().post(
+      '/api/livespeed/imchat/subscribe',
+      data: {
+        'target_id': targetId,
+        'type': type,
+      },
+    );
+
+    if (response.isSuccess) {
+      return true;
+    } else {
+      _errorMessage = response.message ?? '操作失败';
+      notifyListeners();
+      return false;
+    }
+  }
 }

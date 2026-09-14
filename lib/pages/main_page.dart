@@ -4,6 +4,7 @@ import 'package:zogolive/pages/community_page.dart';
 import 'package:zogolive/pages/news_page.dart';
 import 'package:zogolive/pages/profile_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_event_bus.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -21,6 +22,17 @@ class _MainPageState extends State<MainPage> {
     const NewsPage(),
     const ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听切Tab事件，通知对应页面刷新
+    G5EventBus().on<MainTabSwitchEvent>().listen((event) {
+      if (event.index == _currentIndex && mounted) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +56,10 @@ class _MainPageState extends State<MainPage> {
             setState(() {
               _currentIndex = index;
             });
+            // 通知切到"我的"Tab，触发个人信息刷新
+            if (index == 3) {
+              G5EventBus().fire(MainTabSwitchEvent(index));
+            }
           },
           type: BottomNavigationBarType.fixed,
           backgroundColor: G5Colors.pitch,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_post_model.dart';
@@ -7,6 +8,7 @@ import 'package:zogolive/pages/community_detail_page.dart';
 import 'package:zogolive/pages/post_community_page.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_colors.dart';
+import 'package:zogolive/utils/g5_event_bus.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
 class CommunityPage extends G5BaseViewController {
@@ -26,6 +28,9 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   int _page = 1;
   final int _size = 10;
 
+  /// 帖子删除事件订阅 - StreamSubscription?类型，监听详情页删除帖子通知
+  StreamSubscription? _postDeleteSubscription;
+
   bool _isFirstLoading = true;
 
   @override
@@ -34,6 +39,15 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
   @override
   void initData() {
     super.initData();
+    // 监听帖子删除事件，同步从列表中移除被删除的帖子
+    _postDeleteSubscription =
+        G5EventBus().on<PostDeleteEvent>().listen((event) {
+      if (mounted) {
+        setState(() {
+          posts.removeWhere((item) => item.id == event.postId);
+        });
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshController.callRefresh();
     });
@@ -41,6 +55,7 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
 
   @override
   void dispose() {
+    _postDeleteSubscription?.cancel();
     _refreshController.dispose();
     super.dispose();
   }
@@ -233,6 +248,39 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
     );
   }
 
+  /// 显示举报二次确认弹窗
+  /// 点击"取消"关闭弹窗，点击"举报"提示举报成功
+  void _showReportConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: G5Colors.pitchCard,
+          title: const Text('提示', style: TextStyle(color: Colors.white)),
+          content: const Text('确定要举报该帖子吗？',
+              style: TextStyle(color: G5Colors.textSecondary)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消',
+                  style: TextStyle(color: G5Colors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // 关闭弹窗
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('举报成功')),
+                );
+              },
+              child: const Text('举报',
+                  style: TextStyle(color: G5Colors.accentEmerald)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildPostCard(G5PostItem post) {
     final author = post.author;
     final match = post.match;
@@ -306,23 +354,29 @@ class _CommunityPageState extends G5BaseViewState<CommunityPage> {
                   ),
                 ],
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: G5Colors.accentEmerald.withOpacity(0.1),
-                  border: Border.all(
-                      color: G5Colors.accentEmerald.withOpacity(0.3)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  author?.isSubscribe == 1 ? '已关注' : '+ 关注',
-                  style: const TextStyle(
-                    color: G5Colors.accentEmerald,
-                    fontSize: 11,
+              // 作者本人时隐藏举报按钮
+              if (!(author != null &&
+                  G5AuthManager().isLoggedIn &&
+                  author.id == G5AuthManager().currentUser?.id))
+                GestureDetector(
+                  onTap: () => _showReportConfirmDialog(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: G5Colors.pitchElevated,
+                      border: Border.all(color: G5Colors.pitchBorder),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '举报',
+                      style: TextStyle(
+                        color: G5Colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),

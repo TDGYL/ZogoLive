@@ -4,8 +4,10 @@ import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_user_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/pages/login_page.dart';
+import 'package:zogolive/pages/my_matches_page.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_event_bus.dart';
+import 'package:zogolive/utils/g5_network_manager.dart';
 
 class ProfilePage extends G5BaseViewController {
   const ProfilePage({Key? key}) : super(key: key);
@@ -17,6 +19,12 @@ class ProfilePage extends G5BaseViewController {
 class _ProfilePageState extends G5BaseViewState<ProfilePage> {
   StreamSubscription? _authSubscription;
 
+  /// 用户信息刷新事件订阅 - StreamSubscription?类型，监听关注/粉丝数变化通知
+  StreamSubscription? _userInfoSubscription;
+
+  /// 主页Tab切换事件订阅 - StreamSubscription?类型，监听切到"我的"Tab
+  StreamSubscription? _tabSwitchSubscription;
+
   @override
   bool get showBackButton => false;
 
@@ -26,21 +34,65 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
     _authSubscription = G5EventBus().on<LoginStatusChangeEvent>().listen((event) {
       if (mounted) {
         setState(() {}); // 收到通知后刷新界面
+        // 登录状态下重新拉取个人信息
+        _fetchUserInfo();
       }
     });
+    // 监听用户信息刷新事件（关注/粉丝数变化）
+    _userInfoSubscription =
+        G5EventBus().on<UserInfoRefreshEvent>().listen((event) {
+      if (mounted) {
+        setState(() {}); // 收到通知后刷新界面
+      }
+    });
+    // 监听主页Tab切换事件：切到"我的"Tab时拉取个人信息刷新关注数和粉丝数
+    _tabSwitchSubscription =
+        G5EventBus().on<MainTabSwitchEvent>().listen((event) {
+      if (mounted && event.index == 3) {
+        _fetchUserInfo();
+      }
+    });
+    // 登录状态下进入页面时拉取个人信息
+    _fetchUserInfo();
+  }
+
+  /// 请求个人信息接口
+  /// 接口：GET /api/livespeed/member
+  /// 成功后更新我关注的和粉丝数
+  Future<void> _fetchUserInfo() async {
+    if (!G5AuthManager().isLoggedIn) return;
+
+    try {
+      final response =
+          await G5NetworkManager().get('/api/livespeed/member');
+
+      if (response.isSuccess &&
+          response.data != null &&
+          mounted) {
+        final user =
+            G5UserModel.fromJson(response.data as Map<String, dynamic>);
+        // 更新全局用户信息并通知刷新
+        await G5AuthManager().saveUserInfo(user);
+        G5EventBus().fire(UserInfoRefreshEvent());
+      }
+    } catch (e) {
+      // 静默失败，不影响页面展示
+    }
   }
 
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _userInfoSubscription?.cancel();
+    _tabSwitchSubscription?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 每次页面重新可见时（比如从登录页返回）刷新状态
-    setState(() {});
+    // 每次页面重新可见时（比如从登录页返回）拉取个人信息刷新界面
+    _fetchUserInfo();
   }
 
   @override
@@ -224,6 +276,21 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                },
+              ),
+              const Divider(height: 1, color: G5Colors.pitchBorder),
+              _buildMenuItem(
+                Icons.sports_soccer,
+                G5Colors.accentEmerald,
+                '我关注的比赛',
+                trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+                onTap: () {
+                  // 未登录跳转登录页，已登录跳转我关注的比赛列表
+                  if (!G5AuthManager().isLoggedIn) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                  } else {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const MyMatchesPage()));
+                  }
                 },
               ),
               const Divider(height: 1, color: G5Colors.pitchBorder),

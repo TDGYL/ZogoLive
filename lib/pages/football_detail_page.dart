@@ -3,8 +3,10 @@ import 'package:zogolive/base/g5_base_view_controller.dart';
 import 'package:zogolive/models/g5_match_model.dart';
 import 'package:zogolive/models/g5_odds_model.dart';
 import 'package:zogolive/models/g5_process_model.dart';
+import 'package:zogolive/pages/login_page.dart';
 import 'package:zogolive/pages/odds_history_page.dart';
 import 'package:zogolive/pages/team_detail_page.dart';
+import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 
@@ -37,10 +39,14 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
   G5OddsData? _oddsData;
   bool _isOddsLoading = true;
 
+  /// 是否已关注比赛 - bool类型，true表示已关注，初始值取自比赛详情接口的subscribed字段
+  bool _isSubscribed = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _isSubscribed = widget.match.subscribed == true;
     _fetchMatchDetail();
     _fetchProcessData();
     _fetchAnalysisData();
@@ -66,12 +72,88 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
           setState(() {
             _matchDetail =
                 G5MatchItem.fromJson(response.data as Map<String, dynamic>);
+            // 根据详情接口的关注状态同步按钮状态
+            _isSubscribed = _matchDetail?.subscribed == true;
           });
         }
       }
     } catch (e) {
       // 请求失败时保持使用传入的比赛数据
     }
+  }
+
+  /// 登录校验，未登录跳转登录页
+  /// 参数：action - VoidCallback类型，已登录时执行的操作
+  void _checkLoginAndDo(VoidCallback action) {
+    if (G5AuthManager().isLoggedIn) {
+      action();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先登录')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
+
+  /// 切换比赛关注状态
+  /// 已关注调用取消关注接口 POST /api/livespeed/football/match/unsubscribe
+  /// 未关注调用关注接口 POST /api/livespeed/football/match/subscribe
+  /// 需要用户登录，成功后同步关注按钮状态
+  void _toggleSubscribe() {
+    _checkLoginAndDo(() async {
+      final matchId = match.matchId ?? 0;
+      if (matchId == 0) return;
+
+      // 目标状态：当前已关注则取消关注，未关注则关注
+      final willSubscribe = !_isSubscribed;
+      final url = willSubscribe
+          ? '/api/livespeed/football/match/subscribe'
+          : '/api/livespeed/football/match/unsubscribe';
+
+      try {
+        final response = await G5NetworkManager().post(
+          url,
+          data: {'match_id': matchId},
+        );
+
+        if (!mounted) return;
+
+        if (response.code == 0) {
+          setState(() {
+            _isSubscribed = willSubscribe;
+          });
+          // 同步到详情数据模型
+          if (_matchDetail != null) {
+            _matchDetail!.subscribed = willSubscribe;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(willSubscribe ? '关注成功' : '已取消关注'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message ?? '操作失败，请稍后重试'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('网络异常，请稍后重试'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    });
   }
 
   Future<void> _fetchOddsData() async {
@@ -243,9 +325,13 @@ class _FootballDetailPageState extends G5BaseViewState<FootballDetailPage>
       ),
       centerTitle: true,
       actions: [
+        // 关注比赛按钮：已关注实心金星，未关注空心灰星
         IconButton(
-          icon: const Icon(Icons.star_border, color: G5Colors.textSecondary),
-          onPressed: () {},
+          icon: Icon(
+            _isSubscribed ? Icons.star : Icons.star_border,
+            color: _isSubscribed ? G5Colors.accentGold : G5Colors.textSecondary,
+          ),
+          onPressed: _toggleSubscribe,
         ),
       ],
     );
