@@ -1,6 +1,53 @@
 
 
 
+login_page界面的服务协议点击跳转webView，界面加载webUrl=https://www.livespeeds.com/user-agreement?platform=IOS
+
+login_page界面的隐私政策点击跳转webView，界面加载webUrl=https://www.livespeeds.com/privacy-agreement?platform=IOS
+
+
+
+
+settings_page用户邮箱右边展示登录用户邮箱
+
+
+
+
+edit_profile_page点击头像能进入的相册选择修改的头像，当点击保存时候，直接提示：资料已提交，等待审核！
+
+个人中心的关于我们右边的版本号删除掉，替换成右箭头，引导点击
+
+settings_page用户邮箱右边展示用户邮箱
+点击注销账号时候二次弹窗提示，url=/api/livespeed/member/cancel，请求方式为POST请求，没有入参，当请求成功时候，直接删除本地的用户信息，然后回退到首页我的个人中心，刷新界面
+
+关于我们用户协议直接跳转到webview，界面加载webUrl=https://www.livespeeds.com/user-agreement?platform=IOS，隐私协议跳转到webview，界面加载webUrl=https://www.livespeeds.com/privacy-agreement?platform=IOS，
+官网地址右边展示：https://api.livespeeds.com
+
+
+
+
+
+
+
+
+/////////
+个人中心的列表点击进详情操作：
+点击编辑资料，如果未登录，则跳转登录界面，否则跳转一个编辑资料界面，按照现在的项目风格，给我绘制一个编辑资料界面，界面包含的元素，头像，名字输入框，性别修改，保存按钮
+
+点击在线客服，直接push到一个界面，界面展示一列表，列表左边显示一个邮箱头像，右边显示LiveSpeedService@outlook.com这个邮箱，旁边有个复制的按钮，点击复制按钮可以复制邮箱
+
+
+点击关于我们，push到一个界面，界面顶部是项目logo，logo下边是项目版本号，然后下边是一个列表，列表包括：
+用户协议点击，意思协议点击，官网地址
+
+点击设置，如果未登录，则跳转登录界面，否则跳转一个设置界面，界面是一个列表，第一行是用户邮箱，第二行是注销账号
+
+
+
+
+
+
+
 community_detail_page右上角如果是删除按钮，则出现二次弹窗提示，是否删除该帖子
 接口url=/api/livespeed/community/delete，请求方式为POST请求，
 

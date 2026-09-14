@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:captcha_plugin_flutter/captcha_plugin_flutter.dart';
 import 'package:zogolive/base/g5_base_view_controller.dart';
+import 'package:zogolive/pages/g5_web_view_page.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
@@ -251,6 +253,14 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
         SnackBar(content: Text(message)),
       );
     }
+  }
+
+  /// 跳转WebView加载协议页面
+  /// 参数：title - String类型，页面标题；url - String类型，加载的协议地址
+  void _pushToWebView({required String title, required String url}) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => G5WebViewPage(pageTitle: title, webUrl: url),
+    ));
   }
 
   @override
@@ -536,20 +546,37 @@ class _LoginPageState extends G5BaseViewState<LoginPage> {
                               _isAgree = !_isAgree;
                             });
                           },
-                          child: const Text.rich(
+                          child: Text.rich(
                             TextSpan(
                               text: '我已阅读并同意 ',
-                              style: TextStyle(
-                                  color: G5Colors.textSecondary, fontSize: 11),
+                              style: const TextStyle(
+                                  color: G5Colors.textSecondary,
+                                  fontSize: 11),
                               children: [
                                 TextSpan(
                                   text: '服务协议',
-                                  style: TextStyle(color: Color(0xFF818CF8)),
+                                  style: const TextStyle(
+                                      color: Color(0xFF818CF8)),
+                                  // 点击跳转WebView加载服务协议
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => _pushToWebView(
+                                          title: '服务协议',
+                                          url:
+                                              'https://www.livespeeds.com/user-agreement?platform=IOS',
+                                        ),
                                 ),
-                                TextSpan(text: ' 与 '),
+                                const TextSpan(text: ' 与 '),
                                 TextSpan(
                                   text: '隐私政策',
-                                  style: TextStyle(color: Color(0xFF818CF8)),
+                                  style: const TextStyle(
+                                      color: Color(0xFF818CF8)),
+                                  // 点击跳转WebView加载隐私政策
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => _pushToWebView(
+                                          title: '隐私政策',
+                                          url:
+                                              'https://www.livespeeds.com/privacy-agreement?platform=IOS',
+                                        ),
                                 ),
                               ],
                             ),

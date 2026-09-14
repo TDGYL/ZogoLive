@@ -40,6 +40,7 @@ dependencies:
   easy_refresh: ^3.4.0
   captcha_plugin_flutter: '1.2.6'
   webview_flutter: ^4.8.0
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:

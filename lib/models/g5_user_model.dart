@@ -2,6 +2,7 @@
 class G5UserModel {
   int? id;
   String? account;
+  String? email;
   String? nickname;
   String? avatar;
   String? signature;
@@ -20,6 +21,7 @@ class G5UserModel {
   G5UserModel({
     this.id,
     this.account,
+    this.email,
     this.nickname,
     this.avatar,
     this.signature,
@@ -40,6 +42,7 @@ class G5UserModel {
     return G5UserModel(
       id: json['id'] as int?,
       account: json['account'] as String?,
+      email: json['email'] as String?,
       nickname: json['nickname'] as String?,
       avatar: json['avatar'] as String?,
       signature: json['signature'] as String?,
@@ -61,6 +64,7 @@ class G5UserModel {
     return {
       'id': id,
       'account': account,
+      'email': email,
       'nickname': nickname,
       'avatar': avatar,
       'signature': signature,

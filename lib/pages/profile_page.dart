@@ -5,6 +5,10 @@ import 'package:zogolive/models/g5_user_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/pages/login_page.dart';
 import 'package:zogolive/pages/my_matches_page.dart';
+import 'package:zogolive/pages/edit_profile_page.dart';
+import 'package:zogolive/pages/customer_service_page.dart';
+import 'package:zogolive/pages/about_us_page.dart';
+import 'package:zogolive/pages/settings_page.dart';
 import 'package:zogolive/utils/g5_auth_manager.dart';
 import 'package:zogolive/utils/g5_event_bus.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
@@ -275,7 +279,12 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 '编辑资料',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                  // 未登录跳转登录页，已登录跳转编辑资料
+                  if (!G5AuthManager().isLoggedIn) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                  } else {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const EditProfilePage()));
+                  }
                 },
               ),
               const Divider(height: 1, color: G5Colors.pitchBorder),
@@ -299,13 +308,19 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 G5Colors.accentGold,
                 '在线客服',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CustomerServicePage()));
+                },
               ),
               const Divider(height: 1, color: G5Colors.pitchBorder),
               _buildMenuItem(
                 Icons.info,
                 G5Colors.accentBlue,
                 '关于我们',
-                trailing: const Text('v2.8', style: TextStyle(color: G5Colors.textSecondary, fontSize: 10)),
+                trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AboutUsPage()));
+                },
               ),
               const Divider(height: 1, color: G5Colors.pitchBorder),
               _buildMenuItem(
@@ -313,6 +328,14 @@ class _ProfilePageState extends G5BaseViewState<ProfilePage> {
                 G5Colors.textSecondary,
                 '设置',
                 trailing: const Icon(Icons.chevron_right, size: 14, color: G5Colors.textSecondary),
+                onTap: () {
+                  // 未登录跳转登录页，已登录跳转设置页
+                  if (!G5AuthManager().isLoggedIn) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+                  } else {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsPage()));
+                  }
+                },
               ),
             ],
           ),
