@@ -1,5 +1,163 @@
 
 
+优化两部分：
+第一部分：search_page的菜单元素之间间隔10像素，不能紧贴着
+第二部分：菜单全部要两段显示列表，第一段是比赛，第二段是用户，如果段落没有数据，则隐藏段落
+
+接口url=/api/livespeed/index/search
+请求参数
+{
+"text":"team",string类型，
+}
+
+参数说明：text是输入框所搜的字符串
+
+返回数据结构为：
+{
+    "code": 0,
+    "data": {
+        "experts": [
+            {
+                "id": 0,
+                "avatar": "string",
+                "nickname": "string",
+                "description": "string",
+                "on_sale_count": 0,
+                "is_living": 0,
+                "is_focus": 0
+            }
+        ],
+        "matches": [
+            {
+                "match_id": 0,
+                "match_time": 0,
+                "competition_name": "string",
+                "competition_primary_color": "string",
+                "competition_secondary_color": "string",
+                "home_team_id": 0,
+                "home_team_name": "string",
+                "home_team_logo": "string",
+                "home_team_score": 0,
+                "away_team_id": 0,
+                "away_team_name": "string",
+                "away_team_logo": "string",
+                "away_team_score": 0
+            }
+        ],
+        "schemes": [
+            {
+                "id": 0,
+                "title": "string",
+                "price": "string",
+                "goods_id": 0,
+                "author_id": 0,
+                "category": 0,
+                "put_on_time": 0,
+                "content_type": 0,
+                "sale_status": 0,
+                "result_status": 0,
+                "result_other": "string",
+                "discount_type": 0,
+                "preference_status": 0,
+                "original_price": "string",
+                "author": {
+                    "id": 0,
+                    "avatar": "string",
+                    "nickname": "string",
+                    "combo": null,
+                    "hit_rate": 0,
+                    "return_rate": 0,
+                    "field_hit": "string",
+                    "field_streak": 0,
+                    "competitions": [
+                        "string"
+                    ],
+                    "hit_rate_15": 0,
+                    "hit_rate_50": 0,
+                    "tag": null
+                },
+                "matches": [
+                    {
+                        "match_id": 0,
+                        "match_time": 0,
+                        "lottery_tag": "string",
+                        "lotty_result": 0,
+                        "competition_id": 0,
+                        "away_team_name": "string",
+                        "home_team_name": "string",
+                        "competition_name": "string"
+                    }
+                ],
+                "tags": [
+                    {
+                        "name": "string"
+                    }
+                ]
+            }
+        ],
+        "users": [
+            {
+                "id": 0,
+                "uuid": 0,
+                "avatar": "string",
+                "nickname": "string",
+                "is_living": 0,
+                "is_expert": 0,
+                "is_vip": 0,
+                "follow_type": 0
+            }
+        ],
+        "competitions": [
+            {
+                "id": 0,
+                "name": "string",
+                "logo": "string",
+                "category": 0
+            }
+        ]
+    },
+    "message": "string"
+}
+
+其中：matches是比赛的数据，users是用户的数据；
+对应搜索界面，全部的两段就是matches和users，比赛取matches，用户取users
+
+用户界面要有关注按钮状态follow_type=0或者follow_type=2表示未关注，follow_type=1或者follow_type=3表示已关注，比赛列表能跳转到比赛详情界面
+
+
+
+
+
+
+g5_search_history_manager热门实时搜索的数据参照post_match_search_page的这个接口'/api/livespeed/index/search/match/hot'的数据，点击热门列表的数据push的比赛详情
+
+
+
+
+严格按照home_search.html界面还原生成搜索界面，当点击首页顶部搜索push到这个界面
+发布帖子要求：
+1、界面顶部是搜索框，中间是一个菜单选项（全部、比赛、用户），底部是一个列表
+2、当键盘弹起的时候出现历史搜索界面，当键盘收起来的时候出现搜索结果界面
+
+
+
+
+
+
+
+
+按照/Users/guyilin/Desktop/ZogoLive/index.html的风格，给我生成一个搜索界面，搜索界面包含搜索历史缓存key界面，搜索数据界面报错菜单栏和列表，菜单包括全部，比赛，用户，适配苹果手机界面
+
+
+
+在matches_page界面的右上角的左边12像素处加一个搜索按钮，搜索按钮push到一个搜索界面，按照当前的app风格给我生成一个搜索界面，界面要求的功能：
+
+1、顶部有一个长的搜索框，搜索框下边是一个菜单，菜单有全部，比赛，用户三个分类
+2、菜单下边就是一个列表，当切换菜单的时候，刷新菜单的列表数据
+3、做一个搜索历史的功能，当搜索框响应的时候弹出搜索历史界面，当键盘手起时候展示数据列表，历史搜索最多只展示8个数据，历史搜索的右上角做个删除历史搜索的按钮，点击删除时候删除所有的搜索缓存
+
+
+
 
 login_page点击获取验证码时候，有倒计时功能，然后调起网易易盾的 Flutter 人机验证插件captcha_plugin_flutter，插件的VerifyCode= 69d5b2ee3fec46658e01c0b45fc381af，当成功时候代理回调一个validate，然后执行一个网络请求：
 url=/api/livespeed/auth/send-verify，请求方式为POST请求，请求参数为：

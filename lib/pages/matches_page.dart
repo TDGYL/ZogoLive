@@ -5,6 +5,7 @@ import 'package:zogolive/models/g5_match_model.dart';
 import 'package:zogolive/utils/g5_colors.dart';
 import 'package:zogolive/utils/g5_network_manager.dart';
 import 'package:zogolive/pages/football_detail_page.dart';
+import 'package:zogolive/pages/search_page.dart';
 
 class MatchesPage extends G5BaseViewController {
   const MatchesPage({Key? key}) : super(key: key);
@@ -176,6 +177,18 @@ class _MatchesPageState extends G5BaseViewState<MatchesPage> {
         ],
       ),
       actions: [
+        // 搜索按钮：位于日历按钮左侧12像素处，点击跳转搜索页
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: IconButton(
+            icon: const Icon(Icons.search,
+                color: G5Colors.accentEmerald, size: 22),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const SearchPage()));
+            },
+          ),
+        ),
         IconButton(
           icon: const Icon(Icons.calendar_today,
               color: G5Colors.accentEmerald, size: 20),

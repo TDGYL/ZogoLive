@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZogoLive 搜索</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zogo: {
+                            bg: '#0B0F19',
+                            card: '#151C2C',
+                            border: '#232D42',
+                            accent: '#6366F1',
+                            accentGlow: '#4F46E5',
+                            live: '#EF4444',
+                            cyan: '#06B6D4',
+                            textMuted: '#94A3B8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        /* Glassmorphism effects */
+        .glass-panel {
+            background: rgba(21, 28, 44, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-header {
+            background: rgba(11, 15, 25, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Pulse glow animation for Live badge */
+        @keyframes livePulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.15); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .live-dot {
+            animation: livePulse 1.8s infinite ease-in-out;
+        }
+
+        /* Prevent text selection on tap */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans flex justify-center items-center min-h-screen sm:py-6 sm:px-4 antialiased">
+
+    <!-- iPhone Device Container Wrapper -->
+    <div class="w-full max-w-[414px] h-[100vh] sm:h-[852px] bg-zogo-bg sm:rounded-[48px] shadow-2xl overflow-hidden flex flex-col relative sm:border-[8px] sm:border-slate-800 sm:ring-1 sm:ring-white/10">
+        
+        <!-- iOS Dynamic Island & Status Bar -->
+        <div class="w-full pt-3 px-6 pb-1 flex justify-between items-center text-xs text-white z-50 shrink-0 select-none">
+            <span class="font-semibold text-[14px]">9:41</span>
+            <!-- Dynamic Island -->
+            <div class="w-[110px] h-[28px] bg-black rounded-full flex items-center justify-between px-2.5 shadow-md">
+                <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700"></div>
+                <div class="flex items-center space-x-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
+                    <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                </div>
+            </div>
+            <!-- Status Icons -->
+            <div class="flex items-center space-x-1.5 text-[11px]">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full text-[13px]"></i>
+            </div>
+        </div>
+
+        <!-- Search Header Bar -->
+        <div class="px-4 py-2.5 glass-header border-b border-zogo-border/50 sticky top-0 z-40 flex items-center gap-2">
+            <!-- Back Button -->
+            <button id="backBtn" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                <i class="fa-solid fa-chevron-left text-lg"></i>
+            </button>
+            
+            <!-- Search Input Box Container -->
+            <div class="flex-1 relative flex items-center">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-sm"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="搜索比赛、球队、主播/用户" 
+                    class="w-full bg-slate-900/90 text-slate-100 placeholder-slate-500 text-sm pl-9 pr-9 py-2 rounded-full border border-zogo-border focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    autocomplete="off"
+                >
+                <!-- Clear Button -->
+                <button id="clearInputBtn" class="hidden absolute right-3 w-4 h-4 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-[10px] hover:bg-slate-600 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Action / Cancel Button -->
+            <button id="searchCancelBtn" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 px-1 py-1 transition-colors">
+                取消
+            </button>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <div id="scrollContainer" class="flex-1 overflow-y-auto overflow-x-hidden relative pb-8">
+
+            <!-- VIEW 1: Initial Default View (Search History + Hot Rankings) -->
+            <div id="defaultStateView" class="p-4 space-y-6">
+                
+                <!-- Search History Section -->
+                <div id="historySection" class="space-y-3">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        <span class="flex items-center gap-1.5 text-slate-300">
+                            <i class="fa-regular fa-clock text-indigo-400"></i>
+                            搜索历史
+                        </span>
+                        <button id="clearHistoryBtn" class="text-slate-500 hover:text-rose-400 text-xs flex items-center gap-1 transition-colors">
+                            <i class="fa-regular fa-trash-can"></i>
+                            <span>清空</span>
+                        </button>
+                    </div>
+
+                    <!-- History Chips Grid -->
+                    <div id="historyChipsContainer" class="flex flex-wrap gap-2">
+                        <!-- Chips inserted dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Trending / Hot Searches Section -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-fire text-amber-500"></i>
+                            热门实时搜索
+                        </span>
+                        <span class="text-[11px] text-slate-500 font-normal">每15分钟更新</span>
+                    </div>
+
+                    <!-- Hot List Cards -->
+                    <div class="bg-zogo-card/60 rounded-2xl p-2.5 border border-zogo-border/60 space-y-1">
+                        <div class="hot-item flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" data-keyword="欧冠 曼城 vs 皇马">
+                            <div class="flex items-center gap-3">
+                                <span class="w-5 h-5 flex items-center justify-center font-bold text-xs rounded-md bg-rose-500/20 text-rose-400">1</span>
+                                <span class="text-sm font-medium text-slate-200">欧冠 曼城 vs 皇家马德里</span>
+                            </div>
+                            <span class="text-[11px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-medium">爆</span>
+                        </div>
+
+                        <div class="hot-item flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" data-keyword="S14 全球总决赛">
+                            <div class="flex items-center gap-3">
+                                <span class="w-5 h-5 flex items-center justify-center font-bold text-xs rounded-md bg-amber-500/20 text-amber-400">2</span>
+                                <span class="text-sm font-medium text-slate-200">S14 全球总决赛</span>
+                            </div>
+                            <span class="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium">热</span>
+                        </div>
+
+                        <div class="hot-item flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" data-keyword="湖人 vs 勇士">
+                            <div class="flex items-center gap-3">
+                                <span class="w-5 h-5 flex items-center justify-center font-bold text-xs rounded-md bg-indigo-500/20 text-indigo-400">3</span>
+                                <span class="text-sm font-medium text-slate-200">NBA 湖人 vs 勇士 抢七</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">24.5万热度</span>
+                        </div>
+
+                        <div class="hot-item flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" data-keyword="主播甜甜圈直播">
+                            <div class="flex items-center gap-3">
+                                <span class="w-5 h-5 flex items-center justify-center font-bold text-xs rounded-md text-slate-500">4</span>
+                                <span class="text-sm font-medium text-slate-300">主播甜甜圈 解说分析</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">18.2万热度</span>
+                        </div>
+
+                        <div class="hot-item flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" data-keyword="英超 兵工厂阿森纳">
+                            <div class="flex items-center gap-3">
+                                <span class="w-5 h-5 flex items-center justify-center font-bold text-xs rounded-md text-slate-500">5</span>
+                                <span class="text-sm font-medium text-slate-300">英超 兵工厂阿森纳焦点战</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">12.9万热度</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: Search Results State (Hidden by default) -->
+            <div id="searchResultsView" class="hidden">
+                
+                <!-- Category Tabs Sticky Menu Bar -->
+                <div class="sticky top-0 bg-zogo-bg/95 backdrop-blur-md z-30 px-4 border-b border-zogo-border/60 flex items-center gap-6 text-sm font-medium">
+                    <button class="nav-tab active py-3 text-indigo-400 border-b-2 border-indigo-500 transition-colors relative" data-tab="all">
+                        全部
+                        <span id="badgeAllCount" class="ml-1 text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded-full">0</span>
+                    </button>
+                    <button class="nav-tab py-3 text-slate-400 hover:text-slate-200 transition-colors relative" data-tab="matches">
+                        比赛
+                        <span id="badgeMatchesCount" class="ml-1 text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded-full">0</span>
+                    </button>
+                    <button class="nav-tab py-3 text-slate-400 hover:text-slate-200 transition-colors relative" data-tab="users">
+                        用户
+                        <span id="badgeUsersCount" class="ml-1 text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded-full">0</span>
+                    </button>
+                </div>
+
+                <!-- Dynamic Results List Container -->
+                <div class="p-4 space-y-6">
+                    
+                    <!-- Section: Matches List -->
+                    <div id="matchesResultSection" class="space-y-3">
+                        <div class="section-title flex items-center justify-between text-xs font-semibold text-slate-400">
+                            <span>热门比赛内容</span>
+                            <span class="text-[11px] text-indigo-400 flex items-center gap-1 cursor-pointer hover:underline" id="viewAllMatches">
+                                查看全部 <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                            </span>
+                        </div>
+                        <div id="matchesContainer" class="space-y-3">
+                            <!-- Match Cards injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Section: Users List -->
+                    <div id="usersResultSection" class="space-y-3">
+                        <div class="section-title flex items-center justify-between text-xs font-semibold text-slate-400">
+                            <span>推荐解说与用户</span>
+                            <span class="text-[11px] text-indigo-400 flex items-center gap-1 cursor-pointer hover:underline" id="viewAllUsers">
+                                查看全部 <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                            </span>
+                        </div>
+                        <div id="usersContainer" class="space-y-2.5">
+                            <!-- User Cards injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Empty Results Prompt -->
+                    <div id="emptyResultsState" class="hidden py-16 text-center space-y-3">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-slate-900 border border-zogo-border flex items-center justify-center text-slate-600 text-2xl">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                        <p class="text-sm font-medium text-slate-400">未找到相关结果</p>
+                        <p class="text-xs text-slate-500">试试搜索 “曼城”、“NBA” 或 “主播”</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Home Indicator Bar (iOS Bottom Bar) -->
+        <div class="w-full pb-2 pt-1 flex justify-center bg-zogo-bg select-none">
+            <div class="w-32 h-1 bg-slate-700/60 rounded-full"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Mock dataset for matches and user streams
+        const MOCK_DATA = {
+            matches: [
+                {
+                    id: 'm1',
+                    league: 'UEFA 欧冠联赛',
+                    round: '1/4 决赛',
+                    homeTeam: '曼彻斯特城',
+                    homeScore: 2,
+                    awayTeam: '皇家马德里',
+                    awayScore: 1,
+                    status: 'LIVE',
+                    statusText: '78\' 下半场',
+                    views: '128.4万人在看',
+                    tags: ['欧冠', '曼城', '皇马', '足球']
+                },
+                {
+                    id: 'm2',
+                    league: 'NBA 常规赛',
+                    round: '焦点大战',
+                    homeTeam: '洛杉矶湖人',
+                    homeScore: 104,
+                    awayTeam: '金州勇士',
+                    awayScore: 101,
+                    status: 'LIVE',
+                    statusText: '第四节 02:15',
+                    views: '210.9万人在看',
+                    tags: ['NBA', '湖人', '勇士', '篮球', '詹姆斯', '库里']
+                },
+                {
+                    id: 'm3',
+                    league: 'LPL 职业联赛',
+                    round: '春季赛 BO5',
+                    homeTeam: 'BLG',
+                    homeScore: 2,
+                    awayTeam: 'TES',
+                    awayScore: 2,
+                    status: 'UPCOMING',
+                    statusText: '今天 20:00',
+                    views: '预约 45.2万人',
+                    tags: ['LPL', '英雄联盟', 'S14', '电竞', 'BLG', 'TES']
+                },
+                {
+                    id: 'm4',
+                    league: '英超 Premier League',
+                    round: '第 29 轮',
+                    homeTeam: '阿森纳',
+                    homeScore: 3,
+                    awayTeam: '切尔西',
+                    awayScore: 0,
+                    status: 'ENDED',
+                    statusText: '完赛',
+                    views: '集锦/回放',
+                    tags: ['英超', '阿森纳', '切尔西', '足球']
+                }
+            ],
+            users: [
+                {
+                    id: 'u1',
+                    name: '暴走小甜甜 (赛事分析)',
+                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+                    verified: true,
+                    followers: '158.3万粉丝',
+                    isLive: true,
+                    roomTitle: '【热烈解说】欧冠生死战直击！',
+                    tags: ['主播', '欧冠', '足球', '甜甜圈']
+                },
+                {
+                    id: 'u2',
+                    name: '战术大师老詹',
+                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+                    verified: true,
+                    followers: '89.4万粉丝',
+                    isLive: true,
+                    roomTitle: 'NBA季后赛对阵深度复盘',
+                    tags: ['NBA', '篮球', '战术', '湖人', '勇士']
+                },
+                {
+                    id: 'u3',
+                    name: '电竞速报君',
+                    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80',
+                    verified: false,
+                    followers: '32.1万粉丝',
+                    isLive: false,
+                    roomTitle: '',
+                    tags: ['电竞', 'LPL', 'S14', '英雄联盟']
+                },
+                {
+                    id: 'u4',
+                    name: 'ZogoLive官方体育',
+                    avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
+                    verified: true,
+                    followers: '450万粉丝',
+                    isLive: true,
+                    roomTitle: '官方多视角直播中心',
+                    tags: ['官方', '足球', 'NBA', '曼城', '皇马']
+                }
+            ]
+        };
+
+        // Cache Key for localStorage
+        const STORAGE_KEY = 'zogolive_search_history_v1';
+
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const defaultStateView = document.getElementById('defaultStateView');
+        const searchResultsView = document.getElementById('searchResultsView');
+        const historyChipsContainer = document.getElementById('historyChipsContainer');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const matchesContainer = document.getElementById('matchesContainer');
+        const usersContainer = document.getElementById('usersContainer');
+        const emptyResultsState = document.getElementById('emptyResultsState');
+        const matchesResultSection = document.getElementById('matchesResultSection');
+        const usersResultSection = document.getElementById('usersResultSection');
+        const navTabs = document.querySelectorAll('.nav-tab');
+
+        // State variables
+        let searchHistory = getStoredHistory();
+        let currentTab = 'all';
+
+        // Initialize App
+        function init() {
+            renderHistoryChips();
+            bindEvents();
+        }
+
+        // Fetch stored history array
+        function getStoredHistory() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : ['欧冠', '曼城vs皇马', 'NBA湖人', 'LPL春季赛'];
+            } catch (e) {
+                return ['欧冠', '曼城vs皇马', 'NBA湖人'];
+            }
+        }
+
+        // Save history array
+        function saveHistory(list) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+            } catch (e) {}
+        }
+
+        // Add item to search history
+        function pushToHistory(term) {
+            if (!term || !term.trim()) return;
+            const cleaned = term.trim();
+            searchHistory = searchHistory.filter(item => item !== cleaned);
+            searchHistory.unshift(cleaned);
+            if (searchHistory.length > 10) searchHistory.pop();
+            saveHistory(searchHistory);
+            renderHistoryChips();
+        }
+
+        // Remove single item from history
+        function removeHistoryItem(term, e) {
+            e.stopPropagation();
+            searchHistory = searchHistory.filter(item => item !== term);
+            saveHistory(searchHistory);
+            renderHistoryChips();
+        }
+
+        // Render History Chips UI
+        function renderHistoryChips() {
+            historyChipsContainer.innerHTML = '';
+            if (searchHistory.length === 0) {
+                historyChipsContainer.innerHTML = `<span class="text-xs text-slate-500 py-1">暂无搜索历史记录</span>`;
+                return;
+            }
+
+            searchHistory.forEach(item => {
+                const chip = document.createElement('div');
+                chip.className = 'group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zogo-card border border-zogo-border text-xs text-slate-300 hover:text-white hover:border-indigo-500/50 cursor-pointer transition-all';
+                chip.innerHTML = `
+                    <span>${escapeHTML(item)}</span>
+                    <i class="fa-solid fa-xmark text-[10px] text-slate-500 hover:text-rose-400 group-hover:text-slate-400 p-0.5"></i>
+                `;
+                
+                chip.addEventListener('click', () => {
+                    searchInput.value = item;
+                    triggerSearch(item);
+                });
+
+                const deleteIcon = chip.querySelector('i');
+                deleteIcon.addEventListener('click', (e) => removeHistoryItem(item, e));
+
+                historyChipsContainer.appendChild(chip);
+            });
+        }
+
+        // Event Listeners setup
+        function bindEvents() {
+            // Search Input listeners
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                if (query.length > 0) {
+                    clearInputBtn.classList.remove('hidden');
+                    triggerSearch(query, false);
+                } else {
+                    clearInputBtn.classList.add('hidden');
+                    resetToDefaultView();
+                }
+            });
+
+            // Enter key trigger search
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const query = searchInput.value.trim();
+                    if (query) {
+                        pushToHistory(query);
+                        triggerSearch(query, true);
+                    }
+                }
+            });
+
+            // Clear Input button
+            clearInputBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                clearInputBtn.classList.add('hidden');
+                resetToDefaultView();
+                searchInput.focus();
+            });
+
+            // Clear All History
+            clearHistoryBtn.addEventListener('click', () => {
+                searchHistory = [];
+                saveHistory(searchHistory);
+                renderHistoryChips();
+            });
+
+            // Hot search items click
+            document.querySelectorAll('.hot-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const keyword = item.getAttribute('data-keyword');
+                    searchInput.value = keyword;
+                    clearInputBtn.classList.remove('hidden');
+                    pushToHistory(keyword);
+                    triggerSearch(keyword, true);
+                });
+            });
+
+            // Navigation tabs
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    navTabs.forEach(t => {
+                        t.classList.remove('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
+                        t.classList.add('text-slate-400');
+                    });
+                    tab.classList.add('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
+                    tab.classList.remove('text-slate-400');
+                    
+                    currentTab = tab.getAttribute('data-tab');
+                    filterTabContent();
+                });
+            });
+
+            // Back button
+            document.getElementById('backBtn').addEventListener('click', () => {
+                if (!searchResultsView.classList.contains('hidden')) {
+                    searchInput.value = '';
+                    clearInputBtn.classList.add('hidden');
+                    resetToDefaultView();
+                }
+            });
+
+            // Search cancel button
+            document.getElementById('searchCancelBtn').addEventListener('click', () => {
+                searchInput.value = '';
+                clearInputBtn.classList.add('hidden');
+                resetToDefaultView();
+            });
+
+            // View all handlers
+            document.getElementById('viewAllMatches')?.addEventListener('click', () => switchTab('matches'));
+            document.getElementById('viewAllUsers')?.addEventListener('click', () => switchTab('users'));
+        }
+
+        // Programmatically switch tabs
+        function switchTab(tabName) {
+            const target = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+            if (target) target.click();
+        }
+
+        // Switch back to History/Hot State
+        function resetToDefaultView() {
+            defaultStateView.classList.remove('hidden');
+            searchResultsView.classList.add('hidden');
+        }
+
+        // Execute Search Action
+        function triggerSearch(query, saveToHist = false) {
+            if (saveToHist) pushToHistory(query);
+
+            defaultStateView.classList.add('hidden');
+            searchResultsView.classList.remove('hidden');
+
+            const lower = query.toLowerCase();
+
+            // Filter Matches
+            const matchedMatches = MOCK_DATA.matches.filter(m => {
+                return m.homeTeam.toLowerCase().includes(lower) ||
+                       m.awayTeam.toLowerCase().includes(lower) ||
+                       m.league.toLowerCase().includes(lower) ||
+                       m.tags.some(t => t.toLowerCase().includes(lower));
+            });
+
+            // Filter Users
+            const matchedUsers = MOCK_DATA.users.filter(u => {
+                return u.name.toLowerCase().includes(lower) ||
+                       u.roomTitle.toLowerCase().includes(lower) ||
+                       u.tags.some(t => t.toLowerCase().includes(lower));
+            });
+
+            // Render counts
+            document.getElementById('badgeAllCount').innerText = matchedMatches.length + matchedUsers.length;
+            document.getElementById('badgeMatchesCount').innerText = matchedMatches.length;
+            document.getElementById('badgeUsersCount').innerText = matchedUsers.length;
+
+            renderMatches(matchedMatches);
+            renderUsers(matchedUsers);
+
+            filterTabContent();
+        }
+
+        // Filter visible sections according to current tab
+        function filterTabContent() {
+            const hasMatches = matchesContainer.children.length > 0;
+            const hasUsers = usersContainer.children.length > 0;
+
+            if (currentTab === 'all') {
+                matchesResultSection.style.display = hasMatches ? 'block' : 'none';
+                usersResultSection.style.display = hasUsers ? 'block' : 'none';
+                emptyResultsState.classList.toggle('hidden', hasMatches || hasUsers);
+            } else if (currentTab === 'matches') {
+                matchesResultSection.style.display = hasMatches ? 'block' : 'none';
+                usersResultSection.style.display = 'none';
+                emptyResultsState.classList.toggle('hidden', hasMatches);
+            } else if (currentTab === 'users') {
+                matchesResultSection.style.display = 'none';
+                usersResultSection.style.display = hasUsers ? 'block' : 'none';
+                emptyResultsState.classList.toggle('hidden', hasUsers);
+            }
+        }
+
+        // Render Matches Card UI
+        function renderMatches(list) {
+            matchesContainer.innerHTML = '';
+            if (list.length === 0) return;
+
+            list.forEach(item => {
+                let statusBadge = '';
+                if (item.status === 'LIVE') {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 live-dot"></span>
+                            LIVE ${item.statusText}
+                        </span>`;
+                } else if (item.status === 'UPCOMING') {
+                    statusBadge = `<span class="text-[11px] font-medium text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">${item.statusText}</span>`;
+                } else {
+                    statusBadge = `<span class="text-[11px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">已结束</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-zogo-card/80 border border-zogo-border rounded-2xl p-3.5 space-y-3 hover:border-indigo-500/40 transition';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-slate-300">${escapeHTML(item.league)}</span>
+                            <span class="text-slate-600">•</span>
+                            <span class="text-slate-400">${escapeHTML(item.round)}</span>
+                        </div>
+                        ${statusBadge}
+                    </div>
+
+                    <div class="flex items-center justify-between px-1 py-1">
+                        <!-- Home Team -->
+                        <div class="flex items-center gap-2.5 flex-1">
+                            <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs border border-slate-700 text-indigo-300">
+                                ${item.homeTeam.substring(0, 1)}
+                            </div>
+                            <span class="text-sm font-semibold text-slate-100">${escapeHTML(item.homeTeam)}</span>
+                        </div>
+
+                        <!-- Score or VS -->
+                        <div class="px-4 text-center">
+                            ${item.status !== 'UPCOMING' ? `
+                                <div class="text-base font-extrabold tracking-widest text-white">
+                                    ${item.homeScore} <span class="text-slate-500 text-xs px-0.5">-</span> ${item.awayScore}
+                                </div>
+                            ` : `
+                                <div class="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">VS</div>
+                            `}
+                        </div>
+
+                        <!-- Away Team -->
+                        <div class="flex items-center justify-end gap-2.5 flex-1">
+                            <span class="text-sm font-semibold text-slate-100">${escapeHTML(item.awayTeam)}</span>
+                            <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs border border-slate-700 text-cyan-300">
+                                ${item.awayTeam.substring(0, 1)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-zogo-border/50 text-xs">
+                        <span class="text-slate-500">${escapeHTML(item.views)}</span>
+                        <button class="px-3 py-1 rounded-full bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white font-medium transition text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-play text-[10px]"></i> 观赛
+                        </button>
+                    </div>
+                `;
+                matchesContainer.appendChild(card);
+            });
+        }
+
+        // Render Users Card UI
+        function renderUsers(list) {
+            usersContainer.innerHTML = '';
+            if (list.length === 0) return;
+
+            list.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'bg-zogo-card/60 border border-zogo-border/60 rounded-2xl p-3 flex items-center justify-between gap-3 hover:bg-zogo-card transition';
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <!-- Avatar with live ring -->
+                        <div class="relative shrink-0">
+                            <img src="${user.avatar}" alt="${user.name}" class="w-11 h-11 rounded-full object-cover border border-slate-700">
+                            ${user.isLive ? `
+                                <span class="absolute -bottom-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1 rounded-full ring-2 ring-zogo-bg">
+                                    LIVE
+                                </span>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Details -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm font-semibold text-slate-100 truncate">${escapeHTML(user.name)}</span>
+                                ${user.verified ? '<i class="fa-solid fa-circle-check text-indigo-400 text-xs shrink-0"></i>' : ''}
+                            </div>
+                            <div class="text-xs text-slate-400 truncate mt-0.5">
+                                ${user.isLive ? `<span class="text-rose-400 font-medium">[直播] ${escapeHTML(user.roomTitle)}</span>` : `<span>${escapeHTML(user.followers)}</span>`}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Follow Button -->
+                    <button class="shrink-0 px-3.5 py-1.5 rounded-full border border-indigo-500/50 text-indigo-400 hover:bg-indigo-600 hover:text-white hover:border-transparent text-xs font-semibold transition">
+                        + 关注
+                    </button>
+                `;
+                usersContainer.appendChild(card);
+            });
+        }
+
+        // Helper string sanitizer
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Launch on window load
+        window.onload = init;
+    </script>
+</body>
+</html>
